@@ -10,7 +10,6 @@ import json
 import logging
 import os
 import re
-import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
@@ -181,29 +180,32 @@ def _format_duration(seconds: int) -> str:
 
 
 def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
-    """Use yt-dlp --dump-json for metadata across all platforms."""
+    """Use yt-dlp Python API for metadata across all platforms."""
+    import yt_dlp
+
     video_id = _extract_video_id(url, platform)
 
     try:
-        result = subprocess.run(
-            ["yt-dlp", "--dump-json", "--no-download", "--no-warnings", url],
-            capture_output=True,
-            text=True,
-            timeout=30,
+        opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "noplaylist": True,
+        }
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            data = ydl.extract_info(url, download=False)
+
+        title = data.get("title") or data.get("description", "")[:80] or "Untitled"
+        duration = _format_duration(int(data.get("duration", 0) or 0))
+        author = data.get("uploader") or data.get("channel") or ""
+        return VideoMeta(
+            video_id=video_id,
+            title=title,
+            duration_str=duration,
+            author=author,
+            platform=platform,
         )
-        if result.returncode == 0:
-            data = json.loads(result.stdout)
-            title = data.get("title") or data.get("description", "")[:80] or "Untitled"
-            duration = _format_duration(int(data.get("duration", 0)))
-            author = data.get("uploader") or data.get("channel") or ""
-            return VideoMeta(
-                video_id=video_id,
-                title=title,
-                duration_str=duration,
-                author=author,
-                platform=platform,
-            )
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+    except Exception:
         pass
 
     return VideoMeta(
@@ -241,26 +243,28 @@ class TranscriptionProgress:
 
 
 def _download_audio(url: str, output_path: Path) -> Path:
-    """Download audio via yt-dlp, return path to the audio file."""
-    result = subprocess.run(
-        [
-            "yt-dlp",
-            "-x",
-            "--audio-format", "mp3",
-            "--audio-quality", "5",
-            "-o", str(output_path / "audio.%(ext)s"),
-            "--no-warnings",
-            "--no-playlist",
-            url,
-        ],
-        capture_output=True,
-        text=True,
-        timeout=180,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"yt-dlp failed to download audio:\n{result.stderr[:300]}"
-        )
+    """Download audio via yt-dlp Python API, return path to the audio file."""
+    import yt_dlp
+
+    opts = {
+        "format": "bestaudio/best",
+        "extractaudio": True,
+        "audioformat": "mp3",
+        "audioquality": "5",
+        "outtmpl": str(output_path / "audio.%(ext)s"),
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "5",
+        }],
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        rc = ydl.download([url])
+        if rc != 0:
+            raise RuntimeError("yt-dlp failed to download audio")
 
     audio_files = list(output_path.glob("audio.*"))
     if not audio_files:

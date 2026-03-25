@@ -204,7 +204,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         video_title_for_prompt = meta.title or "this video"
         result = await asyncio.wait_for(
             asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt),
-            timeout=45,
+            timeout=90,
         )
         items = result.items
     except asyncio.TimeoutError:
