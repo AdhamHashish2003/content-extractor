@@ -1,0 +1,13 @@
+youtube-transcript-api>=1.0.0
+groq>=0.25.0
+openai>=1.0.0
+openai-whisper>=20231117
+pydub>=0.25.1
+Pillow>=11.0.0
+rich>=13.0.0
+python-dotenv>=1.0.0
+duckduckgo-search>=7.0.0
+icrawler>=0.6.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.9

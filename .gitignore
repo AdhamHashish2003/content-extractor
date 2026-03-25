@@ -1,0 +1,11 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+output/
+downloads/
+logos/
+data/
+.cache/
+nohup.out
+*.zip

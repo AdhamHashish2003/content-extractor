@@ -1,0 +1,2524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentExtractor — Turn Any Video Into Scroll-Stopping Content</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   RESET & VARIABLES
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0F0F13;
+  --surface: #1A1A24;
+  --surface-hover: #22222E;
+  --gradient-primary: linear-gradient(135deg, #7C3AED, #EC4899);
+  --gradient-secondary: linear-gradient(135deg, #3B82F6, #06B6D4);
+  --text: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --border: rgba(255,255,255,0.08);
+  --border-light: rgba(255,255,255,0.06);
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.06);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --violet: #7C3AED;
+  --pink: #EC4899;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ================================================================
+   UTILITY
+   ================================================================ */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-heading {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.section-heading h2 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+.section-heading p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
+/* ================================================================
+   NAVIGATION
+   ================================================================ */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 16px 0;
+  transition: background 0.3s, backdrop-filter 0.3s;
+}
+.nav.scrolled {
+  background: rgba(15,15,19,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--gradient-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  padding: 10px 24px;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.nav-cta:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(124,58,237,0.25);
+}
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.mobile-only { display: none; }
+
+/* ================================================================
+   HERO
+   ================================================================ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 120px 0 80px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,58,237,0.15), transparent 70%);
+  top: -100px; left: -200px;
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236,72,153,0.1), transparent 70%);
+  bottom: -100px; right: -150px;
+  pointer-events: none;
+}
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  border: 1px solid rgba(124,58,237,0.4);
+  background: rgba(124,58,237,0.1);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  width: fit-content;
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 24px;
+}
+.hero-rotating {
+  display: inline-block;
+  position: relative;
+  min-width: 280px;
+  height: 1.2em;
+  vertical-align: bottom;
+  overflow: hidden;
+}
+.hero-rotating span {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.hero-rotating span.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 520px;
+}
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 40px rgba(124,58,237,0.3);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.hero-proof {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Hero mockup */
+.hero-mockup {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+.mockup-card {
+  position: absolute;
+  width: 220px;
+  height: 275px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  color: white;
+  animation: mockup-float 6s ease-in-out infinite alternate;
+}
+.mockup-card:nth-child(1) {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  transform: rotate(-8deg) translateX(-40px);
+  z-index: 1;
+  animation-delay: 0s;
+}
+.mockup-card:nth-child(2) {
+  background: linear-gradient(135deg, #312e81, #7c3aed);
+  transform: rotate(0deg) translateY(-20px);
+  z-index: 2;
+  animation-delay: -2s;
+}
+.mockup-card:nth-child(3) {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  transform: rotate(8deg) translateX(40px);
+  z-index: 1;
+  animation-delay: -4s;
+}
+.mockup-card .mc-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.mockup-card .mc-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+@keyframes mockup-float {
+  0% { transform: rotate(var(--r, 0deg)) translate(var(--tx, 0), var(--ty, 0)); }
+  100% { transform: rotate(var(--r, 0deg)) translate(var(--tx, 0), calc(var(--ty, 0px) - 12px)); }
+}
+.mockup-card:nth-child(1) { --r: -8deg; --tx: -40px; --ty: 0px; }
+.mockup-card:nth-child(2) { --r: 0deg; --tx: 0px; --ty: -20px; }
+.mockup-card:nth-child(3) { --r: 8deg; --tx: 40px; --ty: 0px; }
+
+/* ================================================================
+   SOCIAL PROOF BAR
+   ================================================================ */
+.social-proof {
+  padding: 40px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.social-proof-inner {
+  text-align: center;
+}
+.social-proof p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+.platform-pills {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.platform-pill {
+  padding: 8px 20px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ================================================================
+   HOW IT WORKS
+   ================================================================ */
+.how-it-works {
+  padding: 120px 0;
+}
+.steps-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  position: relative;
+}
+.steps-row::before {
+  content: '';
+  position: absolute;
+  top: 48px;
+  left: calc(16.66% + 24px);
+  right: calc(16.66% + 24px);
+  height: 2px;
+  border-top: 2px dashed rgba(124,58,237,0.3);
+}
+.step-card {
+  text-align: center;
+  padding: 40px 24px;
+  position: relative;
+}
+.step-num {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+}
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+.step-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.step-card p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ================================================================
+   FEATURES GRID
+   ================================================================ */
+.features {
+  padding: 120px 0;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.feature-card {
+  padding: 32px 24px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px rgba(124,58,237,0.1);
+  border-color: rgba(124,58,237,0.2);
+}
+.feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 16px;
+}
+.feature-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* ================================================================
+   PRODUCT PREVIEW
+   ================================================================ */
+.preview {
+  padding: 120px 0;
+}
+.preview-card {
+  padding: 48px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.preview-url {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.preview-url input {
+  flex: 1;
+  padding: 14px 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.preview-url .btn-primary { padding: 14px 24px; font-size: 0.85rem; }
+.preview-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.preview-mode-pill {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.preview-mode-pill.active {
+  border-color: var(--violet);
+  color: var(--text);
+  background: rgba(124,58,237,0.1);
+}
+.preview-slides {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.preview-slide {
+  aspect-ratio: 4/5;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  color: white;
+}
+.preview-slide:nth-child(1) { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+.preview-slide:nth-child(2) { background: linear-gradient(135deg, #312e81, #7c3aed); }
+.preview-slide:nth-child(3) { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+.preview-slide .ps-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.preview-slide .ps-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.preview-thread {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ================================================================
+   PRICING
+   ================================================================ */
+.pricing {
+  padding: 120px 0;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.pricing-card {
+  padding: 40px 32px;
+  position: relative;
+}
+.pricing-card.featured {
+  border-color: rgba(124,58,237,0.4);
+  background: rgba(124,58,237,0.06);
+}
+.pricing-badge {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  border-radius: 100px;
+  background: var(--gradient-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pricing-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.pricing-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.pricing-price span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+.pricing-list {
+  list-style: none;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pricing-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.pricing-list li::before {
+  content: '';
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.15);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2310B981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.pricing-card .btn-primary,
+.pricing-card .btn-ghost { width: 100%; justify-content: center; }
+
+/* ================================================================
+   FAQ
+   ================================================================ */
+.faq { padding: 120px 0; }
+.faq-list {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.faq-q {
+  width: 100%;
+  padding: 20px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Inter', sans-serif;
+}
+.faq-q::after {
+  content: '+';
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  transition: transform 0.3s;
+}
+.faq-item.open .faq-q::after {
+  transform: rotate(45deg);
+}
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s;
+}
+.faq-item.open .faq-a {
+  max-height: 200px;
+  padding: 0 24px 20px;
+}
+.faq-a p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+/* ================================================================
+   FINAL CTA
+   ================================================================ */
+.final-cta {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.06));
+  border-radius: 0;
+}
+.final-cta h2 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  margin-bottom: 16px;
+  position: relative;
+}
+.final-cta p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 36px;
+  position: relative;
+}
+.final-cta .btn-primary { position: relative; }
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+.footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.footer-logo {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.footer-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+.footer-links a {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--text-secondary); }
+.footer-copy {
+  width: 100%;
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ================================================================
+   APP SECTION
+   ================================================================ */
+.app-section {
+  padding: 80px 0 120px;
+  display: none;
+}
+.app-section.visible { display: block; }
+.app-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.app-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.app-header p { color: var(--text-secondary); }
+
+/* Brand panel */
+.brand-panel {
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.brand-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--surface);
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+.brand-summary { color: var(--text-muted); font-size: 0.85rem; font-weight: 400; }
+.chevron {
+  transition: transform 0.3s;
+  color: var(--text-muted);
+}
+.chevron.open { transform: rotate(180deg); }
+.brand-body {
+  display: none;
+  padding: 24px;
+  background: rgba(26,26,36,0.5);
+}
+.brand-body.open { display: block; }
+.brand-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.brand-grid .full-width { grid-column: 1 / -1; }
+.brand-field label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.brand-field input,
+.brand-field select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+}
+.brand-field select { cursor: pointer; }
+.custom-colors {
+  display: none;
+  grid-column: 1 / -1;
+}
+.custom-colors.open { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-field input[type="color"] {
+  width: 36px; height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+}
+.color-field input[type="text"] {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Logo upload */
+.logo-upload-area {
+  margin-top: 4px;
+}
+.logo-upload-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.logo-upload-btn:hover {
+  border-color: var(--violet);
+  color: var(--text-secondary);
+}
+.logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+.logo-preview img {
+  max-height: 40px;
+  max-width: 160px;
+  object-fit: contain;
+}
+.logo-remove {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+.logo-remove:hover { opacity: 0.7; }
+
+/* URL input */
+.url-group {
+  margin-bottom: 32px;
+}
+.url-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.url-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+.url-input:focus { outline: none; border-color: var(--violet); }
+
+/* URL mode toggle (single / bulk) */
+.url-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 10px;
+}
+.url-mode-btn {
+  flex: 1;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+.url-mode-btn:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
+.url-mode-btn:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; border-left: none; }
+.url-mode-btn.active {
+  background: rgba(124,58,237,0.15);
+  border-color: rgba(124,58,237,0.3);
+  color: var(--text);
+}
+.bulk-url-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  resize: vertical;
+  line-height: 1.8;
+}
+.bulk-url-input:focus { outline: none; border-color: var(--violet); }
+.bulk-url-input::placeholder { color: var(--text-muted); }
+.bulk-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Bulk progress */
+.bulk-progress {
+  margin-bottom: 24px;
+}
+.bulk-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.bulk-progress-item:last-child { border-bottom: none; }
+.bulk-progress-item .bp-status {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.bulk-progress-item .bp-url {
+  flex: 1;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.bulk-progress-item .bp-title {
+  color: var(--text);
+  font-weight: 500;
+}
+.bulk-progress-item.pending .bp-status { color: var(--text-muted); }
+.bulk-progress-item.running .bp-status { color: var(--violet); }
+.bulk-progress-item.done .bp-status { color: var(--success); }
+.bulk-progress-item.error .bp-status { color: var(--error); }
+
+/* Bulk results */
+.bulk-results-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.bulk-results-summary .brs-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.bulk-results-summary .brs-text strong { color: var(--text); }
+
+/* History panel */
+.history-panel {
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.history-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--surface);
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+.history-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: rgba(124,58,237,0.2);
+  color: var(--violet);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 8px;
+}
+.history-body {
+  display: none;
+  padding: 16px;
+  background: rgba(26,26,36,0.5);
+  max-height: 400px;
+  overflow-y: auto;
+}
+.history-body.open { display: block; }
+.history-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0 12px 0;
+}
+.history-clear-btn {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-xs);
+  color: var(--error);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s;
+}
+.history-clear-btn:hover { background: rgba(239,68,68,0.1); }
+.history-card {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.history-card:hover { border-color: rgba(124,58,237,0.3); }
+.history-card:last-child { margin-bottom: 0; }
+.history-thumb {
+  width: 60px;
+  height: 75px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.history-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.history-info h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.history-info .history-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.history-info .history-meta span { margin-right: 8px; }
+.history-download {
+  padding: 6px 12px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.history-download:hover { color: var(--text); }
+
+/* Mode buttons */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.mode-btn:hover {
+  border-color: rgba(124,58,237,0.3);
+  color: var(--text);
+  background: var(--surface-hover);
+}
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status */
+.status-area {
+  margin-bottom: 24px;
+  min-height: 40px;
+}
+.status-msg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.15);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+.status-msg.error {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.2);
+  color: var(--error);
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(124,58,237,0.3);
+  border-top-color: var(--violet);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Results */
+#results { display: none; }
+#results.visible { display: block; }
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.result-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.result-meta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+.download-btn:hover { transform: scale(1.02); }
+
+/* Tabs */
+.output-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active {
+  color: var(--text);
+  border-bottom-color: var(--violet);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Carousel viewer */
+.carousel-container { position: relative; }
+.carousel-viewer {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 8px 0;
+  scrollbar-width: none;
+}
+.carousel-viewer::-webkit-scrollbar { display: none; }
+.slide-preview {
+  flex-shrink: 0;
+  width: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.slide-preview img {
+  width: 100%;
+  display: block;
+}
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background 0.2s;
+}
+.carousel-arrow:hover { background: var(--surface-hover); }
+.carousel-arrow-left { left: -16px; }
+.carousel-arrow-right { right: -16px; }
+
+/* Text output */
+.text-output-container {
+  position: relative;
+}
+.text-output {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.copy-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.2s, background 0.2s;
+}
+.copy-btn:hover { color: var(--text); }
+.copy-btn.copied { color: var(--success); }
+
+/* Fade-in on scroll */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-cta { display: none; }
+  .nav-hamburger { display: block; }
+  .mobile-only { display: list-item; }
+  .nav-links.mobile-open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px; left: 0; right: 0;
+    background: rgba(15,15,19,0.95);
+    backdrop-filter: blur(20px);
+    padding: 24px;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner { grid-template-columns: 1fr; text-align: center; }
+  .hero-subtitle { margin: 0 auto 36px; }
+  .hero-buttons { justify-content: center; }
+  .hero-proof { justify-content: center; }
+  .hero-mockup { min-height: 280px; margin-top: 40px; }
+  .steps-row { grid-template-columns: 1fr; }
+  .steps-row::before { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .preview-slides { grid-template-columns: 1fr; }
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  .pricing-card.featured { order: -1; }
+  .mode-grid { grid-template-columns: repeat(2, 1fr); }
+  .brand-grid { grid-template-columns: 1fr; }
+  .custom-colors.open { grid-template-columns: 1fr; }
+  .footer-inner { flex-direction: column; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+  .history-card { grid-template-columns: 1fr; }
+  .history-thumb { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+      <div class="nav-logo-icon">CE</div>
+      ContentExtractor
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li class="mobile-only"><a href="#app" onclick="showApp(); return false;">Get Started Free</a></li>
+    </ul>
+    <a href="#app" class="nav-cta" onclick="showApp(); return false;">Get Started Free</a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">&#9776;</button>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero" id="hero">
+  <div class="container hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">New: AI Ad Creatives</div>
+      <h1>Turn Any Video Into<br>
+        <span class="hero-rotating" id="hero-rotating">
+          <span class="active">Carousel Posts</span>
+          <span>Twitter Threads</span>
+          <span>Ad Creatives</span>
+          <span>Newsletter Content</span>
+        </span>
+      </h1>
+      <p class="hero-subtitle">Paste a YouTube, Instagram, TikTok, or X link. Get branded carousel slides, ad copy, social posts, and more — in seconds.</p>
+      <div class="hero-buttons">
+        <a href="#app" class="btn-primary" onclick="showApp(); return false;">Start Extracting &rarr;</a>
+        <a href="#how-it-works" class="btn-ghost" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'}); return false;">See How It Works &darr;</a>
+      </div>
+      <div class="hero-proof">1,200+ videos processed</div>
+    </div>
+    <div class="hero-mockup">
+      <div class="mockup-card">
+        <div class="mc-label">FACT 01</div>
+        <div class="mc-title">AI spending will hit $200B by 2025</div>
+      </div>
+      <div class="mockup-card">
+        <div class="mc-label">PREDICTION 02</div>
+        <div class="mc-title">Half of all content will be AI-generated</div>
+      </div>
+      <div class="mockup-card">
+        <div class="mc-label">TAKEAWAY 03</div>
+        <div class="mc-title">Start repurposing video now or fall behind</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SOCIAL PROOF
+     ============================================================ -->
+<section class="social-proof fade-in">
+  <div class="container social-proof-inner">
+    <p>Works with content from</p>
+    <div class="platform-pills">
+      <span class="platform-pill">YouTube</span>
+      <span class="platform-pill">Instagram</span>
+      <span class="platform-pill">TikTok</span>
+      <span class="platform-pill">X / Twitter</span>
+      <span class="platform-pill">LinkedIn</span>
+      <span class="platform-pill">1000+ more</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     HOW IT WORKS
+     ============================================================ -->
+<section class="how-it-works" id="how-it-works">
+  <div class="container">
+    <div class="section-heading fade-in">
+      <h2>How It <span class="gradient-text">Works</span></h2>
+      <p>Three steps from video to viral content</p>
+    </div>
+    <div class="steps-row fade-in">
+      <div class="step-card glass">
+        <div class="step-num">01</div>
+        <div class="step-icon">&#128279;</div>
+        <h3>Paste Any Link</h3>
+        <p>YouTube, Instagram, TikTok, X — we handle them all</p>
+      </div>
+      <div class="step-card glass">
+        <div class="step-num">02</div>
+        <div class="step-icon">&#127912;</div>
+        <h3>Choose Your Format</h3>
+        <p>Facts, quotes, predictions, ad copy, and 5 more modes</p>
+      </div>
+      <div class="step-card glass">
+        <div class="step-num">03</div>
+        <div class="step-icon">&#128640;</div>
+        <h3>Download &amp; Post</h3>
+        <p>Get branded slides, threads, and captions instantly</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FEATURES
+     ============================================================ -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-heading fade-in">
+      <h2>Everything You Need to <span class="gradient-text">Repurpose Content</span></h2>
+    </div>
+    <div class="features-grid fade-in">
+      <div class="feature-card glass">
+        <div class="feature-icon">&#127760;</div>
+        <h3>8 Extraction Modes</h3>
+        <p>Facts, predictions, opinions, quotes, summaries, counterarguments, takeaways, viral hooks</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#128640;</div>
+        <h3>AI Ad Creatives</h3>
+        <p>Generate Facebook &amp; Google ad copy with A/B variants</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#127912;</div>
+        <h3>Custom Branding</h3>
+        <p>Upload your logo, pick colors, save brand presets</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#128247;</div>
+        <h3>Background Images</h3>
+        <p>AI-fetched photos that match each slide's content</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#128196;</div>
+        <h3>Multi-Format Export</h3>
+        <p>Carousels, Twitter threads, LinkedIn, newsletters, TikTok scripts</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Bulk Processing</h3>
+        <p>Paste multiple URLs, process them all at once</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#128203;</div>
+        <h3>History Dashboard</h3>
+        <p>Access all your past extractions anytime</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">&#127757;</div>
+        <h3>Works Everywhere</h3>
+        <p>YouTube, Instagram, TikTok, X, and 1000+ sites</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRODUCT PREVIEW
+     ============================================================ -->
+<section class="preview" id="preview">
+  <div class="container">
+    <div class="section-heading fade-in">
+      <h2>See It <span class="gradient-text">In Action</span></h2>
+    </div>
+    <div class="preview-card glass fade-in">
+      <div class="preview-url">
+        <input type="text" value="https://youtube.com/watch?v=dQw4w9WgXcQ" readonly>
+        <button class="btn-primary" disabled>Extract</button>
+      </div>
+      <div class="preview-modes">
+        <span class="preview-mode-pill active">Facts</span>
+        <span class="preview-mode-pill">Predictions</span>
+        <span class="preview-mode-pill">Quotes</span>
+        <span class="preview-mode-pill">Summary</span>
+        <span class="preview-mode-pill">Hooks</span>
+      </div>
+      <div class="preview-slides">
+        <div class="preview-slide">
+          <div class="ps-label">FACT 01</div>
+          <div class="ps-text">80% of social media engagement comes from repurposed video content</div>
+        </div>
+        <div class="preview-slide">
+          <div class="ps-label">FACT 02</div>
+          <div class="ps-text">Creators who repurpose see 3x more reach across platforms</div>
+        </div>
+        <div class="preview-slide">
+          <div class="ps-label">FACT 03</div>
+          <div class="ps-text">Video-to-carousel conversion boosts saves by 200%</div>
+        </div>
+      </div>
+      <div class="preview-thread">1/ 80% of social media engagement now comes from repurposed video content.
+
+Here's what that means for your content strategy:
+
+2/ Creators who systematically repurpose video see 3x more reach than those who post original content on each platform.
+
+3/ The biggest unlock? Video-to-carousel conversion. It boosts saves by 200% on Instagram alone.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRICING
+     ============================================================ -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-heading fade-in">
+      <h2>Simple <span class="gradient-text">Pricing</span></h2>
+      <p>Start free. Upgrade when you need more.</p>
+    </div>
+    <div class="pricing-grid fade-in">
+      <div class="pricing-card glass">
+        <h3>Free</h3>
+        <div class="pricing-price">$0<span>/mo</span></div>
+        <ul class="pricing-list">
+          <li>3 extractions per day</li>
+          <li>All 8 extraction modes</li>
+          <li>Carousel slides with watermark</li>
+          <li>Twitter threads, LinkedIn posts</li>
+        </ul>
+        <a href="#app" class="btn-ghost" onclick="showApp(); return false;">Get Started</a>
+      </div>
+      <div class="pricing-card glass featured">
+        <div class="pricing-badge">Most Popular</div>
+        <h3>Pro</h3>
+        <div class="pricing-price">$19<span>/mo</span></div>
+        <ul class="pricing-list">
+          <li>Unlimited extractions</li>
+          <li>No watermark</li>
+          <li>Logo upload + brand presets</li>
+          <li>Ad creatives (FB + Google)</li>
+          <li>Bulk URL processing</li>
+          <li>History dashboard</li>
+          <li>All output formats</li>
+        </ul>
+        <a href="#app" class="btn-primary" onclick="showApp(); return false;">Upgrade to Pro</a>
+      </div>
+      <div class="pricing-card glass">
+        <h3>Agency</h3>
+        <div class="pricing-price">$49<span>/mo</span></div>
+        <ul class="pricing-list">
+          <li>Everything in Pro</li>
+          <li>5 brand presets</li>
+          <li>Priority processing</li>
+          <li>API access (coming soon)</li>
+        </ul>
+        <a href="#app" class="btn-ghost" onclick="showApp(); return false;">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FAQ
+     ============================================================ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-heading fade-in">
+      <h2>Frequently Asked <span class="gradient-text">Questions</span></h2>
+    </div>
+    <div class="faq-list fade-in">
+      <div class="faq-item">
+        <button class="faq-q">What video platforms are supported?</button>
+        <div class="faq-a"><p>We support YouTube, Instagram Reels, TikTok, X/Twitter, and 1000+ other sites through yt-dlp. If a video has a public URL, we can likely extract from it.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How does the AI extract content?</button>
+        <div class="faq-a"><p>We first extract the video transcript (via captions or AI transcription), then use advanced LLMs to analyze and extract structured content — facts, predictions, quotes, and more.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can I use my own branding?</button>
+        <div class="faq-a"><p>Yes. You can set custom colors, brand name, handle, and tagline. Pro users can upload a logo that appears on every slide.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is there a free plan?</button>
+        <div class="faq-a"><p>Absolutely. The free plan includes 3 extractions per day with all 8 extraction modes. Upgrade to Pro for unlimited access and premium features.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How fast is processing?</button>
+        <div class="faq-a"><p>Most videos are processed in 15-30 seconds. YouTube videos with captions are fastest (5-10 seconds). Longer videos or those requiring audio transcription may take up to a minute.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What about copyright?</button>
+        <div class="faq-a"><p>You're responsible for ensuring you have the right to repurpose the content. We recommend using your own videos, public domain content, or content you have permission to use.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FINAL CTA
+     ============================================================ -->
+<section class="final-cta fade-in">
+  <div class="container">
+    <h2>Ready to Turn Videos Into <span class="gradient-text">Content</span>?</h2>
+    <p>Start extracting for free — no credit card required</p>
+    <a href="#app" class="btn-primary" onclick="showApp(); return false;">Get Started Free &rarr;</a>
+  </div>
+</section>
+
+<!-- ============================================================
+     APP SECTION
+     ============================================================ -->
+<section class="app-section" id="app">
+  <div class="container">
+    <div class="app-header">
+      <h2>Extract <span class="gradient-text">Content</span></h2>
+      <p>Paste a video URL and choose your extraction mode</p>
+    </div>
+
+    <!-- Brand Settings -->
+    <div class="brand-panel">
+      <button class="brand-toggle" id="brand-toggle">
+        <span>Brand Settings <span class="brand-summary" id="brand-summary"></span></span>
+        <span class="chevron" id="chevron">&#9660;</span>
+      </button>
+      <div class="brand-body" id="brand-body">
+        <div class="brand-grid">
+          <div class="brand-field">
+            <label>Handle</label>
+            <input type="text" id="brand-handle" placeholder="@yourhandle">
+          </div>
+          <div class="brand-field">
+            <label>Brand Name</label>
+            <input type="text" id="brand-name" placeholder="Your Brand">
+          </div>
+          <div class="brand-field full-width">
+            <label>Tagline</label>
+            <input type="text" id="brand-tagline" placeholder="Your tagline here...">
+          </div>
+          <div class="brand-field full-width">
+            <label>Color Theme</label>
+            <select id="brand-theme">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="ocean">Ocean</option>
+              <option value="fire">Fire</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="custom-colors" id="custom-colors">
+            <div class="brand-field">
+              <label>Background</label>
+              <div class="color-field">
+                <input type="color" id="brand-bg-picker" value="#0A0A0A">
+                <input type="text" id="brand-bg" value="#0A0A0A">
+              </div>
+            </div>
+            <div class="brand-field">
+              <label>Text</label>
+              <div class="color-field">
+                <input type="color" id="brand-text-picker" value="#FFFFFF">
+                <input type="text" id="brand-text" value="#FFFFFF">
+              </div>
+            </div>
+            <div class="brand-field">
+              <label>Accent</label>
+              <div class="color-field">
+                <input type="color" id="brand-accent-picker" value="#8B5CF6">
+                <input type="text" id="brand-accent" value="#8B5CF6">
+              </div>
+            </div>
+          </div>
+          <div class="brand-field full-width">
+            <label>Brand Logo</label>
+            <div class="logo-upload-area" id="logo-upload-area">
+              <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp" hidden>
+              <div class="logo-preview" id="logo-preview" style="display:none;">
+                <img id="logo-preview-img" alt="Logo preview">
+                <button class="logo-remove" id="logo-remove" title="Remove logo">&times;</button>
+              </div>
+              <button class="logo-upload-btn" id="logo-upload-btn">Upload Logo (PNG, JPG, WebP &mdash; max 2 MB)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="history-panel" id="history-panel" style="display:none;">
+      <button class="history-toggle" id="history-toggle">
+        <span>History <span class="history-count" id="history-count">0</span></span>
+        <span class="chevron" id="history-chevron">&#9660;</span>
+      </button>
+      <div class="history-body" id="history-body">
+        <div class="history-actions">
+          <button class="history-clear-btn" id="history-clear">Clear All</button>
+        </div>
+        <div id="history-list"></div>
+      </div>
+    </div>
+
+    <!-- URL Input -->
+    <div class="url-group">
+      <label>Video URL</label>
+      <div class="url-mode-toggle">
+        <button class="url-mode-btn active" id="url-mode-single" data-mode="single">Single URL</button>
+        <button class="url-mode-btn" id="url-mode-bulk" data-mode="bulk">Bulk (up to 10)</button>
+      </div>
+      <div id="single-url-wrap">
+        <input type="url" class="url-input" id="url-input"
+               placeholder="https://youtube.com/watch?v=... or Instagram / TikTok / X link">
+      </div>
+      <div id="bulk-url-wrap" style="display:none;">
+        <textarea class="bulk-url-input" id="bulk-url-input"
+                  placeholder="Paste one URL per line:&#10;https://youtube.com/watch?v=abc&#10;https://youtube.com/watch?v=xyz&#10;https://tiktok.com/@user/video/123"></textarea>
+        <div class="bulk-hint">One URL per line. Maximum 10 URLs per batch.</div>
+      </div>
+    </div>
+
+    <!-- Bulk Progress -->
+    <div class="bulk-progress" id="bulk-progress" style="display:none;"></div>
+
+    <!-- Mode Buttons -->
+    <div class="mode-grid" id="mode-buttons">
+      <button class="mode-btn" data-mode="facts">&#128202; Facts</button>
+      <button class="mode-btn" data-mode="predictions">&#128302; Predictions</button>
+      <button class="mode-btn" data-mode="opinions">&#128172; Opinions</button>
+      <button class="mode-btn" data-mode="quotes">&#128142; Quotes</button>
+      <button class="mode-btn" data-mode="summary">&#128203; Summary</button>
+      <button class="mode-btn" data-mode="counterarguments">&#9876;&#65039; Counter</button>
+      <button class="mode-btn" data-mode="takeaways">&#9989; Takeaways</button>
+      <button class="mode-btn" data-mode="hooks">&#127907; Hooks</button>
+      <button class="mode-btn" data-mode="ad_creatives">&#128226; Ad Creatives</button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-area" id="status-area"></div>
+
+    <!-- Results -->
+    <div id="results">
+      <div class="result-header">
+        <div>
+          <h3 id="result-title"></h3>
+          <div class="result-meta" id="result-meta"></div>
+        </div>
+        <a class="download-btn" id="download-btn" href="#" download>&#11015; Download ZIP</a>
+      </div>
+
+      <div class="output-tabs" id="output-tabs">
+        <button class="tab-btn active" data-tab="carousel">Carousel</button>
+        <button class="tab-btn" data-tab="twitter">Twitter</button>
+        <button class="tab-btn" data-tab="linkedin">LinkedIn</button>
+        <button class="tab-btn" data-tab="newsletter">Newsletter</button>
+        <button class="tab-btn" data-tab="tiktok">TikTok</button>
+        <button class="tab-btn" data-tab="caption">Caption</button>
+        <button class="tab-btn" data-tab="ad_copy">Ad Copy</button>
+      </div>
+
+      <div class="tab-panel active" id="panel-carousel">
+        <div class="carousel-container">
+          <button class="carousel-arrow carousel-arrow-left" id="carousel-left">&#8249;</button>
+          <div class="carousel-viewer" id="carousel-viewer"></div>
+          <button class="carousel-arrow carousel-arrow-right" id="carousel-right">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-twitter">
+        <div class="text-output-container">
+          <div class="text-output" id="text-twitter"></div>
+          <button class="copy-btn" data-target="text-twitter">Copy</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-linkedin">
+        <div class="text-output-container">
+          <div class="text-output" id="text-linkedin"></div>
+          <button class="copy-btn" data-target="text-linkedin">Copy</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-newsletter">
+        <div class="text-output-container">
+          <div class="text-output" id="text-newsletter"></div>
+          <button class="copy-btn" data-target="text-newsletter">Copy</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-tiktok">
+        <div class="text-output-container">
+          <div class="text-output" id="text-tiktok"></div>
+          <button class="copy-btn" data-target="text-tiktok">Copy</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-caption">
+        <div class="text-output-container">
+          <div class="text-output" id="text-caption"></div>
+          <button class="copy-btn" data-target="text-caption">Copy</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-ad_copy">
+        <div class="text-output-container">
+          <div class="text-output" id="text-ad_copy"></div>
+          <button class="copy-btn" data-target="text-ad_copy">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">ContentExtractor</div>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Privacy</a></li>
+      </ul>
+    </div>
+    <div class="footer-copy">&copy; 2026 ContentExtractor. All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+const $ = (id) => document.getElementById(id);
+
+/* ── Nav scroll effect ───────────────────────────────── */
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+/* ── Mobile nav toggle ───────────────────────────────── */
+$('nav-hamburger').addEventListener('click', () => {
+  $('nav-links').classList.toggle('mobile-open');
+});
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', (e) => {
+    $('nav-links').classList.remove('mobile-open');
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#') && href.length > 1) {
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+});
+
+/* ── Hero rotating text ──────────────────────────────── */
+(function() {
+  const words = document.querySelectorAll('#hero-rotating span');
+  let current = 0;
+  setInterval(() => {
+    words[current].classList.remove('active');
+    current = (current + 1) % words.length;
+    words[current].classList.add('active');
+  }, 2500);
+})();
+
+/* ── Fade-in on scroll ───────────────────────────────── */
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
+
+/* ── FAQ accordion ───────────────────────────────────── */
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+/* ── Show App section ────────────────────────────────── */
+function showApp() {
+  $('app').classList.add('visible');
+  setTimeout(() => {
+    $('app').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+/* ═══════════════════════════════════════════════════════
+   APP LOGIC
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Theme presets ───────────────────────────────────── */
+const THEMES = {
+  dark:  { bg_color: '#0A0A0A', text_color: '#FFFFFF', accent_color: '#FFFFFF' },
+  light: { bg_color: '#FFFFFF', text_color: '#1A1A1A', accent_color: '#2B2B2B' },
+  ocean: { bg_color: '#0A1628', text_color: '#FFFFFF', accent_color: '#06B6D4' },
+  fire:  { bg_color: '#1A0A0A', text_color: '#FFFFFF', accent_color: '#F97316' },
+};
+
+const DEFAULT_BRAND = {
+  handle: '@undercurrenthq',
+  name: 'UndercurrentHQ',
+  tagline: 'The force beneath the surface.',
+  theme: 'dark',
+  bg_color: '#0A0A0A',
+  text_color: '#FFFFFF',
+  accent_color: '#8B5CF6',
+};
+
+function loadBrand() {
+  try { return JSON.parse(localStorage.getItem('ce_brand')) || DEFAULT_BRAND; }
+  catch { return DEFAULT_BRAND; }
+}
+
+function saveBrand() {
+  localStorage.setItem('ce_brand', JSON.stringify(getBrandFromInputs()));
+}
+
+function getBrandFromInputs() {
+  const theme = $('brand-theme').value;
+  const colors = theme !== 'custom' && THEMES[theme]
+    ? THEMES[theme]
+    : { bg_color: $('brand-bg').value, text_color: $('brand-text').value, accent_color: $('brand-accent').value };
+  return {
+    handle: $('brand-handle').value || DEFAULT_BRAND.handle,
+    name: $('brand-name').value || DEFAULT_BRAND.name,
+    tagline: $('brand-tagline').value || DEFAULT_BRAND.tagline,
+    theme: theme,
+    ...colors,
+  };
+}
+
+function populateBrandInputs(b) {
+  $('brand-handle').value = b.handle || '';
+  $('brand-name').value = b.name || '';
+  $('brand-tagline').value = b.tagline || '';
+  $('brand-theme').value = b.theme || 'dark';
+  $('brand-bg').value = b.bg_color || '#0A0A0A';
+  $('brand-bg-picker').value = b.bg_color || '#0A0A0A';
+  $('brand-text').value = b.text_color || '#FFFFFF';
+  $('brand-text-picker').value = b.text_color || '#FFFFFF';
+  $('brand-accent').value = b.accent_color || '#8B5CF6';
+  $('brand-accent-picker').value = b.accent_color || '#8B5CF6';
+  toggleCustomColors(b.theme === 'custom');
+  updateBrandSummary(b);
+}
+
+function updateBrandSummary(b) {
+  $('brand-summary').textContent = ` — ${b.name} (${b.handle})`;
+}
+
+function toggleCustomColors(show) {
+  $('custom-colors').classList.toggle('open', show);
+}
+
+/* Brand panel toggle */
+$('brand-toggle').addEventListener('click', () => {
+  $('brand-body').classList.toggle('open');
+  $('chevron').classList.toggle('open');
+});
+
+/* Theme select */
+$('brand-theme').addEventListener('change', () => {
+  const v = $('brand-theme').value;
+  toggleCustomColors(v === 'custom');
+  if (THEMES[v]) {
+    $('brand-bg').value = THEMES[v].bg_color;
+    $('brand-bg-picker').value = THEMES[v].bg_color;
+    $('brand-text').value = THEMES[v].text_color;
+    $('brand-text-picker').value = THEMES[v].text_color;
+    $('brand-accent').value = THEMES[v].accent_color;
+    $('brand-accent-picker').value = THEMES[v].accent_color;
+  }
+  saveBrand();
+});
+
+/* Color sync */
+['bg', 'text', 'accent'].forEach(k => {
+  const picker = $(`brand-${k}-picker`);
+  const text = $(`brand-${k}`);
+  picker.addEventListener('input', () => { text.value = picker.value; saveBrand(); });
+  text.addEventListener('input', () => { picker.value = text.value; saveBrand(); });
+});
+
+/* Auto-save brand fields */
+['brand-handle', 'brand-name', 'brand-tagline'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    saveBrand();
+    updateBrandSummary(getBrandFromInputs());
+  });
+});
+
+/* ── Logo upload ────────────────────────────────────── */
+$('logo-upload-btn').addEventListener('click', () => $('logo-file').click());
+
+$('logo-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Logo must be under 2 MB');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const resp = await fetch('/api/upload-logo', { method: 'POST', body: formData });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.detail || 'Upload failed');
+      return;
+    }
+    const data = await resp.json();
+    localStorage.setItem('ce_logo', data.filename);
+    showLogoPreview(data.filename);
+  } catch (err) {
+    alert('Upload error: ' + err.message);
+  }
+});
+
+$('logo-remove').addEventListener('click', () => {
+  localStorage.removeItem('ce_logo');
+  $('logo-preview').style.display = 'none';
+  $('logo-upload-btn').style.display = '';
+  $('logo-file').value = '';
+});
+
+function showLogoPreview(filename) {
+  $('logo-preview-img').src = '/api/logos/' + filename;
+  $('logo-preview').style.display = 'flex';
+  $('logo-upload-btn').style.display = 'none';
+}
+
+// Restore logo on load
+(function() {
+  const savedLogo = localStorage.getItem('ce_logo');
+  if (savedLogo) showLogoPreview(savedLogo);
+})();
+
+/* ── URL mode toggle (single / bulk) ────────────────── */
+let urlMode = 'single';
+
+$('url-mode-single').addEventListener('click', () => {
+  urlMode = 'single';
+  $('url-mode-single').classList.add('active');
+  $('url-mode-bulk').classList.remove('active');
+  $('single-url-wrap').style.display = '';
+  $('bulk-url-wrap').style.display = 'none';
+});
+
+$('url-mode-bulk').addEventListener('click', () => {
+  urlMode = 'bulk';
+  $('url-mode-bulk').classList.add('active');
+  $('url-mode-single').classList.remove('active');
+  $('single-url-wrap').style.display = 'none';
+  $('bulk-url-wrap').style.display = '';
+});
+
+/* ── History ─────────────────────────────────────────── */
+async function loadHistory() {
+  try {
+    const resp = await fetch('/api/history');
+    if (!resp.ok) return;
+    const entries = await resp.json();
+    renderHistory(entries);
+  } catch {}
+}
+
+function renderHistory(entries) {
+  const panel = $('history-panel');
+  const list = $('history-list');
+  const count = $('history-count');
+
+  if (!entries.length) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = '';
+  count.textContent = entries.length;
+  list.innerHTML = '';
+
+  entries.forEach(e => {
+    const card = document.createElement('div');
+    card.className = 'history-card';
+
+    const ago = timeAgo(e.created_at);
+    const modeLabel = e.mode.replace(/_/g, ' ');
+
+    card.innerHTML = `
+      <div class="history-thumb">
+        ${e.thumbnail ? `<img src="${e.thumbnail}" alt="Slide">` : ''}
+      </div>
+      <div class="history-info">
+        <h4>${escHtml(e.title)}</h4>
+        <div class="history-meta">
+          <span>${e.platform}</span>
+          <span>${modeLabel}</span>
+          <span>${e.slide_count} slides</span>
+          <span>${ago}</span>
+        </div>
+      </div>
+      <a class="history-download" href="${e.zip_url}" download title="Download ZIP">ZIP</a>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function timeAgo(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+$('history-toggle').addEventListener('click', () => {
+  $('history-body').classList.toggle('open');
+  $('history-chevron').classList.toggle('open');
+});
+
+$('history-clear').addEventListener('click', async () => {
+  if (!confirm('Clear all history?')) return;
+  await fetch('/api/history', { method: 'DELETE' });
+  renderHistory([]);
+});
+
+// Load history on page init
+loadHistory();
+
+/* ── Status helpers ──────────────────────────────────── */
+function showStatus(msg) {
+  $('status-area').innerHTML = `<div class="status-msg"><div class="spinner"></div>${msg}</div>`;
+}
+function showError(msg) {
+  $('status-area').innerHTML = `<div class="status-msg error">${msg}</div>`;
+}
+function clearStatus() {
+  $('status-area').innerHTML = '';
+}
+
+/* ── Mode buttons ────────────────────────────────────── */
+function setButtonsDisabled(d) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.disabled = d);
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (urlMode === 'bulk') generateBulk(btn.dataset.mode);
+    else generate(btn.dataset.mode);
+  });
+});
+
+/* ── Tabs ────────────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ── Copy buttons ────────────────────────────────────── */
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = $(btn.dataset.target);
+    navigator.clipboard.writeText(target.textContent);
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+});
+
+/* ── Carousel navigation ────────────────────────────── */
+$('carousel-left').addEventListener('click', () => {
+  $('carousel-viewer').scrollBy({ left: -270, behavior: 'smooth' });
+});
+$('carousel-right').addEventListener('click', () => {
+  $('carousel-viewer').scrollBy({ left: 270, behavior: 'smooth' });
+});
+
+/* ── Enter key on URL input ──────────────────────────── */
+$('url-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (urlMode === 'bulk') generateBulk('facts');
+    else generate('facts');
+  }
+});
+
+/* ── Generate function ───────────────────────────────── */
+async function generate(mode) {
+  const url = $('url-input').value.trim();
+  if (!url) { showError('Please paste a video URL first'); return; }
+
+  $('results').classList.remove('visible');
+  $('bulk-progress').style.display = 'none';
+  setButtonsDisabled(true);
+
+  const steps = [
+    'Detecting platform...',
+    'Fetching transcript...',
+    'Analyzing with AI...',
+    'Fetching images...',
+    'Generating slides...',
+  ];
+  let stepIdx = 0;
+  showStatus(steps[0]);
+  const stepInterval = setInterval(() => {
+    stepIdx++;
+    if (stepIdx < steps.length) showStatus(steps[stepIdx]);
+  }, 4000);
+
+  const brand = getBrandFromInputs();
+  const brandPayload = {
+    handle: brand.handle,
+    name: brand.name,
+    tagline: brand.tagline,
+    bg_color: brand.bg_color,
+    text_color: brand.text_color,
+    accent_color: brand.accent_color,
+    logo: localStorage.getItem('ce_logo') || '',
+  };
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, mode, format: 'all', brand: brandPayload }),
+    });
+
+    clearInterval(stepInterval);
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: 'Request failed' }));
+      showError(err.detail || 'Something went wrong');
+      setButtonsDisabled(false);
+      return;
+    }
+
+    const data = await resp.json();
+    clearStatus();
+    showResults(data, mode);
+  } catch (e) {
+    clearInterval(stepInterval);
+    showError('Network error: ' + e.message);
+  }
+  setButtonsDisabled(false);
+}
+
+/* ── Show results ────────────────────────────────────── */
+function showResults(data, mode) {
+  $('result-title').textContent = data.title;
+  $('result-meta').textContent = `${data.platform} \u00B7 ${data.item_count} items \u00B7 ${data.slides.length} slides`;
+  $('download-btn').href = data.zip_url;
+
+  const viewer = $('carousel-viewer');
+  viewer.innerHTML = '';
+  data.slides.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'slide-preview';
+    const img = document.createElement('img');
+    img.src = s.data_url;
+    img.alt = s.filename;
+    div.appendChild(img);
+    viewer.appendChild(div);
+  });
+
+  $('text-twitter').textContent = data.twitter_thread || '(not available)';
+  $('text-linkedin').textContent = data.linkedin_post || '(not available)';
+  $('text-newsletter').textContent = data.newsletter || '(not available)';
+  $('text-tiktok').textContent = data.tiktok_script || '(not available)';
+  $('text-caption').textContent = data.caption || '(not available)';
+  $('text-ad_copy').textContent = data.ad_copy || '(not available)';
+
+  // Reset tabs
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="carousel"]').classList.add('active');
+  $('panel-carousel').classList.add('active');
+
+  $('results').classList.add('visible');
+  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Refresh history
+  loadHistory();
+}
+
+/* ── Bulk generate ──────────────────────────────────── */
+async function generateBulk(mode) {
+  const raw = $('bulk-url-input').value.trim();
+  if (!raw) { showError('Please paste at least one URL'); return; }
+
+  const urls = raw.split('\n').map(u => u.trim()).filter(u => u);
+  if (!urls.length) { showError('Please paste at least one URL'); return; }
+  if (urls.length > 10) { showError('Maximum 10 URLs per batch'); return; }
+
+  $('results').classList.remove('visible');
+  setButtonsDisabled(true);
+
+  // Show progress tracker
+  const progress = $('bulk-progress');
+  progress.style.display = '';
+  progress.innerHTML = urls.map((u, i) => `
+    <div class="bulk-progress-item pending" id="bp-${i}">
+      <span class="bp-status">&#9679;</span>
+      <span class="bp-url">${escHtml(u)}</span>
+    </div>
+  `).join('');
+
+  const brand = getBrandFromInputs();
+  const brandPayload = {
+    handle: brand.handle,
+    name: brand.name,
+    tagline: brand.tagline,
+    bg_color: brand.bg_color,
+    text_color: brand.text_color,
+    accent_color: brand.accent_color,
+    logo: localStorage.getItem('ce_logo') || '',
+  };
+
+  // Process one by one for live progress
+  const allResults = [];
+  const allErrors = [];
+
+  for (let i = 0; i < urls.length; i++) {
+    const el = $('bp-' + i);
+    el.className = 'bulk-progress-item running';
+    el.querySelector('.bp-status').innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>';
+
+    try {
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urls[i], mode, format: 'all', brand: brandPayload }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: 'Failed' }));
+        el.className = 'bulk-progress-item error';
+        el.querySelector('.bp-status').textContent = '\u2717';
+        allErrors.push({ url: urls[i], detail: err.detail });
+        continue;
+      }
+
+      const data = await resp.json();
+      data.url = urls[i];
+      allResults.push(data);
+
+      el.className = 'bulk-progress-item done';
+      el.querySelector('.bp-status').textContent = '\u2713';
+      // Show title
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'bp-title';
+      titleSpan.textContent = ' \u2014 ' + data.title;
+      el.appendChild(titleSpan);
+    } catch (e) {
+      el.className = 'bulk-progress-item error';
+      el.querySelector('.bp-status').textContent = '\u2717';
+      allErrors.push({ url: urls[i], detail: e.message });
+    }
+  }
+
+  clearStatus();
+  setButtonsDisabled(false);
+
+  if (allResults.length) {
+    // Show the last result's slides/text, plus a summary
+    const last = allResults[allResults.length - 1];
+    showResults(last, mode);
+
+    // Prepend a summary bar
+    const summary = document.createElement('div');
+    summary.className = 'bulk-results-summary';
+    summary.innerHTML = `
+      <div class="brs-text"><strong>${allResults.length}/${urls.length}</strong> videos processed successfully${allErrors.length ? `, ${allErrors.length} failed` : ''}</div>
+      ${allResults.length > 1 ? `<a class="download-btn" href="#" id="bulk-download-all" style="font-size:0.85rem;padding:8px 16px;">Download All ZIPs</a>` : ''}
+    `;
+    $('results').insertBefore(summary, $('results').firstChild);
+
+    // Bulk download = download each zip sequentially
+    if (allResults.length > 1) {
+      $('bulk-download-all').addEventListener('click', (e) => {
+        e.preventDefault();
+        allResults.forEach(r => {
+          const a = document.createElement('a');
+          a.href = r.zip_url;
+          a.download = '';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+      });
+    }
+  } else {
+    showError('All URLs failed to process');
+  }
+
+  loadHistory();
+}
+
+/* ── Init ────────────────────────────────────────────── */
+const savedBrand = loadBrand();
+populateBrandInputs(savedBrand);
+
+// Auto-show app if URL hash is #app
+if (window.location.hash === '#app') showApp();
+</script>
+</body>
+</html>
