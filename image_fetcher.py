@@ -20,7 +20,26 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", RuntimeWarning)
     from duckduckgo_search import DDGS
 
+from PIL import Image
+
 logger = logging.getLogger(__name__)
+
+_MAX_IMG_WIDTH = 1080
+
+
+def _resize_if_large(path: Path) -> Path:
+    """Resize image to max 1080px wide immediately to save memory."""
+    try:
+        with Image.open(path) as img:
+            if img.width > _MAX_IMG_WIDTH:
+                ratio = _MAX_IMG_WIDTH / img.width
+                new_size = (_MAX_IMG_WIDTH, int(img.height * ratio))
+                img = img.resize(new_size, Image.LANCZOS)
+                img.save(path)
+    except Exception:
+        pass
+    return path
+
 
 _HEADERS = {
     "User-Agent": (
@@ -62,6 +81,7 @@ def _fetch_ddg(query: str) -> Path | None:
                 for chunk in resp.iter_content(8192):
                     tmp.write(chunk)
                 tmp.close()
+                _resize_if_large(Path(tmp.name))
                 logger.debug("[ddg] OK for '%s': %s", query, tmp.name)
                 return Path(tmp.name)
             except (requests.RequestException, OSError):
@@ -112,6 +132,7 @@ def _fetch_bing(query: str) -> Path | None:
                 for chunk in img_resp.iter_content(8192):
                     tmp.write(chunk)
                 tmp.close()
+                _resize_if_large(Path(tmp.name))
                 logger.debug("[bing] OK for '%s': %s", query, tmp.name)
                 return Path(tmp.name)
             except (requests.RequestException, OSError):
