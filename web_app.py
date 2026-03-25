@@ -3,8 +3,6 @@ print("Starting ContentExtractor server...")
 
 import json
 import os
-import secrets
-import time
 import uuid
 from pathlib import Path
 
@@ -13,7 +11,7 @@ from dotenv import load_dotenv
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(_env_path)
 
-from fastapi import FastAPI, HTTPException, Response, Cookie, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -69,33 +67,7 @@ DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-# ── Auth config ────────────────────────────────────────────────────────
-SITE_PASSWORD = os.environ.get("SITE_PASSWORD", "")
-SESSION_TTL = 86400  # 24 hours
-# In-memory session store: token → expiry timestamp
-_sessions: dict[str, float] = {}
-
-
-def _verify_session(token: str | None) -> bool:
-    if not token or token not in _sessions:
-        return False
-    if time.time() > _sessions[token]:
-        del _sessions[token]
-        return False
-    return True
-
-
-def _cleanup_expired_sessions() -> None:
-    now = time.time()
-    expired = [k for k, v in _sessions.items() if now > v]
-    for k in expired:
-        del _sessions[k]
-
-
 # ── Request / Response models ──────────────────────────────────────────
-
-class LoginRequest(BaseModel):
-    password: str
 
 class BrandSettings(BaseModel):
     handle: str = "@undercurrenthq"
@@ -145,45 +117,6 @@ def _add_history_entry(entry: dict) -> None:
     if len(history) > _MAX_HISTORY:
         history = history[:_MAX_HISTORY]
     _save_history(history)
-
-
-# ── Auth endpoints ─────────────────────────────────────────────────────
-
-@app.post("/api/login")
-async def login(req: LoginRequest, response: Response):
-    if not SITE_PASSWORD:
-        raise HTTPException(500, "SITE_PASSWORD not configured on server")
-    if req.password != SITE_PASSWORD:
-        raise HTTPException(401, "Wrong password")
-
-    _cleanup_expired_sessions()
-    token = secrets.token_urlsafe(32)
-    _sessions[token] = time.time() + SESSION_TTL
-    response.set_cookie(
-        key="session",
-        value=token,
-        max_age=SESSION_TTL,
-        httponly=True,
-        samesite="strict",
-    )
-    return {"ok": True}
-
-
-@app.get("/api/check-session")
-async def check_session(session: str | None = Cookie(default=None)):
-    # No password configured = open access
-    if not SITE_PASSWORD:
-        return {"authenticated": True}
-    return {"authenticated": _verify_session(session)}
-
-
-# ── Auth guard ─────────────────────────────────────────────────────────
-
-def _require_auth(session: str | None):
-    if not SITE_PASSWORD:
-        return  # No password configured = open access
-    if not _verify_session(session):
-        raise HTTPException(401, "Not authenticated. Please log in.")
 
 
 # ── Main page ──────────────────────────────────────────────────────────
