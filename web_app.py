@@ -198,6 +198,8 @@ async def index():
 
 async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None) -> dict:
     """Run the full extraction pipeline in a background thread."""
+    if not _deps_loaded:
+        raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
 
     if mode not in CONTENT_TYPES:
         valid = ", ".join(CONTENT_TYPES.keys())

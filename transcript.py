@@ -322,7 +322,13 @@ def _transcribe_chunk_with_rotation(audio_path: Path, keys: list[str]) -> str:
 
 def _transcribe_with_local_whisper(audio_path: Path) -> str:
     """Tier 3: Transcribe using local openai-whisper model."""
-    import whisper
+    try:
+        import whisper
+    except ImportError:
+        raise RuntimeError(
+            "Local Whisper fallback unavailable — openai-whisper not installed. "
+            "Install with: pip install openai-whisper"
+        )
 
     model = whisper.load_model("base")
     result = model.transcribe(str(audio_path))
