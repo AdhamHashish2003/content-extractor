@@ -1,16 +1,11 @@
 """FastAPI web server for ContentExtractor."""
+print("Starting ContentExtractor server...")
 
-import asyncio
-import base64
 import json
 import os
 import secrets
-import shutil
-import sys
 import time
 import uuid
-import zipfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,7 +13,43 @@ from dotenv import load_dotenv
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(_env_path)
 
-# ── Startup key check ────────────────────────────────────────────────
+from fastapi import FastAPI, HTTPException, Response, Cookie, UploadFile, File
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+app = FastAPI(title="ContentExtractor")
+
+
+# ── Health check (defined early so Railway sees it immediately) ───────
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+# ── Heavy imports (wrapped so server starts even if a dep has issues) ─
+
+try:
+    import asyncio
+    import base64
+    import shutil
+    import zipfile
+    from datetime import datetime, timezone
+
+    from config import BRANDS, CONTENT_TYPES, OUTPUT_DIR, LOGOS_DIR, DATA_DIR, Palette
+    from transcript import detect_platform, fetch_metadata, _try_youtube_captions, _groq_pipeline, PLATFORM_LABELS, Platform
+    from analyzer import extract_content  # also registers extra content types
+    from image_fetcher import fetch_images_parallel
+    from designer import generate_carousel
+    from output_formatter import format_all
+
+    _deps_loaded = True
+except Exception as _import_err:
+    print(f"WARNING: Some imports failed: {_import_err}")
+    _deps_loaded = False
+
+# ── Startup key check (warn but don't exit) ──────────────────────────
 print(f"NVIDIA_API_KEY loaded: {bool(os.getenv('NVIDIA_API_KEY'))}")
 print(f"GROQ_API_KEY loaded: {bool(os.getenv('GROQ_API_KEY'))}")
 
@@ -28,23 +59,8 @@ if not os.getenv("NVIDIA_API_KEY"):
 if not os.getenv("GROQ_API_KEY") and not os.getenv("GROQ_API_KEYS"):
     _missing.append("GROQ_API_KEY (or GROQ_API_KEYS)")
 if _missing:
-    print(f"\nFATAL: Missing required env vars: {', '.join(_missing)}")
+    print(f"WARNING: Missing env vars: {', '.join(_missing)}")
     print(f"Check your .env file at: {_env_path}")
-    sys.exit(1)
-
-from fastapi import FastAPI, HTTPException, Request, Response, Cookie, UploadFile, File
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-
-from config import BRANDS, CONTENT_TYPES, OUTPUT_DIR, LOGOS_DIR, DATA_DIR, Palette
-from transcript import detect_platform, fetch_metadata, _try_youtube_captions, _groq_pipeline, PLATFORM_LABELS, Platform
-from analyzer import extract_content  # also registers extra content types
-from image_fetcher import fetch_images_parallel
-from designer import generate_carousel
-from output_formatter import format_all
-
-app = FastAPI(title="ContentExtractor")
 
 # ── Static files ───────────────────────────────────────────────────────
 STATIC_DIR = Path(__file__).parent / "static"
@@ -456,9 +472,3 @@ async def get_logo(filename: str):
         raise HTTPException(404, "Logo not found")
     return FileResponse(path)
 
-
-# ── Health check ───────────────────────────────────────────────────────
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
