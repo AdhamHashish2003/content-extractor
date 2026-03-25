@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ContentExtractor — Turn Any Video Into Scroll-Stopping Content</title>
+<title>ContentExtractor AI — Turn Any Video Into Viral Content</title>
+<meta name="description" content="AI-powered tool that turns YouTube, Instagram, TikTok and X videos into branded carousel slides, Twitter threads, LinkedIn posts, ad creatives, and more. Free to use.">
+<meta name="keywords" content="AI video to carousel, AI content repurposing, video to social media posts, AI carousel generator, video to twitter thread, AI ad creative generator">
+<meta property="og:title" content="ContentExtractor AI — Turn Any Video Into Viral Content">
+<meta property="og:description" content="Paste any video link. Get branded carousel slides, threads, ad copy, and more — in seconds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://content-extractor-production-9224.up.railway.app">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ContentExtractor AI">
+<meta name="twitter:description" content="AI-powered video to content engine">
+<link rel="canonical" href="https://content-extractor-production-9224.up.railway.app">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -14,6 +24,7 @@
 
 :root {
   --bg: #0F0F13;
+  --bg-app: linear-gradient(180deg, #0F0F13 0%, #1A1025 50%, #0F0F13 100%);
   --surface: #1A1A24;
   --surface-hover: #22222E;
   --gradient-primary: linear-gradient(135deg, #7C3AED, #EC4899);
@@ -220,7 +231,7 @@ a { color: inherit; text-decoration: none; }
 .hero-rotating {
   display: inline-block;
   position: relative;
-  min-width: 280px;
+  min-width: 320px;
   height: 1.2em;
   vertical-align: bottom;
   overflow: hidden;
@@ -364,9 +375,7 @@ a { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
-.social-proof-inner {
-  text-align: center;
-}
+.social-proof-inner { text-align: center; }
 .social-proof p {
   color: var(--text-muted);
   font-size: 0.85rem;
@@ -392,9 +401,7 @@ a { color: inherit; text-decoration: none; }
 /* ================================================================
    HOW IT WORKS
    ================================================================ */
-.how-it-works {
-  padding: 120px 0;
-}
+.how-it-works { padding: 120px 0; }
 .steps-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -427,26 +434,14 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   z-index: 1;
 }
-.step-icon {
-  font-size: 2rem;
-  margin-bottom: 16px;
-}
-.step-card h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.step-card p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
+.step-icon { font-size: 2rem; margin-bottom: 16px; }
+.step-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+.step-card p { color: var(--text-secondary); font-size: 0.95rem; }
 
 /* ================================================================
    FEATURES GRID
    ================================================================ */
-.features {
-  padding: 120px 0;
-}
+.features { padding: 120px 0; }
 .features-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -461,176 +456,66 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 0 30px rgba(124,58,237,0.1);
   border-color: rgba(124,58,237,0.2);
 }
-.feature-icon {
-  font-size: 1.75rem;
-  margin-bottom: 16px;
-}
-.feature-card h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.feature-card p {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  line-height: 1.6;
-}
+.feature-icon { font-size: 1.75rem; margin-bottom: 16px; }
+.feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.feature-card p { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; }
 
 /* ================================================================
    PRODUCT PREVIEW
    ================================================================ */
-.preview {
-  padding: 120px 0;
-}
-.preview-card {
-  padding: 48px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-.preview-url {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
+.preview { padding: 120px 0; }
+.preview-card { padding: 48px; max-width: 900px; margin: 0 auto; }
+.preview-url { display: flex; gap: 12px; margin-bottom: 24px; }
 .preview-url input {
-  flex: 1;
-  padding: 14px 20px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  flex: 1; padding: 14px 20px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.9rem;
   font-family: 'JetBrains Mono', monospace;
 }
 .preview-url .btn-primary { padding: 14px 24px; font-size: 0.85rem; }
-.preview-modes {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 32px;
-}
+.preview-modes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
 .preview-mode-pill {
-  padding: 6px 14px;
-  border-radius: 100px;
-  border: 1px solid var(--border);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  padding: 6px 14px; border-radius: 100px; border: 1px solid var(--border);
+  font-size: 0.8rem; color: var(--text-secondary);
 }
-.preview-mode-pill.active {
-  border-color: var(--violet);
-  color: var(--text);
-  background: rgba(124,58,237,0.1);
-}
-.preview-slides {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
+.preview-mode-pill.active { border-color: var(--violet); color: var(--text); background: rgba(124,58,237,0.1); }
+.preview-slides { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
 .preview-slide {
-  aspect-ratio: 4/5;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 20px;
-  color: white;
+  aspect-ratio: 4/5; border-radius: 12px; display: flex; flex-direction: column;
+  justify-content: flex-end; padding: 20px; color: white;
 }
 .preview-slide:nth-child(1) { background: linear-gradient(135deg, #1e1b4b, #312e81); }
 .preview-slide:nth-child(2) { background: linear-gradient(135deg, #312e81, #7c3aed); }
 .preview-slide:nth-child(3) { background: linear-gradient(135deg, #7c3aed, #ec4899); }
-.preview-slide .ps-label {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  opacity: 0.7;
-  margin-bottom: 4px;
-}
-.preview-slide .ps-text {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
+.preview-slide .ps-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.7; margin-bottom: 4px; }
+.preview-slide .ps-text { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 0.85rem; line-height: 1.4; }
 .preview-thread {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 20px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  line-height: 1.7;
-  white-space: pre-wrap;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+  color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap;
 }
 
 /* ================================================================
    PRICING
    ================================================================ */
-.pricing {
-  padding: 120px 0;
-}
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  align-items: start;
-}
-.pricing-card {
-  padding: 40px 32px;
-  position: relative;
-}
-.pricing-card.featured {
-  border-color: rgba(124,58,237,0.4);
-  background: rgba(124,58,237,0.06);
-}
+.pricing { padding: 120px 0; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
+.pricing-card { padding: 40px 32px; position: relative; }
+.pricing-card.featured { border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.06); }
 .pricing-badge {
-  position: absolute;
-  top: -12px; left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 16px;
-  border-radius: 100px;
-  background: var(--gradient-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  padding: 4px 16px; border-radius: 100px; background: var(--gradient-primary);
+  font-size: 0.75rem; font-weight: 700; white-space: nowrap;
 }
-.pricing-card h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.pricing-price {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
+.pricing-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+.pricing-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 4px; }
 .pricing-price span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
-.pricing-list {
-  list-style: none;
-  margin: 24px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.pricing-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
+.pricing-list { list-style: none; margin: 24px 0; display: flex; flex-direction: column; gap: 12px; }
+.pricing-list li { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-secondary); }
 .pricing-list li::before {
-  content: '';
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: rgba(16,185,129,0.15);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  content: ''; width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2310B981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
+  background-repeat: no-repeat; background-position: center;
 }
 .pricing-card .btn-primary,
 .pricing-card .btn-ghost { width: 100%; justify-content: center; }
@@ -639,126 +524,38 @@ a { color: inherit; text-decoration: none; }
    FAQ
    ================================================================ */
 .faq { padding: 120px 0; }
-.faq-list {
-  max-width: 720px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.faq-item {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
+.faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.faq-item { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
 .faq-q {
-  width: 100%;
-  padding: 20px 24px;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'Inter', sans-serif;
+  width: 100%; padding: 20px 24px; background: transparent; border: none; color: var(--text);
+  font-size: 1rem; font-weight: 600; text-align: left; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center; font-family: 'Inter', sans-serif;
 }
-.faq-q::after {
-  content: '+';
-  font-size: 1.3rem;
-  color: var(--text-muted);
-  transition: transform 0.3s;
-}
-.faq-item.open .faq-q::after {
-  transform: rotate(45deg);
-}
-.faq-a {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s;
-}
-.faq-item.open .faq-a {
-  max-height: 200px;
-  padding: 0 24px 20px;
-}
-.faq-a p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  line-height: 1.7;
-}
+.faq-q::after { content: '+'; font-size: 1.3rem; color: var(--text-muted); transition: transform 0.3s; }
+.faq-item.open .faq-q::after { transform: rotate(45deg); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; }
+.faq-item.open .faq-a { max-height: 200px; padding: 0 24px 20px; }
+.faq-a p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; }
 
 /* ================================================================
    FINAL CTA
    ================================================================ */
-.final-cta {
-  padding: 120px 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.final-cta::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.06));
-  border-radius: 0;
-}
-.final-cta h2 {
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 800;
-  margin-bottom: 16px;
-  position: relative;
-}
-.final-cta p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin-bottom: 36px;
-  position: relative;
-}
+.final-cta { padding: 120px 0; text-align: center; position: relative; overflow: hidden; }
+.final-cta::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.06)); }
+.final-cta h2 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 800; margin-bottom: 16px; position: relative; }
+.final-cta p { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 36px; position: relative; }
 .final-cta .btn-primary { position: relative; }
 
 /* ================================================================
    FOOTER
    ================================================================ */
-.footer {
-  padding: 48px 0 32px;
-  border-top: 1px solid var(--border);
-}
-.footer-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-.footer-logo {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 800;
-  font-size: 1rem;
-}
-.footer-links {
-  display: flex;
-  gap: 24px;
-  list-style: none;
-}
-.footer-links a {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  transition: color 0.2s;
-}
+.footer { padding: 48px 0 32px; border-top: 1px solid var(--border); }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px; }
+.footer-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1rem; }
+.footer-links { display: flex; gap: 24px; list-style: none; }
+.footer-links a { color: var(--text-muted); font-size: 0.85rem; transition: color 0.2s; }
 .footer-links a:hover { color: var(--text-secondary); }
-.footer-copy {
-  width: 100%;
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
+.footer-copy { width: 100%; text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; }
 
 /* ================================================================
    APP SECTION
@@ -766,17 +563,20 @@ a { color: inherit; text-decoration: none; }
 .app-section {
   padding: 80px 0 120px;
   display: none;
+  background: var(--bg-app);
+  position: relative;
+}
+.app-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 400px;
+  background: radial-gradient(ellipse, rgba(124,58,237,0.08), transparent 70%);
+  pointer-events: none;
 }
 .app-section.visible { display: block; }
-.app-header {
-  text-align: center;
-  margin-bottom: 48px;
-}
-.app-header h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
+.app-header { text-align: center; margin-bottom: 48px; position: relative; }
+.app-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
 .app-header p { color: var(--text-secondary); }
 
 /* Brand panel */
@@ -785,232 +585,112 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  background: rgba(26,26,36,0.3);
 }
 .brand-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: var(--surface);
-  border: none;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; background: var(--surface); border: none; color: var(--text);
+  cursor: pointer; font-size: 0.95rem; font-family: 'Inter', sans-serif; font-weight: 600;
 }
 .brand-summary { color: var(--text-muted); font-size: 0.85rem; font-weight: 400; }
-.chevron {
-  transition: transform 0.3s;
-  color: var(--text-muted);
-}
+.chevron { transition: transform 0.3s; color: var(--text-muted); }
 .chevron.open { transform: rotate(180deg); }
-.brand-body {
-  display: none;
-  padding: 24px;
-  background: rgba(26,26,36,0.5);
-}
+.brand-body { display: none; padding: 24px; background: rgba(26,26,36,0.5); }
 .brand-body.open { display: block; }
-.brand-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
+.brand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .brand-grid .full-width { grid-column: 1 / -1; }
-.brand-field label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  font-weight: 500;
-}
+.brand-field label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
 .brand-field input,
 .brand-field select {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text);
-  font-size: 0.9rem;
-  font-family: 'Inter', sans-serif;
+  width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text); font-size: 0.9rem; font-family: 'Inter', sans-serif;
 }
 .brand-field select { cursor: pointer; }
-.custom-colors {
-  display: none;
-  grid-column: 1 / -1;
-}
+.custom-colors { display: none; grid-column: 1 / -1; }
 .custom-colors.open { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.color-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.color-field { display: flex; align-items: center; gap: 8px; }
 .color-field input[type="color"] {
-  width: 36px; height: 36px;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  cursor: pointer;
+  width: 36px; height: 36px; padding: 2px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--bg); cursor: pointer;
 }
 .color-field input[type="text"] {
-  flex: 1;
-  padding: 8px 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text);
-  font-size: 0.85rem;
+  flex: 1; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text); font-size: 0.85rem;
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Logo upload */
-.logo-upload-area {
-  margin-top: 4px;
-}
+/* Logo upload — drag zone */
+.logo-upload-area { margin-top: 4px; }
 .logo-upload-btn {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  width: 100%; padding: 20px 16px; background: var(--bg);
+  border: 2px dashed rgba(124,58,237,0.3); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 0.85rem; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s;
+  text-align: center;
 }
 .logo-upload-btn:hover {
-  border-color: var(--violet);
-  color: var(--text-secondary);
+  border-color: var(--violet); color: var(--text-secondary);
+  background: rgba(124,58,237,0.05);
 }
 .logo-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs);
 }
-.logo-preview img {
-  max-height: 40px;
-  max-width: 160px;
-  object-fit: contain;
-}
+.logo-preview img { max-height: 40px; max-width: 160px; object-fit: contain; }
 .logo-remove {
-  background: none;
-  border: none;
-  color: var(--error);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  line-height: 1;
+  background: none; border: none; color: var(--error); font-size: 1.2rem;
+  cursor: pointer; padding: 2px 6px; line-height: 1;
 }
 .logo-remove:hover { opacity: 0.7; }
 
 /* URL input */
-.url-group {
-  margin-bottom: 32px;
-}
-.url-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
+.url-group { margin-bottom: 32px; }
+.url-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
 .url-input {
-  width: 100%;
-  padding: 16px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: 1rem;
-  font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s;
+  width: 100%; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  font-size: 1rem; font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.url-input:focus { outline: none; border-color: var(--violet); }
+.url-input:focus {
+  outline: none; border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.15), inset 0 0 20px rgba(124,58,237,0.05);
+}
+.url-input::placeholder { color: var(--text-muted); }
 
-/* URL mode toggle (single / bulk) */
-.url-mode-toggle {
-  display: flex;
-  gap: 0;
-  margin-bottom: 10px;
+/* Platform badge */
+.platform-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+  background: rgba(16,185,129,0.12); color: var(--success); margin-top: 8px;
 }
+
+/* URL mode toggle */
+.url-mode-toggle { display: flex; gap: 0; margin-bottom: 10px; }
 .url-mode-btn {
-  flex: 1;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s;
+  flex: 1; padding: 8px 16px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all 0.2s;
 }
 .url-mode-btn:first-child { border-radius: var(--radius-xs) 0 0 var(--radius-xs); }
 .url-mode-btn:last-child { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; border-left: none; }
-.url-mode-btn.active {
-  background: rgba(124,58,237,0.15);
-  border-color: rgba(124,58,237,0.3);
-  color: var(--text);
-}
+.url-mode-btn.active { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); color: var(--text); }
 .bulk-url-input {
-  width: 100%;
-  min-height: 100px;
-  padding: 16px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: 0.9rem;
-  font-family: 'JetBrains Mono', monospace;
-  resize: vertical;
-  line-height: 1.8;
+  width: 100%; min-height: 100px; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+  font-size: 0.9rem; font-family: 'JetBrains Mono', monospace; resize: vertical; line-height: 1.8;
 }
 .bulk-url-input:focus { outline: none; border-color: var(--violet); }
 .bulk-url-input::placeholder { color: var(--text-muted); }
-.bulk-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
+.bulk-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
 
 /* Bulk progress */
-.bulk-progress {
-  margin-bottom: 24px;
-}
-.bulk-progress-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.85rem;
-}
+.bulk-progress { margin-bottom: 24px; }
+.bulk-progress-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 .bulk-progress-item:last-child { border-bottom: none; }
-.bulk-progress-item .bp-status {
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-}
-.bulk-progress-item .bp-url {
-  flex: 1;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
-}
-.bulk-progress-item .bp-title {
-  color: var(--text);
-  font-weight: 500;
-}
+.bulk-progress-item .bp-status { width: 20px; text-align: center; flex-shrink: 0; }
+.bulk-progress-item .bp-url { flex: 1; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+.bulk-progress-item .bp-title { color: var(--text); font-weight: 500; }
 .bulk-progress-item.pending .bp-status { color: var(--text-muted); }
 .bulk-progress-item.running .bp-status { color: var(--violet); }
 .bulk-progress-item.done .bp-status { color: var(--success); }
@@ -1018,140 +698,54 @@ a { color: inherit; text-decoration: none; }
 
 /* Bulk results */
 .bulk-results-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
+  margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
 }
-.bulk-results-summary .brs-text {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
+.bulk-results-summary .brs-text { font-size: 0.9rem; color: var(--text-secondary); }
 .bulk-results-summary .brs-text strong { color: var(--text); }
 
 /* History panel */
-.history-panel {
-  margin-bottom: 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
+.history-panel { margin-bottom: 32px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .history-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: var(--surface);
-  border: none;
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; background: var(--surface); border: none; color: var(--text);
+  cursor: pointer; font-size: 0.95rem; font-family: 'Inter', sans-serif; font-weight: 600;
 }
 .history-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
-  background: rgba(124,58,237,0.2);
-  color: var(--violet);
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-left: 8px;
+  display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px;
+  padding: 0 6px; border-radius: 11px; background: rgba(124,58,237,0.2); color: var(--violet);
+  font-size: 0.75rem; font-weight: 700; margin-left: 8px;
 }
-.history-body {
-  display: none;
-  padding: 16px;
-  background: rgba(26,26,36,0.5);
-  max-height: 400px;
-  overflow-y: auto;
-}
+.history-body { display: none; padding: 16px; background: rgba(26,26,36,0.5); max-height: 400px; overflow-y: auto; }
 .history-body.open { display: block; }
-.history-empty {
-  text-align: center;
-  padding: 24px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.history-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 0 12px 0;
-}
+.history-actions { display: flex; justify-content: flex-end; padding: 0 0 12px 0; }
 .history-clear-btn {
-  padding: 6px 14px;
-  background: none;
-  border: 1px solid rgba(239,68,68,0.3);
-  border-radius: var(--radius-xs);
-  color: var(--error);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  padding: 6px 14px; background: none; border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-xs);
+  color: var(--error); font-size: 0.75rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
   transition: background 0.2s;
 }
 .history-clear-btn:hover { background: rgba(239,68,68,0.1); }
 .history-card {
-  display: grid;
-  grid-template-columns: 60px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 8px;
-  transition: border-color 0.2s;
+  display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center;
+  padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 8px; transition: border-color 0.2s;
 }
 .history-card:hover { border-color: rgba(124,58,237,0.3); }
 .history-card:last-child { margin-bottom: 0; }
-.history-thumb {
-  width: 60px;
-  height: 75px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--surface);
-}
-.history-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.history-info h4 {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-.history-info .history-meta {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
+.history-thumb { width: 60px; height: 75px; border-radius: 6px; overflow: hidden; background: var(--surface); }
+.history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.history-info h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+.history-info .history-meta { font-size: 0.75rem; color: var(--text-muted); }
 .history-info .history-meta span { margin-right: 8px; }
 .history-download {
-  padding: 6px 12px;
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  text-decoration: none;
+  padding: 6px 12px; background: var(--surface-hover); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text-secondary); font-size: 0.75rem;
+  font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: none;
   transition: color 0.2s;
 }
 .history-download:hover { color: var(--text); }
 
-/* Mode buttons */
+/* Mode buttons — 3x3 grid with descriptions */
 .mode-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1159,210 +753,140 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 32px;
 }
 .mode-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 16px 12px; background: var(--surface);
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-secondary); cursor: pointer;
+  transition: all 0.25s ease; font-family: 'Inter', sans-serif;
+  position: relative;
 }
+.mode-btn .mode-icon { font-size: 1.2rem; }
+.mode-btn .mode-label { font-size: 0.8rem; font-weight: 700; }
+.mode-btn .mode-desc { font-size: 0.65rem; color: var(--text-muted); text-align: center; line-height: 1.3; }
 .mode-btn:hover {
-  border-color: rgba(124,58,237,0.3);
-  color: var(--text);
-  background: var(--surface-hover);
+  border-color: rgba(124,58,237,0.4); color: var(--text);
+  background: var(--surface-hover); transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(124,58,237,0.1);
 }
-.mode-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.mode-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.mode-btn.mode-featured {
+  background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(236,72,153,0.1));
+  border-color: rgba(124,58,237,0.3);
+}
+.mode-btn .mode-new-badge {
+  position: absolute; top: -8px; right: -8px;
+  padding: 2px 8px; border-radius: 100px; background: var(--gradient-primary);
+  font-size: 0.6rem; font-weight: 700; color: white; letter-spacing: 0.5px;
 }
 
-/* Status */
-.status-area {
-  margin-bottom: 24px;
-  min-height: 40px;
+/* Status — step-based progress */
+.status-area { margin-bottom: 24px; min-height: 40px; }
+.status-steps {
+  padding: 16px 20px; border-radius: var(--radius-sm);
+  background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.12);
 }
+.status-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0; font-size: 0.9rem; color: var(--text-muted);
+  transition: color 0.3s;
+}
+.status-step.active { color: var(--text-secondary); }
+.status-step.done { color: var(--success); }
+.status-step.error { color: var(--error); }
+.status-step .step-icon { width: 20px; text-align: center; flex-shrink: 0; }
 .status-msg {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-radius: var(--radius-sm);
-  background: rgba(124,58,237,0.08);
-  border: 1px solid rgba(124,58,237,0.15);
-  font-size: 0.95rem;
-  color: var(--text-secondary);
+  display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+  border-radius: var(--radius-sm); background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.15); font-size: 0.95rem; color: var(--text-secondary);
 }
 .status-msg.error {
-  background: rgba(239,68,68,0.08);
-  border-color: rgba(239,68,68,0.2);
-  color: var(--error);
+  background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: var(--error);
+  white-space: pre-wrap; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;
 }
 .spinner {
-  width: 18px; height: 18px;
-  border: 2px solid rgba(124,58,237,0.3);
-  border-top-color: var(--violet);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
+  width: 18px; height: 18px; border: 2px solid rgba(124,58,237,0.3);
+  border-top-color: var(--violet); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Results */
 #results { display: none; }
-#results.visible { display: block; }
+#results.visible { display: block; animation: fadeUp 0.4s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
 }
-.result-header h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-.result-meta {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
+.result-header h3 { font-size: 1.25rem; font-weight: 700; }
+.result-meta { color: var(--text-muted); font-size: 0.85rem; }
 .download-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-radius: var(--radius-sm);
-  background: var(--gradient-primary);
-  color: white;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: transform 0.2s;
+  display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+  border-radius: var(--radius-sm); background: var(--gradient-primary); color: white;
+  font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
 }
-.download-btn:hover { transform: scale(1.02); }
+.download-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(124,58,237,0.25); }
 
-/* Tabs */
+/* Tabs — pill style */
 .output-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
-  overflow-x: auto;
+  display: flex; gap: 6px; margin-bottom: 24px; overflow-x: auto;
+  padding: 4px; background: var(--surface); border-radius: var(--radius-sm);
 }
 .tab-btn {
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  font-family: 'Inter', sans-serif;
-  transition: color 0.2s, border-color 0.2s;
+  padding: 10px 18px; background: none; border: none; border-radius: var(--radius-xs);
+  color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; font-family: 'Inter', sans-serif; transition: all 0.2s;
 }
-.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn:hover { color: var(--text-secondary); background: rgba(255,255,255,0.04); }
 .tab-btn.active {
-  color: var(--text);
-  border-bottom-color: var(--violet);
+  background: var(--gradient-primary); color: white;
 }
 .tab-panel { display: none; }
-.tab-panel.active { display: block; }
+.tab-panel.active { display: block; animation: fadeUp 0.3s ease; }
 
 /* Carousel viewer */
 .carousel-container { position: relative; }
 .carousel-viewer {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 8px 0;
-  scrollbar-width: none;
+  display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+  padding: 8px 0; scrollbar-width: none;
 }
 .carousel-viewer::-webkit-scrollbar { display: none; }
 .slide-preview {
-  flex-shrink: 0;
-  width: 240px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border);
+  flex-shrink: 0; width: 280px; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--surface);
+  transition: transform 0.2s;
 }
-.slide-preview img {
-  width: 100%;
-  display: block;
-}
+.slide-preview:hover { transform: scale(1.02); }
+.slide-preview img { width: 100%; display: block; }
 .carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: background 0.2s;
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border-radius: 50%; background: var(--surface);
+  border: 1px solid var(--border); color: var(--text); font-size: 1.1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  z-index: 2; transition: background 0.2s;
 }
 .carousel-arrow:hover { background: var(--surface-hover); }
 .carousel-arrow-left { left: -16px; }
 .carousel-arrow-right { right: -16px; }
 
 /* Text output */
-.text-output-container {
-  position: relative;
-}
+.text-output-container { position: relative; }
 .text-output {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 24px;
-  font-size: 0.9rem;
-  line-height: 1.8;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-  max-height: 500px;
-  overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 24px; font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary);
+  white-space: pre-wrap; max-height: 500px; overflow-y: auto;
 }
 .copy-btn {
-  position: absolute;
-  top: 12px; right: 12px;
-  padding: 6px 14px;
-  border-radius: var(--radius-xs);
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: color 0.2s, background 0.2s;
+  position: absolute; top: 12px; right: 12px; padding: 6px 14px;
+  border-radius: var(--radius-xs); background: var(--surface-hover);
+  border: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: color 0.2s, background 0.2s;
 }
 .copy-btn:hover { color: var(--text); }
-.copy-btn.copied { color: var(--success); }
+.copy-btn.copied { color: var(--success); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); }
 
 /* Fade-in on scroll */
-.fade-in {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-.fade-in.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
 
 /* ================================================================
    MOBILE
@@ -1373,15 +897,9 @@ a { color: inherit; text-decoration: none; }
   .nav-hamburger { display: block; }
   .mobile-only { display: list-item; }
   .nav-links.mobile-open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 60px; left: 0; right: 0;
-    background: rgba(15,15,19,0.95);
-    backdrop-filter: blur(20px);
-    padding: 24px;
-    gap: 16px;
-    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; position: absolute;
+    top: 60px; left: 0; right: 0; background: rgba(15,15,19,0.95);
+    backdrop-filter: blur(20px); padding: 24px; gap: 16px; border-bottom: 1px solid var(--border);
   }
   .hero-inner { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin: 0 auto 36px; }
@@ -1392,9 +910,7 @@ a { color: inherit; text-decoration: none; }
   .steps-row::before { display: none; }
   .features-grid { grid-template-columns: 1fr; }
   .preview-slides { grid-template-columns: 1fr; }
-  .pricing-grid {
-    grid-template-columns: 1fr;
-  }
+  .pricing-grid { grid-template-columns: 1fr; }
   .pricing-card.featured { order: -1; }
   .mode-grid { grid-template-columns: repeat(2, 1fr); }
   .brand-grid { grid-template-columns: 1fr; }
@@ -1414,8 +930,8 @@ a { color: inherit; text-decoration: none; }
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a href="#hero" class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
-      <div class="nav-logo-icon">CE</div>
-      ContentExtractor
+      <div class="nav-logo-icon">AI</div>
+      ContentExtractor AI
     </a>
     <ul class="nav-links" id="nav-links">
       <li><a href="#features">Features</a></li>
@@ -1435,16 +951,16 @@ a { color: inherit; text-decoration: none; }
 <section class="hero" id="hero">
   <div class="container hero-inner">
     <div class="hero-content">
-      <div class="hero-badge">New: AI Ad Creatives</div>
-      <h1>Turn Any Video Into<br>
+      <div class="hero-badge">Powered by AI &mdash; 100% Free</div>
+      <h1>AI-Powered Video to<br>
         <span class="hero-rotating" id="hero-rotating">
-          <span class="active">Carousel Posts</span>
-          <span>Twitter Threads</span>
-          <span>Ad Creatives</span>
-          <span>Newsletter Content</span>
+          <span class="active">AI Carousel Posts</span>
+          <span>AI Twitter Threads</span>
+          <span>AI Ad Creatives</span>
+          <span>AI Newsletter Content</span>
         </span>
       </h1>
-      <p class="hero-subtitle">Paste a YouTube, Instagram, TikTok, or X link. Get branded carousel slides, ad copy, social posts, and more — in seconds.</p>
+      <p class="hero-subtitle">Paste a YouTube, Instagram, TikTok, or X link. Our AI extracts key content and generates branded carousel slides, ad copy, social posts, and more &mdash; in seconds.</p>
       <div class="hero-buttons">
         <a href="#app" class="btn-primary" onclick="showApp(); return false;">Start Extracting &rarr;</a>
         <a href="#how-it-works" class="btn-ghost" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'}); return false;">See How It Works &darr;</a>
@@ -1453,15 +969,15 @@ a { color: inherit; text-decoration: none; }
     </div>
     <div class="hero-mockup">
       <div class="mockup-card">
-        <div class="mc-label">FACT 01</div>
+        <div class="mc-label">AI FACT 01</div>
         <div class="mc-title">AI spending will hit $200B by 2025</div>
       </div>
       <div class="mockup-card">
-        <div class="mc-label">PREDICTION 02</div>
+        <div class="mc-label">AI PREDICTION 02</div>
         <div class="mc-title">Half of all content will be AI-generated</div>
       </div>
       <div class="mockup-card">
-        <div class="mc-label">TAKEAWAY 03</div>
+        <div class="mc-label">AI TAKEAWAY 03</div>
         <div class="mc-title">Start repurposing video now or fall behind</div>
       </div>
     </div>
@@ -1491,7 +1007,7 @@ a { color: inherit; text-decoration: none; }
 <section class="how-it-works" id="how-it-works">
   <div class="container">
     <div class="section-heading fade-in">
-      <h2>How It <span class="gradient-text">Works</span></h2>
+      <h2>How <span class="gradient-text">AI Extraction</span> Works</h2>
       <p>Three steps from video to viral content</p>
     </div>
     <div class="steps-row fade-in">
@@ -1499,13 +1015,13 @@ a { color: inherit; text-decoration: none; }
         <div class="step-num">01</div>
         <div class="step-icon">&#128279;</div>
         <h3>Paste Any Link</h3>
-        <p>YouTube, Instagram, TikTok, X — we handle them all</p>
+        <p>YouTube, Instagram, TikTok, X &mdash; we handle them all</p>
       </div>
       <div class="step-card glass">
         <div class="step-num">02</div>
-        <div class="step-icon">&#127912;</div>
-        <h3>Choose Your Format</h3>
-        <p>Facts, quotes, predictions, ad copy, and 5 more modes</p>
+        <div class="step-icon">&#129302;</div>
+        <h3>AI Analyzes Content</h3>
+        <p>Our AI extracts facts, quotes, predictions, ad copy, and more</p>
       </div>
       <div class="step-card glass">
         <div class="step-num">03</div>
@@ -1523,13 +1039,13 @@ a { color: inherit; text-decoration: none; }
 <section class="features" id="features">
   <div class="container">
     <div class="section-heading fade-in">
-      <h2>Everything You Need to <span class="gradient-text">Repurpose Content</span></h2>
+      <h2>Everything You Need to <span class="gradient-text">AI-Repurpose Content</span></h2>
     </div>
     <div class="features-grid fade-in">
       <div class="feature-card glass">
-        <div class="feature-icon">&#127760;</div>
-        <h3>8 Extraction Modes</h3>
-        <p>Facts, predictions, opinions, quotes, summaries, counterarguments, takeaways, viral hooks</p>
+        <div class="feature-icon">&#129302;</div>
+        <h3>9 AI Extraction Modes</h3>
+        <p>Facts, predictions, opinions, quotes, summaries, counterarguments, takeaways, hooks, ad creatives</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#128640;</div>
@@ -1538,28 +1054,28 @@ a { color: inherit; text-decoration: none; }
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#127912;</div>
-        <h3>Custom Branding</h3>
+        <h3>AI Custom Branding</h3>
         <p>Upload your logo, pick colors, save brand presets</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#128247;</div>
-        <h3>Background Images</h3>
+        <h3>AI Background Images</h3>
         <p>AI-fetched photos that match each slide's content</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#128196;</div>
-        <h3>Multi-Format Export</h3>
+        <h3>Multi-Format AI Export</h3>
         <p>Carousels, Twitter threads, LinkedIn, newsletters, TikTok scripts</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#9889;</div>
-        <h3>Bulk Processing</h3>
+        <h3>AI Bulk Processing</h3>
         <p>Paste multiple URLs, process them all at once</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#128203;</div>
         <h3>History Dashboard</h3>
-        <p>Access all your past extractions anytime</p>
+        <p>Access all your past AI extractions anytime</p>
       </div>
       <div class="feature-card glass">
         <div class="feature-icon">&#127757;</div>
@@ -1576,7 +1092,7 @@ a { color: inherit; text-decoration: none; }
 <section class="preview" id="preview">
   <div class="container">
     <div class="section-heading fade-in">
-      <h2>See It <span class="gradient-text">In Action</span></h2>
+      <h2>See AI Extraction <span class="gradient-text">In Action</span></h2>
     </div>
     <div class="preview-card glass fade-in">
       <div class="preview-url">
@@ -1588,19 +1104,19 @@ a { color: inherit; text-decoration: none; }
         <span class="preview-mode-pill">Predictions</span>
         <span class="preview-mode-pill">Quotes</span>
         <span class="preview-mode-pill">Summary</span>
-        <span class="preview-mode-pill">Hooks</span>
+        <span class="preview-mode-pill">Ad Creatives</span>
       </div>
       <div class="preview-slides">
         <div class="preview-slide">
-          <div class="ps-label">FACT 01</div>
+          <div class="ps-label">AI FACT 01</div>
           <div class="ps-text">80% of social media engagement comes from repurposed video content</div>
         </div>
         <div class="preview-slide">
-          <div class="ps-label">FACT 02</div>
+          <div class="ps-label">AI FACT 02</div>
           <div class="ps-text">Creators who repurpose see 3x more reach across platforms</div>
         </div>
         <div class="preview-slide">
-          <div class="ps-label">FACT 03</div>
+          <div class="ps-label">AI FACT 03</div>
           <div class="ps-text">Video-to-carousel conversion boosts saves by 200%</div>
         </div>
       </div>
@@ -1629,10 +1145,10 @@ Here's what that means for your content strategy:
         <h3>Free</h3>
         <div class="pricing-price">$0<span>/mo</span></div>
         <ul class="pricing-list">
-          <li>3 extractions per day</li>
-          <li>All 8 extraction modes</li>
-          <li>Carousel slides with watermark</li>
-          <li>Twitter threads, LinkedIn posts</li>
+          <li>3 AI extractions per day</li>
+          <li>All 9 AI extraction modes</li>
+          <li>AI carousel slides with watermark</li>
+          <li>AI Twitter threads, LinkedIn posts</li>
         </ul>
         <a href="#app" class="btn-ghost" onclick="showApp(); return false;">Get Started</a>
       </div>
@@ -1641,10 +1157,10 @@ Here's what that means for your content strategy:
         <h3>Pro</h3>
         <div class="pricing-price">$19<span>/mo</span></div>
         <ul class="pricing-list">
-          <li>Unlimited extractions</li>
+          <li>Unlimited AI extractions</li>
           <li>No watermark</li>
           <li>Logo upload + brand presets</li>
-          <li>Ad creatives (FB + Google)</li>
+          <li>AI ad creatives (FB + Google)</li>
           <li>Bulk URL processing</li>
           <li>History dashboard</li>
           <li>All output formats</li>
@@ -1657,7 +1173,7 @@ Here's what that means for your content strategy:
         <ul class="pricing-list">
           <li>Everything in Pro</li>
           <li>5 brand presets</li>
-          <li>Priority processing</li>
+          <li>Priority AI processing</li>
           <li>API access (coming soon)</li>
         </ul>
         <a href="#app" class="btn-ghost" onclick="showApp(); return false;">Contact Us</a>
@@ -1676,24 +1192,20 @@ Here's what that means for your content strategy:
     </div>
     <div class="faq-list fade-in">
       <div class="faq-item">
-        <button class="faq-q">What video platforms are supported?</button>
-        <div class="faq-a"><p>We support YouTube, Instagram Reels, TikTok, X/Twitter, and 1000+ other sites through yt-dlp. If a video has a public URL, we can likely extract from it.</p></div>
+        <button class="faq-q">What video platforms does the AI support?</button>
+        <div class="faq-a"><p>We support YouTube, Instagram Reels, TikTok, X/Twitter, and 1000+ other sites through yt-dlp. If a video has a public URL, our AI can likely extract from it.</p></div>
       </div>
       <div class="faq-item">
         <button class="faq-q">How does the AI extract content?</button>
-        <div class="faq-a"><p>We first extract the video transcript (via captions or AI transcription), then use advanced LLMs to analyze and extract structured content — facts, predictions, quotes, and more.</p></div>
+        <div class="faq-a"><p>We first extract the video transcript (via captions or AI transcription), then use advanced LLMs to analyze and extract structured content &mdash; facts, predictions, quotes, ad creatives, and more.</p></div>
       </div>
       <div class="faq-item">
         <button class="faq-q">Can I use my own branding?</button>
-        <div class="faq-a"><p>Yes. You can set custom colors, brand name, handle, and tagline. Pro users can upload a logo that appears on every slide.</p></div>
+        <div class="faq-a"><p>Yes. You can set custom colors, brand name, handle, and tagline. Upload a logo that appears on every slide.</p></div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Is there a free plan?</button>
-        <div class="faq-a"><p>Absolutely. The free plan includes 3 extractions per day with all 8 extraction modes. Upgrade to Pro for unlimited access and premium features.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">How fast is processing?</button>
-        <div class="faq-a"><p>Most videos are processed in 15-30 seconds. YouTube videos with captions are fastest (5-10 seconds). Longer videos or those requiring audio transcription may take up to a minute.</p></div>
+        <button class="faq-q">How fast is AI processing?</button>
+        <div class="faq-a"><p>Most videos are processed in 15-30 seconds. YouTube videos with captions are fastest (5-10 seconds). Longer videos may take up to a minute.</p></div>
       </div>
       <div class="faq-item">
         <button class="faq-q">What about copyright?</button>
@@ -1708,8 +1220,8 @@ Here's what that means for your content strategy:
      ============================================================ -->
 <section class="final-cta fade-in">
   <div class="container">
-    <h2>Ready to Turn Videos Into <span class="gradient-text">Content</span>?</h2>
-    <p>Start extracting for free — no credit card required</p>
+    <h2>Ready to Turn Videos Into <span class="gradient-text">AI Content</span>?</h2>
+    <p>Start extracting for free &mdash; no credit card required</p>
     <a href="#app" class="btn-primary" onclick="showApp(); return false;">Get Started Free &rarr;</a>
   </div>
 </section>
@@ -1720,8 +1232,8 @@ Here's what that means for your content strategy:
 <section class="app-section" id="app">
   <div class="container">
     <div class="app-header">
-      <h2>Extract <span class="gradient-text">Content</span></h2>
-      <p>Paste a video URL and choose your extraction mode</p>
+      <h2>AI <span class="gradient-text">Content Extraction</span></h2>
+      <p>Paste a video URL and choose your AI extraction mode</p>
     </div>
 
     <!-- Brand Settings -->
@@ -1785,7 +1297,7 @@ Here's what that means for your content strategy:
                 <img id="logo-preview-img" alt="Logo preview">
                 <button class="logo-remove" id="logo-remove" title="Remove logo">&times;</button>
               </div>
-              <button class="logo-upload-btn" id="logo-upload-btn">Upload Logo (PNG, JPG, WebP &mdash; max 2 MB)</button>
+              <button class="logo-upload-btn" id="logo-upload-btn">Drop your logo here or click to upload<br><span style="font-size:0.75rem;opacity:0.6;">PNG, JPG, WebP &mdash; max 2 MB</span></button>
             </div>
           </div>
         </div>
@@ -1815,7 +1327,8 @@ Here's what that means for your content strategy:
       </div>
       <div id="single-url-wrap">
         <input type="url" class="url-input" id="url-input"
-               placeholder="https://youtube.com/watch?v=... or Instagram / TikTok / X link">
+               placeholder="Paste any video URL here...">
+        <div id="platform-badge-wrap"></div>
       </div>
       <div id="bulk-url-wrap" style="display:none;">
         <textarea class="bulk-url-input" id="bulk-url-input"
@@ -1827,17 +1340,54 @@ Here's what that means for your content strategy:
     <!-- Bulk Progress -->
     <div class="bulk-progress" id="bulk-progress" style="display:none;"></div>
 
-    <!-- Mode Buttons -->
+    <!-- Mode Buttons — 3x3 with descriptions -->
     <div class="mode-grid" id="mode-buttons">
-      <button class="mode-btn" data-mode="facts">&#128202; Facts</button>
-      <button class="mode-btn" data-mode="predictions">&#128302; Predictions</button>
-      <button class="mode-btn" data-mode="opinions">&#128172; Opinions</button>
-      <button class="mode-btn" data-mode="quotes">&#128142; Quotes</button>
-      <button class="mode-btn" data-mode="summary">&#128203; Summary</button>
-      <button class="mode-btn" data-mode="counterarguments">&#9876;&#65039; Counter</button>
-      <button class="mode-btn" data-mode="takeaways">&#9989; Takeaways</button>
-      <button class="mode-btn" data-mode="hooks">&#127907; Hooks</button>
-      <button class="mode-btn" data-mode="ad_creatives">&#128226; Ad Creatives</button>
+      <button class="mode-btn" data-mode="facts">
+        <span class="mode-icon">&#128202;</span>
+        <span class="mode-label">Facts</span>
+        <span class="mode-desc">Key facts &amp; statistics</span>
+      </button>
+      <button class="mode-btn" data-mode="predictions">
+        <span class="mode-icon">&#128302;</span>
+        <span class="mode-label">Predictions</span>
+        <span class="mode-desc">Forward-looking claims</span>
+      </button>
+      <button class="mode-btn" data-mode="opinions">
+        <span class="mode-icon">&#128172;</span>
+        <span class="mode-label">Opinions</span>
+        <span class="mode-desc">Bold viewpoints</span>
+      </button>
+      <button class="mode-btn" data-mode="quotes">
+        <span class="mode-icon">&#128142;</span>
+        <span class="mode-label">Quotes</span>
+        <span class="mode-desc">Shareable direct quotes</span>
+      </button>
+      <button class="mode-btn" data-mode="summary">
+        <span class="mode-icon">&#128203;</span>
+        <span class="mode-label">Summary</span>
+        <span class="mode-desc">Timeline breakdown</span>
+      </button>
+      <button class="mode-btn" data-mode="counterarguments">
+        <span class="mode-icon">&#9876;&#65039;</span>
+        <span class="mode-label">Counter</span>
+        <span class="mode-desc">Opposing arguments</span>
+      </button>
+      <button class="mode-btn" data-mode="takeaways">
+        <span class="mode-icon">&#9989;</span>
+        <span class="mode-label">Takeaways</span>
+        <span class="mode-desc">Actionable items</span>
+      </button>
+      <button class="mode-btn" data-mode="hooks">
+        <span class="mode-icon">&#127907;</span>
+        <span class="mode-label">Hooks</span>
+        <span class="mode-desc">Viral opening lines</span>
+      </button>
+      <button class="mode-btn mode-featured" data-mode="ad_creatives">
+        <span class="mode-new-badge">NEW</span>
+        <span class="mode-icon">&#128226;</span>
+        <span class="mode-label">Ad Creatives</span>
+        <span class="mode-desc">Paid social ad copy</span>
+      </button>
     </div>
 
     <!-- Status -->
@@ -1917,7 +1467,7 @@ Here's what that means for your content strategy:
 <footer class="footer">
   <div class="container">
     <div class="footer-inner">
-      <div class="footer-logo">ContentExtractor</div>
+      <div class="footer-logo">ContentExtractor AI</div>
       <ul class="footer-links">
         <li><a href="#features">Features</a></li>
         <li><a href="#pricing">Pricing</a></li>
@@ -1926,7 +1476,7 @@ Here's what that means for your content strategy:
         <li><a href="#">Privacy</a></li>
       </ul>
     </div>
-    <div class="footer-copy">&copy; 2026 ContentExtractor. All rights reserved.</div>
+    <div class="footer-copy">&copy; 2026 ContentExtractor AI. All rights reserved.</div>
   </div>
 </footer>
 
@@ -1951,10 +1501,7 @@ document.querySelectorAll('.nav-links a').forEach(a => {
     const href = a.getAttribute('href');
     if (href && href.startsWith('#') && href.length > 1) {
       const target = document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     }
   });
 });
@@ -1989,9 +1536,7 @@ document.querySelectorAll('.faq-q').forEach(btn => {
 /* ── Show App section ────────────────────────────────── */
 function showApp() {
   $('app').classList.add('visible');
-  setTimeout(() => {
-    $('app').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  setTimeout(() => { $('app').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2007,257 +1552,154 @@ const THEMES = {
 };
 
 const DEFAULT_BRAND = {
-  handle: '@undercurrenthq',
-  name: 'UndercurrentHQ',
-  tagline: 'The force beneath the surface.',
-  theme: 'dark',
-  bg_color: '#0A0A0A',
-  text_color: '#FFFFFF',
-  accent_color: '#8B5CF6',
+  handle: '@undercurrenthq', name: 'UndercurrentHQ', tagline: 'The force beneath the surface.',
+  theme: 'dark', bg_color: '#0A0A0A', text_color: '#FFFFFF', accent_color: '#8B5CF6',
 };
 
 function loadBrand() {
   try { return JSON.parse(localStorage.getItem('ce_brand')) || DEFAULT_BRAND; }
   catch { return DEFAULT_BRAND; }
 }
-
-function saveBrand() {
-  localStorage.setItem('ce_brand', JSON.stringify(getBrandFromInputs()));
-}
-
+function saveBrand() { localStorage.setItem('ce_brand', JSON.stringify(getBrandFromInputs())); }
 function getBrandFromInputs() {
   const theme = $('brand-theme').value;
   const colors = theme !== 'custom' && THEMES[theme]
     ? THEMES[theme]
     : { bg_color: $('brand-bg').value, text_color: $('brand-text').value, accent_color: $('brand-accent').value };
-  return {
-    handle: $('brand-handle').value || DEFAULT_BRAND.handle,
-    name: $('brand-name').value || DEFAULT_BRAND.name,
-    tagline: $('brand-tagline').value || DEFAULT_BRAND.tagline,
-    theme: theme,
-    ...colors,
-  };
+  return { handle: $('brand-handle').value || DEFAULT_BRAND.handle, name: $('brand-name').value || DEFAULT_BRAND.name,
+    tagline: $('brand-tagline').value || DEFAULT_BRAND.tagline, theme: theme, ...colors };
 }
-
 function populateBrandInputs(b) {
   $('brand-handle').value = b.handle || '';
   $('brand-name').value = b.name || '';
   $('brand-tagline').value = b.tagline || '';
   $('brand-theme').value = b.theme || 'dark';
-  $('brand-bg').value = b.bg_color || '#0A0A0A';
-  $('brand-bg-picker').value = b.bg_color || '#0A0A0A';
-  $('brand-text').value = b.text_color || '#FFFFFF';
-  $('brand-text-picker').value = b.text_color || '#FFFFFF';
-  $('brand-accent').value = b.accent_color || '#8B5CF6';
-  $('brand-accent-picker').value = b.accent_color || '#8B5CF6';
+  $('brand-bg').value = b.bg_color || '#0A0A0A'; $('brand-bg-picker').value = b.bg_color || '#0A0A0A';
+  $('brand-text').value = b.text_color || '#FFFFFF'; $('brand-text-picker').value = b.text_color || '#FFFFFF';
+  $('brand-accent').value = b.accent_color || '#8B5CF6'; $('brand-accent-picker').value = b.accent_color || '#8B5CF6';
   toggleCustomColors(b.theme === 'custom');
   updateBrandSummary(b);
 }
+function updateBrandSummary(b) { $('brand-summary').textContent = ` \u2014 ${b.name} (${b.handle})`; }
+function toggleCustomColors(show) { $('custom-colors').classList.toggle('open', show); }
 
-function updateBrandSummary(b) {
-  $('brand-summary').textContent = ` — ${b.name} (${b.handle})`;
-}
-
-function toggleCustomColors(show) {
-  $('custom-colors').classList.toggle('open', show);
-}
-
-/* Brand panel toggle */
-$('brand-toggle').addEventListener('click', () => {
-  $('brand-body').classList.toggle('open');
-  $('chevron').classList.toggle('open');
-});
-
-/* Theme select */
+$('brand-toggle').addEventListener('click', () => { $('brand-body').classList.toggle('open'); $('chevron').classList.toggle('open'); });
 $('brand-theme').addEventListener('change', () => {
-  const v = $('brand-theme').value;
-  toggleCustomColors(v === 'custom');
+  const v = $('brand-theme').value; toggleCustomColors(v === 'custom');
   if (THEMES[v]) {
-    $('brand-bg').value = THEMES[v].bg_color;
-    $('brand-bg-picker').value = THEMES[v].bg_color;
-    $('brand-text').value = THEMES[v].text_color;
-    $('brand-text-picker').value = THEMES[v].text_color;
-    $('brand-accent').value = THEMES[v].accent_color;
-    $('brand-accent-picker').value = THEMES[v].accent_color;
+    $('brand-bg').value = THEMES[v].bg_color; $('brand-bg-picker').value = THEMES[v].bg_color;
+    $('brand-text').value = THEMES[v].text_color; $('brand-text-picker').value = THEMES[v].text_color;
+    $('brand-accent').value = THEMES[v].accent_color; $('brand-accent-picker').value = THEMES[v].accent_color;
   }
   saveBrand();
 });
-
-/* Color sync */
 ['bg', 'text', 'accent'].forEach(k => {
-  const picker = $(`brand-${k}-picker`);
-  const text = $(`brand-${k}`);
+  const picker = $(`brand-${k}-picker`), text = $(`brand-${k}`);
   picker.addEventListener('input', () => { text.value = picker.value; saveBrand(); });
   text.addEventListener('input', () => { picker.value = text.value; saveBrand(); });
 });
-
-/* Auto-save brand fields */
 ['brand-handle', 'brand-name', 'brand-tagline'].forEach(id => {
-  $(id).addEventListener('input', () => {
-    saveBrand();
-    updateBrandSummary(getBrandFromInputs());
-  });
+  $(id).addEventListener('input', () => { saveBrand(); updateBrandSummary(getBrandFromInputs()); });
 });
 
 /* ── Logo upload ────────────────────────────────────── */
 $('logo-upload-btn').addEventListener('click', () => $('logo-file').click());
-
 $('logo-file').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
-    alert('Logo must be under 2 MB');
-    return;
-  }
-  const formData = new FormData();
-  formData.append('file', file);
+  const file = e.target.files[0]; if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { alert('Logo must be under 2 MB'); return; }
+  const formData = new FormData(); formData.append('file', file);
   try {
     const resp = await fetch('/api/upload-logo', { method: 'POST', body: formData });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      alert(err.detail || 'Upload failed');
-      return;
-    }
+    if (!resp.ok) { const err = await resp.json().catch(() => ({})); alert(err.detail || 'Upload failed'); return; }
     const data = await resp.json();
-    localStorage.setItem('ce_logo', data.filename);
-    showLogoPreview(data.filename);
-  } catch (err) {
-    alert('Upload error: ' + err.message);
-  }
+    localStorage.setItem('ce_logo', data.filename); showLogoPreview(data.filename);
+  } catch (err) { alert('Upload error: ' + err.message); }
 });
-
 $('logo-remove').addEventListener('click', () => {
-  localStorage.removeItem('ce_logo');
-  $('logo-preview').style.display = 'none';
-  $('logo-upload-btn').style.display = '';
-  $('logo-file').value = '';
+  localStorage.removeItem('ce_logo'); $('logo-preview').style.display = 'none';
+  $('logo-upload-btn').style.display = ''; $('logo-file').value = '';
 });
-
 function showLogoPreview(filename) {
   $('logo-preview-img').src = '/api/logos/' + filename;
-  $('logo-preview').style.display = 'flex';
-  $('logo-upload-btn').style.display = 'none';
+  $('logo-preview').style.display = 'flex'; $('logo-upload-btn').style.display = 'none';
 }
+(function() { const s = localStorage.getItem('ce_logo'); if (s) showLogoPreview(s); })();
 
-// Restore logo on load
-(function() {
-  const savedLogo = localStorage.getItem('ce_logo');
-  if (savedLogo) showLogoPreview(savedLogo);
-})();
-
-/* ── URL mode toggle (single / bulk) ────────────────── */
+/* ── URL mode toggle ────────────────────────────────── */
 let urlMode = 'single';
-
 $('url-mode-single').addEventListener('click', () => {
-  urlMode = 'single';
-  $('url-mode-single').classList.add('active');
-  $('url-mode-bulk').classList.remove('active');
-  $('single-url-wrap').style.display = '';
-  $('bulk-url-wrap').style.display = 'none';
+  urlMode = 'single'; $('url-mode-single').classList.add('active'); $('url-mode-bulk').classList.remove('active');
+  $('single-url-wrap').style.display = ''; $('bulk-url-wrap').style.display = 'none';
+});
+$('url-mode-bulk').addEventListener('click', () => {
+  urlMode = 'bulk'; $('url-mode-bulk').classList.add('active'); $('url-mode-single').classList.remove('active');
+  $('single-url-wrap').style.display = 'none'; $('bulk-url-wrap').style.display = '';
 });
 
-$('url-mode-bulk').addEventListener('click', () => {
-  urlMode = 'bulk';
-  $('url-mode-bulk').classList.add('active');
-  $('url-mode-single').classList.remove('active');
-  $('single-url-wrap').style.display = 'none';
-  $('bulk-url-wrap').style.display = '';
+/* ── Platform auto-detect badge ─────────────────────── */
+$('url-input').addEventListener('input', () => {
+  const url = $('url-input').value.trim();
+  const wrap = $('platform-badge-wrap');
+  if (!url) { wrap.innerHTML = ''; return; }
+  let plat = '';
+  if (/youtube\.com|youtu\.be/i.test(url)) plat = 'YouTube';
+  else if (/instagram\.com/i.test(url)) plat = 'Instagram';
+  else if (/tiktok\.com/i.test(url)) plat = 'TikTok';
+  else if (/twitter\.com|x\.com/i.test(url)) plat = 'X / Twitter';
+  if (plat) wrap.innerHTML = `<span class="platform-badge">${plat} &#10003;</span>`;
+  else wrap.innerHTML = '';
 });
 
 /* ── History ─────────────────────────────────────────── */
 async function loadHistory() {
-  try {
-    const resp = await fetch('/api/history');
-    if (!resp.ok) return;
-    const entries = await resp.json();
-    renderHistory(entries);
-  } catch {}
+  try { const r = await fetch('/api/history'); if (!r.ok) return; renderHistory(await r.json()); } catch {}
 }
-
 function renderHistory(entries) {
-  const panel = $('history-panel');
-  const list = $('history-list');
-  const count = $('history-count');
-
-  if (!entries.length) {
-    panel.style.display = 'none';
-    return;
-  }
-
-  panel.style.display = '';
-  count.textContent = entries.length;
-  list.innerHTML = '';
-
+  const panel = $('history-panel'), list = $('history-list'), count = $('history-count');
+  if (!entries.length) { panel.style.display = 'none'; return; }
+  panel.style.display = ''; count.textContent = entries.length; list.innerHTML = '';
   entries.forEach(e => {
-    const card = document.createElement('div');
-    card.className = 'history-card';
-
-    const ago = timeAgo(e.created_at);
-    const modeLabel = e.mode.replace(/_/g, ' ');
-
+    const card = document.createElement('div'); card.className = 'history-card';
     card.innerHTML = `
-      <div class="history-thumb">
-        ${e.thumbnail ? `<img src="${e.thumbnail}" alt="Slide">` : ''}
+      <div class="history-thumb">${e.thumbnail ? `<img src="${e.thumbnail}" alt="Slide">` : ''}</div>
+      <div class="history-info"><h4>${escHtml(e.title)}</h4>
+        <div class="history-meta"><span>${e.platform}</span><span>${e.mode.replace(/_/g,' ')}</span><span>${e.slide_count} slides</span><span>${timeAgo(e.created_at)}</span></div>
       </div>
-      <div class="history-info">
-        <h4>${escHtml(e.title)}</h4>
-        <div class="history-meta">
-          <span>${e.platform}</span>
-          <span>${modeLabel}</span>
-          <span>${e.slide_count} slides</span>
-          <span>${ago}</span>
-        </div>
-      </div>
-      <a class="history-download" href="${e.zip_url}" download title="Download ZIP">ZIP</a>
-    `;
+      <a class="history-download" href="${e.zip_url}" download title="Download ZIP">ZIP</a>`;
     list.appendChild(card);
   });
 }
-
-function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-  return Math.floor(diff / 86400) + 'd ago';
+  if (diff < 60) return 'just now'; if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'; return Math.floor(diff / 86400) + 'd ago';
 }
-
-$('history-toggle').addEventListener('click', () => {
-  $('history-body').classList.toggle('open');
-  $('history-chevron').classList.toggle('open');
-});
-
+$('history-toggle').addEventListener('click', () => { $('history-body').classList.toggle('open'); $('history-chevron').classList.toggle('open'); });
 $('history-clear').addEventListener('click', async () => {
-  if (!confirm('Clear all history?')) return;
-  await fetch('/api/history', { method: 'DELETE' });
-  renderHistory([]);
+  if (!confirm('Clear all history?')) return; await fetch('/api/history', { method: 'DELETE' }); renderHistory([]);
 });
-
-// Load history on page init
 loadHistory();
 
 /* ── Status helpers ──────────────────────────────────── */
-function showStatus(msg) {
-  $('status-area').innerHTML = `<div class="status-msg"><div class="spinner"></div>${msg}</div>`;
+const STEP_LABELS = ['Detecting platform...', 'Fetching transcript...', 'Analyzing with AI...', 'Fetching images...', 'Generating slides...'];
+
+function showStepProgress(activeIdx) {
+  $('status-area').innerHTML = `<div class="status-steps">${STEP_LABELS.map((label, i) => {
+    let cls = 'status-step', icon = '&#9675;';
+    if (i < activeIdx) { cls += ' done'; icon = '&#10003;'; }
+    else if (i === activeIdx) { cls += ' active'; icon = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;"></div>'; }
+    return `<div class="${cls}"><span class="step-icon">${icon}</span>${label}</div>`;
+  }).join('')}</div>`;
 }
+
 function showError(msg) {
-  $('status-area').innerHTML = `<div class="status-msg error">${msg}</div>`;
+  $('status-area').innerHTML = `<div class="status-msg error">${escHtml(msg)}</div>`;
 }
-function clearStatus() {
-  $('status-area').innerHTML = '';
-}
+function clearStatus() { $('status-area').innerHTML = ''; }
 
 /* ── Mode buttons ────────────────────────────────────── */
-function setButtonsDisabled(d) {
-  document.querySelectorAll('.mode-btn').forEach(b => b.disabled = d);
-}
-
+function setButtonsDisabled(d) { document.querySelectorAll('.mode-btn').forEach(b => b.disabled = d); }
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (urlMode === 'bulk') generateBulk(btn.dataset.mode);
@@ -2270,8 +1712,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    $('panel-' + btn.dataset.tab).classList.add('active');
+    btn.classList.add('active'); $('panel-' + btn.dataset.tab).classList.add('active');
   });
 });
 
@@ -2280,26 +1721,18 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = $(btn.dataset.target);
     navigator.clipboard.writeText(target.textContent);
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
+    btn.textContent = 'Copied \u2713'; btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
   });
 });
 
 /* ── Carousel navigation ────────────────────────────── */
-$('carousel-left').addEventListener('click', () => {
-  $('carousel-viewer').scrollBy({ left: -270, behavior: 'smooth' });
-});
-$('carousel-right').addEventListener('click', () => {
-  $('carousel-viewer').scrollBy({ left: 270, behavior: 'smooth' });
-});
+$('carousel-left').addEventListener('click', () => { $('carousel-viewer').scrollBy({ left: -300, behavior: 'smooth' }); });
+$('carousel-right').addEventListener('click', () => { $('carousel-viewer').scrollBy({ left: 300, behavior: 'smooth' }); });
 
 /* ── Enter key on URL input ──────────────────────────── */
 $('url-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    if (urlMode === 'bulk') generateBulk('facts');
-    else generate('facts');
-  }
+  if (e.key === 'Enter') { if (urlMode === 'bulk') generateBulk('facts'); else generate('facts'); }
 });
 
 /* ── Generate function ───────────────────────────────── */
@@ -2311,48 +1744,34 @@ async function generate(mode) {
   $('bulk-progress').style.display = 'none';
   setButtonsDisabled(true);
 
-  const steps = [
-    'Detecting platform...',
-    'Fetching transcript...',
-    'Analyzing with AI...',
-    'Fetching images...',
-    'Generating slides...',
-  ];
   let stepIdx = 0;
-  showStatus(steps[0]);
-  const stepInterval = setInterval(() => {
-    stepIdx++;
-    if (stepIdx < steps.length) showStatus(steps[stepIdx]);
-  }, 4000);
+  showStepProgress(0);
+  const stepInterval = setInterval(() => { stepIdx++; if (stepIdx < STEP_LABELS.length) showStepProgress(stepIdx); }, 4000);
 
   const brand = getBrandFromInputs();
   const brandPayload = {
-    handle: brand.handle,
-    name: brand.name,
-    tagline: brand.tagline,
-    bg_color: brand.bg_color,
-    text_color: brand.text_color,
-    accent_color: brand.accent_color,
+    handle: brand.handle, name: brand.name, tagline: brand.tagline,
+    bg_color: brand.bg_color, text_color: brand.text_color, accent_color: brand.accent_color,
     logo: localStorage.getItem('ce_logo') || '',
   };
 
   try {
     const resp = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, mode, format: 'all', brand: brandPayload }),
     });
-
     clearInterval(stepInterval);
 
+    const data = await resp.json();
+
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ detail: 'Request failed' }));
-      showError(err.detail || 'Something went wrong');
+      const errMsg = data.detail || data.error || 'Unknown error';
+      const tb = data.traceback ? '\n\n' + data.traceback : '';
+      showError(errMsg + tb);
       setButtonsDisabled(false);
       return;
     }
 
-    const data = await resp.json();
     clearStatus();
     showResults(data, mode);
   } catch (e) {
@@ -2371,13 +1790,9 @@ function showResults(data, mode) {
   const viewer = $('carousel-viewer');
   viewer.innerHTML = '';
   data.slides.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'slide-preview';
-    const img = document.createElement('img');
-    img.src = s.data_url;
-    img.alt = s.filename;
-    div.appendChild(img);
-    viewer.appendChild(div);
+    const div = document.createElement('div'); div.className = 'slide-preview';
+    const img = document.createElement('img'); img.src = s.data_url; img.alt = s.filename;
+    div.appendChild(img); viewer.appendChild(div);
   });
 
   $('text-twitter').textContent = data.twitter_thread || '(not available)';
@@ -2387,7 +1802,6 @@ function showResults(data, mode) {
   $('text-caption').textContent = data.caption || '(not available)';
   $('text-ad_copy').textContent = data.ad_copy || '(not available)';
 
-  // Reset tabs
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelector('.tab-btn[data-tab="carousel"]').classList.add('active');
@@ -2395,8 +1809,6 @@ function showResults(data, mode) {
 
   $('results').classList.add('visible');
   $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Refresh history
   loadHistory();
 }
 
@@ -2404,120 +1816,67 @@ function showResults(data, mode) {
 async function generateBulk(mode) {
   const raw = $('bulk-url-input').value.trim();
   if (!raw) { showError('Please paste at least one URL'); return; }
-
   const urls = raw.split('\n').map(u => u.trim()).filter(u => u);
   if (!urls.length) { showError('Please paste at least one URL'); return; }
   if (urls.length > 10) { showError('Maximum 10 URLs per batch'); return; }
 
-  $('results').classList.remove('visible');
-  setButtonsDisabled(true);
-
-  // Show progress tracker
+  $('results').classList.remove('visible'); setButtonsDisabled(true);
   const progress = $('bulk-progress');
   progress.style.display = '';
   progress.innerHTML = urls.map((u, i) => `
     <div class="bulk-progress-item pending" id="bp-${i}">
-      <span class="bp-status">&#9679;</span>
-      <span class="bp-url">${escHtml(u)}</span>
-    </div>
-  `).join('');
+      <span class="bp-status">&#9679;</span><span class="bp-url">${escHtml(u)}</span>
+    </div>`).join('');
 
   const brand = getBrandFromInputs();
-  const brandPayload = {
-    handle: brand.handle,
-    name: brand.name,
-    tagline: brand.tagline,
-    bg_color: brand.bg_color,
-    text_color: brand.text_color,
-    accent_color: brand.accent_color,
-    logo: localStorage.getItem('ce_logo') || '',
-  };
-
-  // Process one by one for live progress
-  const allResults = [];
-  const allErrors = [];
+  const brandPayload = { handle: brand.handle, name: brand.name, tagline: brand.tagline,
+    bg_color: brand.bg_color, text_color: brand.text_color, accent_color: brand.accent_color,
+    logo: localStorage.getItem('ce_logo') || '' };
+  const allResults = [], allErrors = [];
 
   for (let i = 0; i < urls.length; i++) {
     const el = $('bp-' + i);
     el.className = 'bulk-progress-item running';
     el.querySelector('.bp-status').innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>';
-
     try {
       const resp = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urls[i], mode, format: 'all', brand: brandPayload }),
       });
-
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ detail: 'Failed' }));
-        el.className = 'bulk-progress-item error';
-        el.querySelector('.bp-status').textContent = '\u2717';
-        allErrors.push({ url: urls[i], detail: err.detail });
-        continue;
+        el.className = 'bulk-progress-item error'; el.querySelector('.bp-status').textContent = '\u2717';
+        allErrors.push({ url: urls[i], detail: err.detail }); continue;
       }
-
-      const data = await resp.json();
-      data.url = urls[i];
-      allResults.push(data);
-
-      el.className = 'bulk-progress-item done';
-      el.querySelector('.bp-status').textContent = '\u2713';
-      // Show title
-      const titleSpan = document.createElement('span');
-      titleSpan.className = 'bp-title';
-      titleSpan.textContent = ' \u2014 ' + data.title;
-      el.appendChild(titleSpan);
+      const data = await resp.json(); data.url = urls[i]; allResults.push(data);
+      el.className = 'bulk-progress-item done'; el.querySelector('.bp-status').textContent = '\u2713';
+      const ts = document.createElement('span'); ts.className = 'bp-title'; ts.textContent = ' \u2014 ' + data.title; el.appendChild(ts);
     } catch (e) {
-      el.className = 'bulk-progress-item error';
-      el.querySelector('.bp-status').textContent = '\u2717';
+      el.className = 'bulk-progress-item error'; el.querySelector('.bp-status').textContent = '\u2717';
       allErrors.push({ url: urls[i], detail: e.message });
     }
   }
-
-  clearStatus();
-  setButtonsDisabled(false);
+  clearStatus(); setButtonsDisabled(false);
 
   if (allResults.length) {
-    // Show the last result's slides/text, plus a summary
-    const last = allResults[allResults.length - 1];
-    showResults(last, mode);
-
-    // Prepend a summary bar
-    const summary = document.createElement('div');
-    summary.className = 'bulk-results-summary';
-    summary.innerHTML = `
-      <div class="brs-text"><strong>${allResults.length}/${urls.length}</strong> videos processed successfully${allErrors.length ? `, ${allErrors.length} failed` : ''}</div>
-      ${allResults.length > 1 ? `<a class="download-btn" href="#" id="bulk-download-all" style="font-size:0.85rem;padding:8px 16px;">Download All ZIPs</a>` : ''}
-    `;
+    showResults(allResults[allResults.length - 1], mode);
+    const summary = document.createElement('div'); summary.className = 'bulk-results-summary';
+    summary.innerHTML = `<div class="brs-text"><strong>${allResults.length}/${urls.length}</strong> videos processed${allErrors.length ? `, ${allErrors.length} failed` : ''}</div>
+      ${allResults.length > 1 ? `<a class="download-btn" href="#" id="bulk-download-all" style="font-size:0.85rem;padding:8px 16px;">Download All</a>` : ''}`;
     $('results').insertBefore(summary, $('results').firstChild);
-
-    // Bulk download = download each zip sequentially
     if (allResults.length > 1) {
       $('bulk-download-all').addEventListener('click', (e) => {
         e.preventDefault();
-        allResults.forEach(r => {
-          const a = document.createElement('a');
-          a.href = r.zip_url;
-          a.download = '';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        });
+        allResults.forEach(r => { const a = document.createElement('a'); a.href = r.zip_url; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); });
       });
     }
-  } else {
-    showError('All URLs failed to process');
-  }
-
+  } else { showError('All URLs failed to process'); }
   loadHistory();
 }
 
 /* ── Init ────────────────────────────────────────────── */
 const savedBrand = loadBrand();
 populateBrandInputs(savedBrand);
-
-// Auto-show app if URL hash is #app
 if (window.location.hash === '#app') showApp();
 </script>
 </body>

@@ -3,6 +3,7 @@ print("Starting ContentExtractor server...")
 
 import json
 import os
+import traceback
 import uuid
 from pathlib import Path
 
@@ -286,10 +287,13 @@ async def api_generate(req: ExtractRequest):
         return JSONResponse(result)
     except HTTPException:
         raise
-    except RuntimeError as e:
-        raise HTTPException(400, str(e))
     except Exception as e:
-        raise HTTPException(500, f"Internal error: {type(e).__name__}: {str(e)[:200]}")
+        tb = traceback.format_exc()
+        print(f"ERROR in /api/generate: {e}\n{tb}")
+        return JSONResponse(
+            {"detail": f"{type(e).__name__}: {str(e)}", "traceback": tb},
+            status_code=500,
+        )
 
 
 @app.post("/api/generate-bulk")
