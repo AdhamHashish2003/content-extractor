@@ -236,18 +236,58 @@ def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
     )
 
 
-# ── Tier 1: YouTube Native Captions ───────────────────────────────────
+# ── YouTube Transcript (multi-source fallback) ──────────────────────
 
 def _try_youtube_captions(video_id: str) -> str | None:
-    """Attempt to get YouTube captions. Returns transcript text or None."""
+    """Fetch YouTube transcript with multiple fallbacks for cloud servers.
+
+    1. youtube-transcript-api (uses Innertube internally — best option)
+    2. Direct page scrape → extract captionTrack URLs → fetch XML
+    """
+    import html as htmlmod
+    import requests
+
+    # Source 1: youtube-transcript-api (handles Innertube, consent cookies, etc.)
     try:
         api = YouTubeTranscriptApi()
         result = api.fetch(video_id)
         text = " ".join(snippet.text for snippet in result)
         if len(text.split()) >= 50:
+            logger.info("[yt-captions] youtube-transcript-api OK for %s", video_id)
             return text
-    except Exception:
-        pass
+    except Exception as e:
+        logger.info("[yt-captions] youtube-transcript-api failed: %s", e)
+
+    # Source 2: Scrape caption track URLs from page HTML and fetch XML directly
+    try:
+        session = requests.Session()
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        # Set CONSENT cookie to bypass EU consent page
+        session.cookies.set("CONSENT", "YES+1", domain=".youtube.com")
+
+        page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
+        match = re.search(r'"captionTracks":\s*(\[.*?\])', page.text)
+        if match:
+            import json as _json
+            tracks = _json.loads(match.group(1))
+            for track in tracks:
+                base_url = track.get("baseUrl", "")
+                if not base_url:
+                    continue
+                cc_resp = session.get(base_url, timeout=15)
+                if cc_resp.ok and len(cc_resp.text) > 100:
+                    texts = re.findall(r"<text[^>]*>(.*?)</text>", cc_resp.text, re.DOTALL)
+                    clean = [htmlmod.unescape(t).strip() for t in texts if t.strip()]
+                    text = " ".join(clean)
+                    if len(text.split()) >= 50:
+                        logger.info("[yt-captions] direct page scrape OK for %s", video_id)
+                        return text
+    except Exception as e:
+        logger.info("[yt-captions] direct page scrape failed: %s", e)
+
     return None
 
 
