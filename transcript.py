@@ -12,6 +12,7 @@ import os
 import re
 import tempfile
 import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -169,7 +170,7 @@ def _extract_video_id(url: str, platform: Platform) -> str:
     return _extract_generic_id(url)
 
 
-# ── Metadata (yt-dlp --dump-json) ──────────────────────────────────────
+# ── Metadata ─────────────────────────────────────────────────────────
 
 def _format_duration(seconds: int) -> str:
     h, remainder = divmod(seconds, 3600)
@@ -179,40 +180,58 @@ def _format_duration(seconds: int) -> str:
     return f"{m}:{s:02d}"
 
 
-def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
-    """Use yt-dlp Python API for metadata across all platforms."""
-    import yt_dlp
-
-    video_id = _extract_video_id(url, platform)
-
+def _fetch_youtube_metadata(video_id: str) -> dict:
+    """Get YouTube title via simple HTTP request — no yt-dlp, no bot detection."""
     try:
-        opts = {
-            "quiet": True,
-            "no_warnings": True,
-            "skip_download": True,
-            "noplaylist": True,
-        }
+        page_url = f"https://www.youtube.com/watch?v={video_id}"
+        req = urllib.request.Request(page_url, headers={"User-Agent": "Mozilla/5.0"})
+        html = urllib.request.urlopen(req, timeout=10).read().decode("utf-8", errors="ignore")
+        title_match = re.search(r"<title>(.*?)</title>", html)
+        title = title_match.group(1).replace(" - YouTube", "").strip() if title_match else ""
+        author_match = re.search(r'"author":"(.*?)"', html)
+        author = author_match.group(1) if author_match else ""
+        return {"title": title, "author": author}
+    except Exception:
+        return {"title": "", "author": ""}
+
+
+def _fetch_ytdlp_metadata(url: str) -> dict:
+    """Get metadata via yt-dlp Python API — used for non-YouTube platforms only."""
+    try:
+        import yt_dlp
+        opts = {"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True}
         with yt_dlp.YoutubeDL(opts) as ydl:
             data = ydl.extract_info(url, download=False)
+        return {
+            "title": data.get("title") or data.get("description", "")[:80] or "",
+            "duration": int(data.get("duration", 0) or 0),
+            "author": data.get("uploader") or data.get("channel") or "",
+        }
+    except Exception:
+        return {"title": "", "duration": 0, "author": ""}
 
-        title = data.get("title") or data.get("description", "")[:80] or "Untitled"
-        duration = _format_duration(int(data.get("duration", 0) or 0))
-        author = data.get("uploader") or data.get("channel") or ""
+
+def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
+    """Fetch video metadata. YouTube uses HTTP scrape; others use yt-dlp."""
+    video_id = _extract_video_id(url, platform)
+
+    if platform == Platform.YOUTUBE:
+        data = _fetch_youtube_metadata(video_id)
         return VideoMeta(
             video_id=video_id,
-            title=title,
-            duration_str=duration,
-            author=author,
+            title=data.get("title", ""),
+            duration_str="",
+            author=data.get("author", "YouTube"),
             platform=platform,
         )
-    except Exception:
-        pass
 
+    # Non-YouTube: use yt-dlp
+    data = _fetch_ytdlp_metadata(url)
     return VideoMeta(
         video_id=video_id,
-        title="",
-        duration_str="??:??",
-        author="",
+        title=data.get("title", ""),
+        duration_str=_format_duration(data.get("duration", 0)),
+        author=data.get("author", ""),
         platform=platform,
     )
 
@@ -222,8 +241,9 @@ def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
 def _try_youtube_captions(video_id: str) -> str | None:
     """Attempt to get YouTube captions. Returns transcript text or None."""
     try:
-        parts = YouTubeTranscriptApi.get_transcript(video_id)
-        text = " ".join(part["text"] for part in parts)
+        api = YouTubeTranscriptApi()
+        result = api.fetch(video_id)
+        text = " ".join(snippet.text for snippet in result)
         if len(text.split()) >= 50:
             return text
     except Exception:

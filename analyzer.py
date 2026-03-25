@@ -151,7 +151,7 @@ _SYSTEM_MSG = (
 
 
 def _call_nvidia(prompt: str) -> str:
-    """Call NVIDIA NIM API (Kimi K2.5) with 30s timeout."""
+    """Call NVIDIA NIM API (Kimi K2.5) with 60s timeout."""
     api_key = os.getenv("NVIDIA_API_KEY")
     if not api_key:
         raise RuntimeError(
@@ -162,7 +162,7 @@ def _call_nvidia(prompt: str) -> str:
     client = OpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
         api_key=api_key,
-        timeout=30.0,
+        timeout=60.0,
     )
     response = client.chat.completions.create(
         model=NVIDIA_MODEL,

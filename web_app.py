@@ -173,23 +173,28 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
 
     # 2. Fetch transcript
     transcript = None
-    try:
-        if platform == Platform.YOUTUBE:
+    if platform == Platform.YOUTUBE:
+        # YouTube: use captions only (no yt-dlp — blocked on cloud servers)
+        try:
             transcript = await asyncio.wait_for(
                 asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
             )
-    except Exception:
-        transcript = None
-
-    if transcript is None:
+        except Exception:
+            transcript = None
+        if not transcript:
+            raise HTTPException(400,
+                "This YouTube video has no captions available. "
+                "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
+    else:
+        # Non-YouTube: use yt-dlp audio download + Groq Whisper
         try:
             transcript = await asyncio.wait_for(
                 asyncio.to_thread(_groq_pipeline, url), timeout=90
             )
         except asyncio.TimeoutError:
-            raise HTTPException(400, "Step 2 failed: Transcript extraction timed out (90s). Try a YouTube video with captions.")
+            raise HTTPException(400, "Step 2 failed: Transcript extraction timed out (90s).")
         except Exception as e:
-            raise HTTPException(400, f"Step 2 failed: Could not get transcript. Try a YouTube video with captions. ({e})")
+            raise HTTPException(400, f"Step 2 failed: Could not get transcript. ({e})")
 
     if not transcript or len(transcript.split()) < 50:
         raise HTTPException(400, "Step 2 failed: Transcript too short (< 50 words). The video may not have spoken content.")
@@ -204,11 +209,11 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         video_title_for_prompt = meta.title or "this video"
         result = await asyncio.wait_for(
             asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt),
-            timeout=90,
+            timeout=120,
         )
         items = result.items
     except asyncio.TimeoutError:
-        raise HTTPException(400, "Step 3 failed: AI analysis timed out (45s). Try a shorter video.")
+        raise HTTPException(400, "Step 3 failed: AI analysis timed out. Try a shorter video.")
     except Exception as e:
         raise HTTPException(400, f"Step 3 failed: AI content extraction error. {e}")
 
