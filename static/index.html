@@ -1402,12 +1402,24 @@ $('nav-cta').addEventListener('click',e=>{
 });
 
 /* --- Payment success check --- */
-function checkPaymentSuccess(){
+async function checkPaymentSuccess(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('payment')==='success'){
-    showToast('Welcome to Pro! \uD83C\uDF89');
-    refreshUser();
-    // Clean URL
+    const sessionId=params.get('session_id');
+    if(sessionId&&getToken()){
+      try{
+        const r=await fetch('/api/checkout/verify?session_id='+encodeURIComponent(sessionId),{headers:authHeaders()});
+        const d=await r.json();
+        if(d.status==='success'){
+          showToast('Welcome to '+d.plan.charAt(0).toUpperCase()+d.plan.slice(1)+'! \uD83C\uDF89');
+        }else{
+          showToast('Payment is processing...');
+        }
+      }catch{showToast('Payment received!')}
+    }else{
+      showToast('Payment received!');
+    }
+    await refreshUser();
     window.history.replaceState({},'',window.location.pathname+window.location.hash);
   }
 }

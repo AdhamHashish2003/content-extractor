@@ -66,10 +66,12 @@ try:
 
     _STRIPE_SECRET = os.getenv("STRIPE_SECRET_KEY", "")
     _STRIPE_PUB_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
-    _STRIPE_PRO_PRICE = os.getenv("STRIPE_PRO_PRICE_ID", "")
-    _STRIPE_AGENCY_PRICE = os.getenv("STRIPE_AGENCY_PRICE_ID", "")
-    _STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     _JWT_SECRET = os.getenv("JWT_SECRET", "")
+
+    _PLANS = {
+        "pro": {"name": "ContentExtractor AI Pro", "amount": 1900, "interval": "month"},
+        "agency": {"name": "ContentExtractor AI Agency", "amount": 4900, "interval": "month"},
+    }
     _JWT_ALGORITHM = "HS256"
     _JWT_EXPIRE_DAYS = 30
 
@@ -308,58 +310,56 @@ async def create_checkout(request: Request):
 
     body = await request.json()
     plan = body.get("plan", "pro")
-    price_id = _STRIPE_PRO_PRICE if plan == "pro" else _STRIPE_AGENCY_PRICE
-    if not price_id:
-        raise HTTPException(400, "Price not configured")
+    plan_info = _PLANS.get(plan)
+    if not plan_info:
+        raise HTTPException(400, f"Invalid plan: {plan}")
 
     base_url = str(request.base_url).rstrip("/")
     session = _stripe_mod.checkout.Session.create(
         mode="subscription",
         customer_email=user["email"],
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=f"{base_url}?payment=success",
+        line_items=[{
+            "price_data": {
+                "product_data": {"name": plan_info["name"]},
+                "currency": "usd",
+                "unit_amount": plan_info["amount"],
+                "recurring": {"interval": plan_info["interval"]},
+            },
+            "quantity": 1,
+        }],
+        success_url=f"{base_url}?payment=success&session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{base_url}?payment=cancelled",
-        metadata={"user_id": user["id"]},
+        metadata={"user_id": user["id"], "plan": plan},
     )
     return JSONResponse({"checkout_url": session.url})
 
 
-@app.post("/api/webhook/stripe")
-async def stripe_webhook(request: Request):
-    if not _auth_loaded or not _STRIPE_WEBHOOK_SECRET:
-        raise HTTPException(503, "Webhook not configured")
-    payload = await request.body()
-    sig = request.headers.get("stripe-signature", "")
+@app.get("/api/checkout/verify")
+async def verify_checkout(request: Request):
+    """Verify a completed checkout session and activate the plan."""
+    if not _auth_loaded or not _STRIPE_SECRET:
+        raise HTTPException(503, "Payments unavailable")
+    user = _get_current_user(request.headers.get("authorization"))
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    session_id = request.query_params.get("session_id", "")
+    if not session_id:
+        raise HTTPException(400, "Missing session_id")
+
     try:
-        event = _stripe_mod.Webhook.construct_event(payload, sig, _STRIPE_WEBHOOK_SECRET)
+        session = _stripe_mod.checkout.Session.retrieve(session_id)
     except Exception:
-        raise HTTPException(400, "Invalid signature")
+        raise HTTPException(400, "Invalid session")
 
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        user_id = session.get("metadata", {}).get("user_id")
-        if user_id:
-            sub_id = session.get("subscription", "")
-            customer_id = session.get("customer", "")
-            # Determine plan from line items price
-            plan = "pro"
-            if _STRIPE_AGENCY_PRICE:
-                try:
-                    li = _stripe_mod.checkout.Session.list_line_items(session["id"], limit=1)
-                    if li.data and li.data[0].price.id == _STRIPE_AGENCY_PRICE:
-                        plan = "agency"
-                except Exception:
-                    pass
-            db.update_plan(user_id, plan, customer_id, sub_id)
+    if session.payment_status == "paid":
+        plan = session.metadata.get("plan", "pro")
+        customer_id = session.customer or ""
+        sub_id = session.subscription or ""
+        db.update_plan(user["id"], plan, customer_id, sub_id)
+        return JSONResponse({"status": "success", "plan": plan})
 
-    elif event["type"] == "customer.subscription.deleted":
-        sub = event["data"]["object"]
-        customer_id = sub.get("customer", "")
-        user = db.find_user_by_stripe_customer(customer_id)
-        if user:
-            db.cancel_plan(user["id"])
-
-    return JSONResponse({"ok": True})
+    return JSONResponse({"status": "pending"})
 
 
 @app.get("/api/billing/portal")
