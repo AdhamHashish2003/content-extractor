@@ -30,7 +30,7 @@ class Palette:
     accent: str
     text: str
     name: str
-    handle: str = ""       # display handle (e.g. @undercurrenthq)
+    handle: str = ""       # display handle (e.g. @yourbrand)
     body: str = ""         # body text color — falls back to text if empty
     muted: str = ""        # labels, counters, secondary elements
     divider: str = ""      # divider line color — falls back to accent if empty
@@ -43,17 +43,6 @@ LOGOS_DIR.mkdir(exist_ok=True)
 
 
 BRANDS: dict[str, Palette] = {
-    "undercurrent": Palette(
-        bg="#FFFFFF",
-        accent="#2B2B2B",
-        text="#1A1A1A",
-        name="undercurrent",
-        handle="@undercurrenthq",
-        body="#3A3A3A",
-        muted="#6B7280",
-        divider="#2B2B2B",
-        tagline="The force beneath the surface.",
-    ),
     "imperium": Palette(bg="#0A0A0A", accent="#D4AF37", text="#F5F5F5", name="imperium"),
     "general": Palette(bg="#111111", accent="#FF8800", text="#FFFFFF", name="general"),
 }

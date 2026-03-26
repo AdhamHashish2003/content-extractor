@@ -20,7 +20,7 @@ def _split_tweet(text: str, max_len: int = 280) -> str:
     return truncated + "\u2026"
 
 
-def format_twitter_thread(result: "ExtractionResult", handle: str = "@undercurrenthq") -> str:
+def format_twitter_thread(result: "ExtractionResult", handle: str = "") -> str:
     """Numbered Twitter/X thread ready to copy-paste."""
     title = result.carousel_title or "Thread"
     lines = [_split_tweet(f"\U0001f9f5 {title}")]
@@ -29,11 +29,12 @@ def format_twitter_thread(result: "ExtractionResult", handle: str = "@undercurre
         tweet = f"{i}/ {item.headline}\n\n{item.body}"
         lines.append(_split_tweet(tweet))
 
-    lines.append(_split_tweet(f"Follow {handle} for more."))
+    if handle:
+        lines.append(_split_tweet(f"Follow {handle} for more."))
     return "\n\n".join(lines)
 
 
-def format_linkedin_post(result: "ExtractionResult", handle: str = "undercurrenthq") -> str:
+def format_linkedin_post(result: "ExtractionResult", handle: str = "") -> str:
     """LinkedIn-style post with short punchy lines."""
     title = result.carousel_title or "Key insights"
     parts: list[str] = []
@@ -49,8 +50,9 @@ def format_linkedin_post(result: "ExtractionResult", handle: str = "undercurrent
         parts.append("")
 
     # CTA
-    parts.append(f"Follow {handle} for more breakdowns like this.")
-    parts.append("")
+    if handle:
+        parts.append(f"Follow {handle} for more breakdowns like this.")
+        parts.append("")
     parts.append("#ContentStrategy #Insights #SocialMedia #Threads #LinkedIn")
 
     return "\n".join(parts)
@@ -108,7 +110,7 @@ def format_tiktok_script(result: "ExtractionResult") -> str:
     return "\n".join(parts)
 
 
-def format_caption(result: "ExtractionResult", handle: str = "@undercurrenthq") -> str:
+def format_caption(result: "ExtractionResult", handle: str = "") -> str:
     """Instagram caption with hook, body, CTA, and hashtags."""
     parts: list[str] = []
 
@@ -123,8 +125,9 @@ def format_caption(result: "ExtractionResult", handle: str = "@undercurrenthq") 
     parts.append("")
 
     # CTA
-    parts.append(f"Follow {handle} for more.")
-    parts.append("")
+    if handle:
+        parts.append(f"Follow {handle} for more.")
+        parts.append("")
 
     # Hashtags
     hashtags = (
@@ -140,7 +143,7 @@ def format_caption(result: "ExtractionResult", handle: str = "@undercurrenthq") 
     return "\n".join(parts)
 
 
-def format_ad_copy(result: "ExtractionResult", handle: str = "@undercurrenthq") -> str:
+def format_ad_copy(result: "ExtractionResult", handle: str = "") -> str:
     """Platform-ready ad creative copy (Facebook/Instagram/LinkedIn ads)."""
     parts: list[str] = []
     title = result.carousel_title or "Ad Creatives"
@@ -161,7 +164,8 @@ def format_ad_copy(result: "ExtractionResult", handle: str = "@undercurrenthq") 
     parts.append("• Facebook/Instagram: Use Headline + Primary Text as-is")
     parts.append("• LinkedIn: Combine Headline + Primary Text into a single sponsored post")
     parts.append("• Google Ads: Use Headline (max 30 chars) — trim if needed")
-    parts.append(f"• Landing page CTA should reference {handle}")
+    if handle:
+        parts.append(f"• Landing page CTA should reference {handle}")
 
     return "\n".join(parts)
 
@@ -178,7 +182,7 @@ FORMATTERS: dict[str, callable] = {
 }
 
 
-def format_all(result: "ExtractionResult", handle: str = "@undercurrenthq", source_channel: str = "") -> dict[str, str]:
+def format_all(result: "ExtractionResult", handle: str = "", source_channel: str = "") -> dict[str, str]:
     """Run all formatters and return a dict of format_name -> text."""
     return {
         "twitter_thread": format_twitter_thread(result, handle=handle),
