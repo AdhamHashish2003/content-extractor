@@ -514,6 +514,43 @@ class PillowRenderer:
 
 # ── Carousel Builder ───────────────────────────────────────────────────
 
+def _add_watermark(img: Image.Image) -> None:
+    """Stamp 'Made with ContentExtractor AI' at the bottom-right of a slide.
+
+    Uses white at 30% opacity on dark backgrounds, gray at 30% on light ones.
+    Placed above the footer region so it doesn't cover the brand handle.
+    """
+    draw = ImageDraw.Draw(img)
+    text = "Made with ContentExtractor AI"
+    try:
+        font = ImageFont.truetype(str(FONT_REGULAR), 18)
+    except Exception:
+        font = ImageFont.load_default()
+
+    # Sample bg brightness at the watermark area to pick colour
+    sample_x = SLIDE_WIDTH - PAD - 50
+    sample_y = SLIDE_HEIGHT - 160
+    try:
+        pixel = img.getpixel((max(sample_x, 0), max(sample_y, 0)))
+        brightness = (pixel[0] * 299 + pixel[1] * 587 + pixel[2] * 114) / 1000
+    except Exception:
+        brightness = 0
+
+    fill = (255, 255, 255, 77) if brightness < 128 else (120, 120, 120, 77)
+
+    # Convert to RGBA to support alpha text
+    base = img.convert("RGBA")
+    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    bbox = font.getbbox(text)
+    tw = bbox[2] - bbox[0]
+    x = SLIDE_WIDTH - PAD - tw
+    y = SLIDE_HEIGHT - 155
+    od.text((x, y), text, font=font, fill=fill)
+    composited = Image.alpha_composite(base, overlay)
+    img.paste(composited.convert("RGB"), (0, 0))
+
+
 def generate_carousel(
     items: list[ExtractedItem],
     video_title: str,
@@ -524,6 +561,7 @@ def generate_carousel(
     source: str = "",
     title_image: Path | None = None,
     content_images: list[Path | None] | None = None,
+    watermark: bool = False,
 ) -> list[Path]:
     """Generate all slides and save to output_dir. Returns list of saved paths."""
     if renderer is None:
@@ -549,6 +587,8 @@ def generate_carousel(
         content_img = renderer.render_content(
             item, i + 1, total_slides, content_type, palette, bg
         )
+        if watermark:
+            _add_watermark(content_img)
         path = output_dir / f"slide_{i + 2:02d}.png"
         content_img.save(path, "PNG")
         content_img.close()

@@ -382,6 +382,63 @@ img{max-width:100%;display:block}
 .copy-btn.copied{color:var(--success);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
 
 /* ============================================================
+   AUTH MODAL
+   ============================================================ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:36px 32px;width:100%;max-width:420px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:fadeUp .3s ease}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted)}
+.modal h2{font-size:1.3rem;font-weight:800;margin-bottom:20px;text-align:center}
+.auth-tabs{display:flex;gap:0;margin-bottom:20px;border-radius:100px;overflow:hidden;border:1px solid var(--card-border)}
+.auth-tab{flex:1;padding:10px;text-align:center;background:#fff;border:none;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--text-muted);font-family:'Inter',sans-serif;transition:all .2s}
+.auth-tab.active{background:var(--primary-gradient);color:#fff}
+.auth-form{display:none}.auth-form.active{display:block}
+.auth-field{margin-bottom:14px}
+.auth-field label{display:block;font-size:.8rem;font-weight:600;color:var(--text-body);margin-bottom:4px}
+.auth-field input{width:100%;padding:12px 14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);font-size:.9rem;font-family:'Inter',sans-serif;color:var(--text)}
+.auth-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.auth-submit{width:100%;padding:14px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:700;font-size:.95rem;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;transition:transform .2s}
+.auth-submit:hover{transform:scale(1.02)}
+.auth-error{color:var(--error);font-size:.8rem;margin-top:8px;text-align:center;min-height:20px}
+
+/* User nav dropdown */
+.nav-user{position:relative;display:none;align-items:center}
+.nav-user-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:100px;background:var(--primary-light);border:1px solid rgba(124,58,237,.2);color:var(--primary);font-weight:600;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif}
+.nav-user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,.1);min-width:200px;display:none;z-index:1001}
+.nav-user-dropdown.open{display:block}
+.nav-user-dropdown .nud-item{display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;font-size:.85rem;cursor:pointer;color:var(--text-body);font-family:'Inter',sans-serif;transition:background .2s}
+.nav-user-dropdown .nud-item:hover{background:var(--surface)}
+.nav-user-dropdown .nud-item.nud-plan{font-weight:600;color:var(--primary);cursor:default}
+.nav-user-dropdown .nud-item.nud-plan:hover{background:transparent}
+.nav-user-dropdown .nud-divider{height:1px;background:var(--card-border);margin:4px 0}
+.nav-user-dropdown .nud-item.nud-logout{color:var(--error)}
+
+/* Upgrade modal */
+.upgrade-body{text-align:center;padding:10px 0}
+.upgrade-body h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.upgrade-body p{color:var(--text-body);font-size:.9rem;margin-bottom:20px}
+.upgrade-actions{display:flex;flex-direction:column;gap:10px}
+.upgrade-actions .btn-primary{justify-content:center}
+.upgrade-dismiss{background:none;border:none;color:var(--text-muted);font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px}
+
+/* Signup banner */
+.signup-banner{display:none;padding:12px 20px;background:var(--primary-light);border:1px solid rgba(124,58,237,.15);border-radius:var(--radius-sm);text-align:center;font-size:.85rem;color:var(--text-body);margin-bottom:20px;cursor:pointer}
+.signup-banner:hover{background:rgba(124,58,237,.12)}
+.signup-banner strong{color:var(--primary);font-weight:600}
+
+/* Bulk lock badge */
+.bulk-lock{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;color:var(--text-muted);cursor:help}
+.bulk-lock::before{content:'\1F512'}
+
+/* Watermark badge */
+.watermark-badge{display:none;font-size:.7rem;color:var(--text-muted);margin-top:6px}
+.watermark-badge.visible{display:block}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:14px 28px;border-radius:100px;background:var(--success);color:#fff;font-weight:600;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:3000;animation:fadeUp .3s ease;pointer-events:none}
+.toast.hidden{display:none}
+
+/* ============================================================
    MOBILE
    ============================================================ */
 @media(max-width:768px){
@@ -431,7 +488,16 @@ img{max-width:100%;display:block}
       <li><a href="#faq">FAQ</a></li>
       <li class="mobile-only"><a href="#app" onclick="showApp();closeMobileMenu();return false;">Try Free</a></li>
     </ul>
-    <a href="#app" class="nav-cta" onclick="showApp();return false;">Try Free &rarr;</a>
+    <a href="#app" class="nav-cta" id="nav-cta" onclick="showApp();return false;">Try Free &rarr;</a>
+    <div class="nav-user" id="nav-user">
+      <button class="nav-user-btn" id="nav-user-btn"></button>
+      <div class="nav-user-dropdown" id="nav-user-dropdown">
+        <div class="nud-item nud-plan" id="nud-plan">Free Plan</div>
+        <div class="nud-divider"></div>
+        <button class="nud-item" id="nud-manage">Manage Subscription</button>
+        <button class="nud-item nud-logout" id="nud-logout">Log Out</button>
+      </div>
+    </div>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">&#9776;</button>
   </div>
 </nav>
@@ -460,7 +526,7 @@ img{max-width:100%;display:block}
       <div class="hero-trust">
         <span>Free forever</span>
         <span class="separator">&middot;</span>
-        <span>No signup required</span>
+        <span>No credit card required</span>
         <span class="separator">&middot;</span>
         <span>9 AI modes</span>
       </div>
@@ -647,7 +713,7 @@ img{max-width:100%;display:block}
           <li>Twitter threads &amp; LinkedIn posts</li>
           <li>Instagram captions</li>
         </ul>
-        <a href="#app" class="btn-outline" onclick="showApp();return false;">Start Free &rarr;</a>
+        <a href="#" class="btn-outline" onclick="handlePricingClick('free');return false;">Start Free &rarr;</a>
       </div>
       <!-- Pro -->
       <div class="pricing-card featured">
@@ -664,7 +730,7 @@ img{max-width:100%;display:block}
           <li>All 6 output formats</li>
           <li>Priority processing</li>
         </ul>
-        <a href="#app" class="btn-primary" onclick="showApp();return false;">Get Pro &rarr;</a>
+        <a href="#" class="btn-primary" onclick="handlePricingClick('pro');return false;">Get Pro &rarr;</a>
       </div>
       <!-- Agency -->
       <div class="pricing-card">
@@ -676,7 +742,7 @@ img{max-width:100%;display:block}
           <li>API access (coming soon)</li>
           <li>Priority support</li>
         </ul>
-        <a href="#app" class="btn-outline" onclick="showApp();return false;">Contact Us &rarr;</a>
+        <a href="#" class="btn-outline" onclick="handlePricingClick('agency');return false;">Contact Us &rarr;</a>
       </div>
     </div>
   </div>
@@ -735,6 +801,9 @@ img{max-width:100%;display:block}
   <div class="container">
     <div class="app-header"><h2>AI <span class="gradient-text">Content Extraction</span></h2><p>Paste a video URL and choose your AI extraction mode</p></div>
 
+    <!-- Signup Banner (shown for non-logged-in users) -->
+    <div class="signup-banner" id="signup-banner" onclick="openAuthModal()"><strong>Sign up free</strong> to save history and unlock Pro features</div>
+
     <!-- Brand Settings -->
     <div class="brand-panel">
       <button class="brand-toggle" id="brand-toggle"><span>Brand Settings <span class="brand-summary" id="brand-summary"></span></span><span class="chevron" id="chevron">&#9660;</span></button>
@@ -774,7 +843,7 @@ img{max-width:100%;display:block}
       <label>Video URL</label>
       <div class="url-mode-toggle">
         <button class="url-mode-btn active" id="url-mode-single">Single URL</button>
-        <button class="url-mode-btn" id="url-mode-bulk">Bulk (up to 10)</button>
+        <button class="url-mode-btn" id="url-mode-bulk">Bulk (up to 10) <span class="bulk-lock" id="bulk-lock" title="Pro feature">PRO</span></button>
       </div>
       <div id="single-url-wrap">
         <input type="url" class="url-input" id="url-input" placeholder="Paste any video URL here...">
@@ -842,6 +911,53 @@ img{max-width:100%;display:block}
     </div>
   </div>
 </section>
+
+<!-- ============================================================
+     AUTH MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <button class="modal-close" id="auth-modal-close">&times;</button>
+    <h2>Welcome to ContentExtractor</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="signup">Sign Up</button>
+      <button class="auth-tab" data-auth-tab="login">Log In</button>
+    </div>
+    <form class="auth-form active" id="auth-form-signup" onsubmit="return false">
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com" required></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="Min 6 characters" minlength="6" required></div>
+      <div class="auth-field"><label>Confirm Password</label><input type="password" id="signup-confirm" placeholder="Confirm password" minlength="6" required></div>
+      <button class="auth-submit" id="signup-btn" type="submit">Create Account</button>
+      <div class="auth-error" id="signup-error"></div>
+    </form>
+    <form class="auth-form" id="auth-form-login" onsubmit="return false">
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" required></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="Password" required></div>
+      <button class="auth-submit" id="login-btn" type="submit">Log In</button>
+      <div class="auth-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     UPGRADE MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal">
+    <button class="modal-close" id="upgrade-modal-close">&times;</button>
+    <div class="upgrade-body">
+      <h3>You've used your 3 free extractions today</h3>
+      <p>Upgrade to Pro for unlimited extractions, no watermark, bulk processing, and more.</p>
+      <div class="upgrade-actions">
+        <button class="btn-primary" id="upgrade-pro-btn">Upgrade to Pro &mdash; $19/mo</button>
+        <button class="upgrade-dismiss" id="upgrade-dismiss">Come back tomorrow</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast hidden" id="toast"></div>
 
 <!-- ============================================================
      FOOTER
@@ -1058,10 +1174,15 @@ async function generate(mode){
   const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},4000);
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,mode,format:'all',brand:bp,num_items:selectedSlideCount})});
+    const hdrs={'Content-Type':'application/json',...authHeaders()};
+    const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify({url,mode,format:'all',brand:bp,num_items:selectedSlideCount})});
     clearInterval(iv);const d=await r.json();
-    if(!r.ok){showError(d.detail||'Something went wrong. Please try again.');setButtonsDisabled(false);return}
+    if(!r.ok){
+      if(d.limit_reached){setButtonsDisabled(false);openUpgradeModal();return}
+      showError(d.detail||'Something went wrong. Please try again.');setButtonsDisabled(false);return;
+    }
     clearStatus();showResults(d,mode);
+    if(currentUser)refreshUser();
   }catch(e){clearInterval(iv);showError('Network error — please check your connection and try again.')}
   setButtonsDisabled(false);
 }
@@ -1113,12 +1234,18 @@ async function generateBulk(mode){
   $('results').classList.remove('visible');setButtonsDisabled(true);
   const pr=$('bulk-progress');pr.style.display='';
   pr.innerHTML=urls.map((u,i)=>`<div class="bulk-progress-item pending" id="bp-${i}"><span class="bp-status">&#9679;</span><span class="bp-url">${escHtml(u)}</span></div>`).join('');
+  // Bulk requires pro/agency
+  if(!currentUser||currentUser.plan==='free'){
+    showError('Bulk processing requires a Pro or Agency plan.');setButtonsDisabled(false);
+    if(!currentUser)openAuthModal('signup');else openUpgradeModal();return;
+  }
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   const ar=[],ae=[];
   for(let i=0;i<urls.length;i++){
     const el=$('bp-'+i);el.className='bulk-progress-item running';el.querySelector('.bp-status').innerHTML='<div class="spinner"></div>';
     try{
-      const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:urls[i],mode,format:'all',brand:bp,num_items:selectedSlideCount})});
+      const hdrs={'Content-Type':'application/json',...authHeaders()};
+      const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify({url:urls[i],mode,format:'all',brand:bp,num_items:selectedSlideCount})});
       if(!r.ok){const e=await r.json().catch(()=>({detail:'Failed'}));el.className='bulk-progress-item error';el.querySelector('.bp-status').textContent='\u2717';ae.push({url:urls[i],detail:e.detail});continue}
       const d=await r.json();d.url=urls[i];ar.push(d);
       el.className='bulk-progress-item done';el.querySelector('.bp-status').textContent='\u2713';
@@ -1136,9 +1263,160 @@ async function generateBulk(mode){
   loadHistory();
 }
 
+/* ================================================================
+   AUTH & PAYMENTS
+   ================================================================ */
+let currentUser=null; // {email, plan, daily_usage, can_extract}
+
+function getToken(){return localStorage.getItem('ce_token')}
+function setToken(t){localStorage.setItem('ce_token',t)}
+function clearToken(){localStorage.removeItem('ce_token')}
+function authHeaders(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{}}
+
+/* --- Toast --- */
+function showToast(msg,dur=3000){const t=$('toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),dur)}
+
+/* --- Auth modal --- */
+function openAuthModal(tab){
+  $('auth-modal').classList.add('open');
+  if(tab)switchAuthTab(tab);
+}
+function closeAuthModal(){$('auth-modal').classList.remove('open')}
+function switchAuthTab(t){
+  document.querySelectorAll('.auth-tab').forEach(b=>{b.classList.toggle('active',b.dataset.authTab===t)});
+  document.querySelectorAll('.auth-form').forEach(f=>{f.classList.toggle('active',f.id==='auth-form-'+t)});
+  $('signup-error').textContent='';$('login-error').textContent='';
+}
+$('auth-modal-close').addEventListener('click',closeAuthModal);
+$('auth-modal').addEventListener('click',e=>{if(e.target===$('auth-modal'))closeAuthModal()});
+document.querySelectorAll('.auth-tab').forEach(b=>{b.addEventListener('click',()=>switchAuthTab(b.dataset.authTab))});
+
+/* --- Signup --- */
+$('auth-form-signup').addEventListener('submit',async()=>{
+  const email=$('signup-email').value.trim(),pw=$('signup-password').value,confirm=$('signup-confirm').value;
+  $('signup-error').textContent='';
+  if(pw!==confirm){$('signup-error').textContent='Passwords do not match';return}
+  if(pw.length<6){$('signup-error').textContent='Password must be at least 6 characters';return}
+  try{
+    const r=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok){$('signup-error').textContent=d.detail||'Signup failed';return}
+    setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');
+  }catch(e){$('signup-error').textContent='Network error'}
+});
+
+/* --- Login --- */
+$('auth-form-login').addEventListener('submit',async()=>{
+  const email=$('login-email').value.trim(),pw=$('login-password').value;
+  $('login-error').textContent='';
+  try{
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok){$('login-error').textContent=d.detail||'Login failed';return}
+    setToken(d.token);closeAuthModal();await refreshUser();showToast('Welcome back!');
+  }catch(e){$('login-error').textContent='Network error'}
+});
+
+/* --- Refresh user info --- */
+async function refreshUser(){
+  const t=getToken();
+  if(!t){currentUser=null;updateNavForUser();return}
+  try{
+    const r=await fetch('/api/auth/me',{headers:authHeaders()});
+    if(!r.ok){clearToken();currentUser=null;updateNavForUser();return}
+    currentUser=await r.json();
+  }catch{currentUser=null}
+  updateNavForUser();
+}
+
+/* --- Update nav based on auth state --- */
+function updateNavForUser(){
+  const cta=$('nav-cta'),usr=$('nav-user'),btn=$('nav-user-btn'),plan=$('nud-plan'),banner=$('signup-banner'),lock=$('bulk-lock');
+  if(currentUser){
+    cta.style.display='none';usr.style.display='flex';
+    btn.textContent=currentUser.email;
+    const planLabel=currentUser.plan.charAt(0).toUpperCase()+currentUser.plan.slice(1);
+    plan.textContent='My Plan: '+planLabel;
+    banner.style.display='none';
+    lock.style.display=currentUser.plan==='free'?'':'none';
+  }else{
+    cta.style.display='';usr.style.display='none';
+    banner.style.display='block';
+    lock.style.display='';
+  }
+}
+
+/* --- User dropdown --- */
+$('nav-user-btn').addEventListener('click',e=>{e.stopPropagation();$('nav-user-dropdown').classList.toggle('open')});
+document.addEventListener('click',()=>$('nav-user-dropdown').classList.remove('open'));
+$('nud-logout').addEventListener('click',()=>{clearToken();currentUser=null;updateNavForUser();showToast('Logged out')});
+$('nud-manage').addEventListener('click',async()=>{
+  if(!currentUser||!getToken())return;
+  try{
+    const r=await fetch('/api/billing/portal',{headers:authHeaders()});
+    const d=await r.json();
+    if(r.ok&&d.portal_url)window.location.href=d.portal_url;
+    else showToast('No active subscription');
+  }catch{showToast('Could not open billing portal')}
+});
+
+/* --- Upgrade modal --- */
+function openUpgradeModal(){$('upgrade-modal').classList.add('open')}
+function closeUpgradeModal(){$('upgrade-modal').classList.remove('open')}
+$('upgrade-modal-close').addEventListener('click',closeUpgradeModal);
+$('upgrade-modal').addEventListener('click',e=>{if(e.target===$('upgrade-modal'))closeUpgradeModal()});
+$('upgrade-dismiss').addEventListener('click',closeUpgradeModal);
+$('upgrade-pro-btn').addEventListener('click',async()=>{
+  closeUpgradeModal();
+  await startCheckout('pro');
+});
+
+/* --- Checkout --- */
+async function startCheckout(plan){
+  if(!getToken()){openAuthModal('signup');return}
+  try{
+    const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({plan})});
+    const d=await r.json();
+    if(r.ok&&d.checkout_url)window.location.href=d.checkout_url;
+    else showToast(d.detail||'Could not start checkout');
+  }catch{showToast('Network error')}
+}
+
+/* --- Pricing buttons --- */
+function handlePricingClick(plan){
+  if(plan==='free'){
+    if(!currentUser)openAuthModal('signup');
+    else showApp();
+  }else if(plan==='agency'){
+    window.location.href='mailto:hello@contentextractor.ai?subject=Agency%20Plan%20Inquiry';
+  }else{
+    if(!currentUser)openAuthModal('signup');
+    else startCheckout(plan);
+  }
+}
+
+/* --- Nav CTA click → open auth modal if we have auth --- */
+$('nav-cta').addEventListener('click',e=>{
+  // If auth is available and user is not logged in, show auth modal
+  // Otherwise fall through to showApp()
+});
+
+/* --- Payment success check --- */
+function checkPaymentSuccess(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('payment')==='success'){
+    showToast('Welcome to Pro! \uD83C\uDF89');
+    refreshUser();
+    // Clean URL
+    window.history.replaceState({},'',window.location.pathname+window.location.hash);
+  }
+}
+
 /* --- INIT --- */
 populateBrandInputs(loadBrand());
 if(window.location.hash==='#app')showApp();
+refreshUser();
+checkPaymentSuccess();
 </script>
 </body>
 </html>

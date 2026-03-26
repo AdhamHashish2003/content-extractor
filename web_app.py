@@ -15,7 +15,9 @@ from dotenv import load_dotenv
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(_env_path)
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Request
+import re
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Header
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -54,6 +56,29 @@ try:
 except Exception as _import_err:
     print(f"WARNING: Some imports failed: {_import_err}")
     _deps_loaded = False
+
+# ── Auth / Stripe imports ────────────────────────────────────────────
+try:
+    import stripe as _stripe_mod
+    from jose import jwt, JWTError
+
+    import database as db
+
+    _STRIPE_SECRET = os.getenv("STRIPE_SECRET_KEY", "")
+    _STRIPE_PUB_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+    _STRIPE_PRO_PRICE = os.getenv("STRIPE_PRO_PRICE_ID", "")
+    _STRIPE_AGENCY_PRICE = os.getenv("STRIPE_AGENCY_PRICE_ID", "")
+    _STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    _JWT_SECRET = os.getenv("JWT_SECRET", "")
+    _JWT_ALGORITHM = "HS256"
+    _JWT_EXPIRE_DAYS = 30
+
+    if _STRIPE_SECRET:
+        _stripe_mod.api_key = _STRIPE_SECRET
+    _auth_loaded = True
+except Exception as _auth_err:
+    print(f"WARNING: Auth/Stripe imports failed: {_auth_err}")
+    _auth_loaded = False
 
 # ── Startup key check (warn but don't exit) ──────────────────────────
 print(f"NVIDIA_API_KEY loaded: {bool(os.getenv('NVIDIA_API_KEY'))}")
@@ -168,13 +193,200 @@ async def index():
     return HTMLResponse(html_path.read_text())
 
 
+# ── Auth helpers ──────────────────────────────────────────────────────
+
+def _create_jwt(user_id: str, email: str) -> str:
+    from datetime import timedelta
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(days=_JWT_EXPIRE_DAYS),
+    }
+    return jwt.encode(payload, _JWT_SECRET, algorithm=_JWT_ALGORITHM)
+
+
+def _decode_jwt(token: str) -> dict | None:
+    """Decode a JWT token. Returns payload dict or None on failure."""
+    try:
+        return jwt.decode(token, _JWT_SECRET, algorithms=[_JWT_ALGORITHM])
+    except JWTError:
+        return None
+
+
+def _get_current_user(authorization: str | None) -> dict | None:
+    """Extract user from Authorization header. Returns user dict or None."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization[7:]
+    payload = _decode_jwt(token)
+    if not payload:
+        return None
+    return db.get_user_by_id(payload["sub"])
+
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+# ── Auth endpoints ───────────────────────────────────────────────────
+
+@app.post("/api/auth/signup")
+async def auth_signup(request: Request):
+    if not _auth_loaded:
+        raise HTTPException(503, "Auth system unavailable")
+    body = await request.json()
+    email = (body.get("email") or "").strip()
+    password = body.get("password") or ""
+
+    if not email or not _EMAIL_RE.match(email):
+        raise HTTPException(400, "Invalid email address")
+    if len(password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+
+    try:
+        user = db.create_user(email, password)
+    except ValueError:
+        raise HTTPException(409, "Email already registered")
+
+    token = _create_jwt(user["id"], user["email"])
+    return JSONResponse({
+        "token": token,
+        "user": {"email": user["email"], "plan": user["plan"]},
+    })
+
+
+@app.post("/api/auth/login")
+async def auth_login(request: Request):
+    if not _auth_loaded:
+        raise HTTPException(503, "Auth system unavailable")
+    body = await request.json()
+    email = (body.get("email") or "").strip()
+    password = body.get("password") or ""
+
+    user = db.get_user_by_email(email)
+    if not user or not db.verify_password(password, user["password_hash"]):
+        raise HTTPException(401, "Invalid email or password")
+
+    token = _create_jwt(user["id"], user["email"])
+    return JSONResponse({
+        "token": token,
+        "user": {"email": user["email"], "plan": user["plan"]},
+    })
+
+
+@app.get("/api/auth/me")
+async def auth_me(request: Request):
+    if not _auth_loaded:
+        raise HTTPException(503, "Auth system unavailable")
+    user = _get_current_user(request.headers.get("authorization"))
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    usage = db.get_daily_usage(user["id"])
+    can_extract = db.check_can_extract(user["id"])
+    return JSONResponse({
+        "email": user["email"],
+        "plan": user["plan"],
+        "daily_usage": usage,
+        "can_extract": can_extract,
+    })
+
+
+# ── Stripe endpoints ─────────────────────────────────────────────────
+
+@app.get("/api/config/stripe")
+async def stripe_config():
+    """Return the publishable key for the frontend."""
+    return JSONResponse({"publishable_key": _STRIPE_PUB_KEY if _auth_loaded else ""})
+
+
+@app.post("/api/checkout")
+async def create_checkout(request: Request):
+    if not _auth_loaded or not _STRIPE_SECRET:
+        raise HTTPException(503, "Payments unavailable")
+    user = _get_current_user(request.headers.get("authorization"))
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    body = await request.json()
+    plan = body.get("plan", "pro")
+    price_id = _STRIPE_PRO_PRICE if plan == "pro" else _STRIPE_AGENCY_PRICE
+    if not price_id:
+        raise HTTPException(400, "Price not configured")
+
+    base_url = str(request.base_url).rstrip("/")
+    session = _stripe_mod.checkout.Session.create(
+        mode="subscription",
+        customer_email=user["email"],
+        line_items=[{"price": price_id, "quantity": 1}],
+        success_url=f"{base_url}?payment=success",
+        cancel_url=f"{base_url}?payment=cancelled",
+        metadata={"user_id": user["id"]},
+    )
+    return JSONResponse({"checkout_url": session.url})
+
+
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    if not _auth_loaded or not _STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(503, "Webhook not configured")
+    payload = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    try:
+        event = _stripe_mod.Webhook.construct_event(payload, sig, _STRIPE_WEBHOOK_SECRET)
+    except Exception:
+        raise HTTPException(400, "Invalid signature")
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("metadata", {}).get("user_id")
+        if user_id:
+            sub_id = session.get("subscription", "")
+            customer_id = session.get("customer", "")
+            # Determine plan from line items price
+            plan = "pro"
+            if _STRIPE_AGENCY_PRICE:
+                try:
+                    li = _stripe_mod.checkout.Session.list_line_items(session["id"], limit=1)
+                    if li.data and li.data[0].price.id == _STRIPE_AGENCY_PRICE:
+                        plan = "agency"
+                except Exception:
+                    pass
+            db.update_plan(user_id, plan, customer_id, sub_id)
+
+    elif event["type"] == "customer.subscription.deleted":
+        sub = event["data"]["object"]
+        customer_id = sub.get("customer", "")
+        user = db.find_user_by_stripe_customer(customer_id)
+        if user:
+            db.cancel_plan(user["id"])
+
+    return JSONResponse({"ok": True})
+
+
+@app.get("/api/billing/portal")
+async def billing_portal(request: Request):
+    if not _auth_loaded or not _STRIPE_SECRET:
+        raise HTTPException(503, "Payments unavailable")
+    user = _get_current_user(request.headers.get("authorization"))
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+    if not user.get("stripe_customer_id"):
+        raise HTTPException(400, "No active subscription")
+
+    base_url = str(request.base_url).rstrip("/")
+    session = _stripe_mod.billing_portal.Session.create(
+        customer=user["stripe_customer_id"],
+        return_url=base_url,
+    )
+    return JSONResponse({"portal_url": session.url})
+
+
 # ── Pipeline helpers (run sync code in thread) ─────────────────────────
 
 _PIPELINE_TIMEOUT = 120  # seconds
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False) -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -290,6 +502,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     generate_carousel, items=items, video_title=title_display,
                     content_type=content_type, palette=palette, output_dir=output_path,
                     source=meta.author, title_image=title_image, content_images=content_images,
+                    watermark=watermark,
                 )
             except Exception as e:
                 raise HTTPException(500, f"Slide generation error. {e}")
@@ -377,6 +590,26 @@ async def api_generate(req: ExtractRequest, request: Request):
             {"detail": "We're experiencing high demand. Please try again in a minute."},
             status_code=429,
         )
+
+    # ── Plan enforcement ──
+    watermark = True  # default for anonymous / free
+    user = None
+    if _auth_loaded:
+        user = _get_current_user(request.headers.get("authorization"))
+    if user:
+        plan = user.get("plan", "free")
+        if plan in ("pro", "agency"):
+            watermark = False
+        else:
+            # free plan — check daily limit
+            if not db.check_can_extract(user["id"]):
+                return JSONResponse(
+                    {"detail": "Daily limit reached. Upgrade to Pro for unlimited extractions.",
+                     "limit_reached": True},
+                    status_code=429,
+                )
+    # anonymous users get watermark but no limit check (IP rate limit still applies)
+
     start_time = time.time()
     # Concurrency gate — return 503 immediately if all slots are busy
     try:
@@ -387,7 +620,11 @@ async def api_generate(req: ExtractRequest, request: Request):
             status_code=503,
         )
     try:
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items)
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark)
+        # Increment usage for logged-in users
+        if user and _auth_loaded:
+            db.increment_daily_usage(user["id"])
+        result["watermark"] = watermark
         elapsed = time.time() - start_time
         logger.info("OK ip=%s url=%s mode=%s items=%d time=%.1fs", ip, req.url[:80], req.mode, req.num_items, elapsed)
         return JSONResponse(result)
@@ -412,6 +649,17 @@ async def api_generate_bulk(req: BulkExtractRequest, request: Request):
             {"detail": "We're experiencing high demand. Please try again in a minute."},
             status_code=429,
         )
+
+    # ── Require pro/agency for bulk ──
+    user = None
+    if _auth_loaded:
+        user = _get_current_user(request.headers.get("authorization"))
+    if not user or user.get("plan", "free") not in ("pro", "agency"):
+        return JSONResponse(
+            {"detail": "Upgrade to Pro for bulk processing."},
+            status_code=403,
+        )
+
     urls = [u.strip() for u in req.urls if u.strip()]
     if not urls:
         raise HTTPException(400, "No URLs provided")
