@@ -160,31 +160,7 @@ class BulkExtractRequest(BaseModel):
     brand: BrandSettings | None = None
 
 
-# ── History store ─────────────────────────────────────────────────────
-
-HISTORY_FILE = DATA_DIR / "history.json"
-_MAX_HISTORY = 100
-
-
-def _load_history() -> list[dict]:
-    if not HISTORY_FILE.exists():
-        return []
-    try:
-        return json.loads(HISTORY_FILE.read_text())
-    except (json.JSONDecodeError, OSError):
-        return []
-
-
-def _save_history(entries: list[dict]) -> None:
-    HISTORY_FILE.write_text(json.dumps(entries, indent=2))
-
-
-def _add_history_entry(entry: dict) -> None:
-    history = _load_history()
-    history.insert(0, entry)
-    if len(history) > _MAX_HISTORY:
-        history = history[:_MAX_HISTORY]
-    _save_history(history)
+# ── History (now in database) ─────────────────────────────────────────
 
 
 # ── Main page ──────────────────────────────────────────────────────────
@@ -386,7 +362,7 @@ _PIPELINE_TIMEOUT = 120  # seconds
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None) -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -556,13 +532,14 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         # 10. Save to history (non-fatal)
         try:
             thumb_b64 = slides_data[0]["data_url"] if slides_data else ""
-            _add_history_entry({
-                "job_id": job_id, "url": url, "title": title_display,
-                "source": meta.author or "", "platform": platform_label, "mode": mode,
-                "item_count": len(items), "slide_count": len(slide_paths),
-                "zip_url": f"/downloads/{zip_name}" if zip_name else "", "thumbnail": thumb_b64,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            })
+            if _auth_loaded:
+                db.add_extraction({
+                    "job_id": job_id, "user_id": user_id, "url": url, "title": title_display,
+                    "source": meta.author or "", "platform": platform_label, "mode": mode,
+                    "item_count": len(items), "slide_count": len(slide_paths),
+                    "zip_url": f"/downloads/{zip_name}" if zip_name else "", "thumbnail": thumb_b64,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                })
         except Exception:
             pass
 
@@ -620,7 +597,8 @@ async def api_generate(req: ExtractRequest, request: Request):
             status_code=503,
         )
     try:
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark)
+        _uid = user["id"] if user else None
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid)
         # Increment usage for logged-in users
         if user and _auth_loaded:
             db.increment_daily_usage(user["id"])
@@ -725,20 +703,22 @@ async def download_file(filename: str):
 
 @app.get("/api/history")
 async def get_history():
-    return JSONResponse(_load_history())
+    if _auth_loaded:
+        return JSONResponse(db.get_history())
+    return JSONResponse([])
 
 
 @app.delete("/api/history")
 async def clear_history():
-    _save_history([])
+    if _auth_loaded:
+        db.clear_history()
     return {"ok": True}
 
 
 @app.delete("/api/history/{job_id}")
 async def delete_history_entry(job_id: str):
-    history = _load_history()
-    history = [e for e in history if e.get("job_id") != job_id]
-    _save_history(history)
+    if _auth_loaded:
+        db.delete_extraction(job_id)
     return {"ok": True}
 
 
