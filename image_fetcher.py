@@ -25,6 +25,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 _MAX_IMG_WIDTH = 1080
+_MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB — skip oversized images
 
 
 def _resize_if_large(path: Path) -> Path:
@@ -81,6 +82,9 @@ def _fetch_ddg(query: str) -> Path | None:
                 for chunk in resp.iter_content(8192):
                     tmp.write(chunk)
                 tmp.close()
+                if Path(tmp.name).stat().st_size > _MAX_IMAGE_SIZE:
+                    Path(tmp.name).unlink(missing_ok=True)
+                    continue
                 _resize_if_large(Path(tmp.name))
                 logger.debug("[ddg] OK for '%s': %s", query, tmp.name)
                 return Path(tmp.name)
@@ -132,6 +136,9 @@ def _fetch_bing(query: str) -> Path | None:
                 for chunk in img_resp.iter_content(8192):
                     tmp.write(chunk)
                 tmp.close()
+                if Path(tmp.name).stat().st_size > _MAX_IMAGE_SIZE:
+                    Path(tmp.name).unlink(missing_ok=True)
+                    continue
                 _resize_if_large(Path(tmp.name))
                 logger.debug("[bing] OK for '%s': %s", query, tmp.name)
                 return Path(tmp.name)
@@ -164,8 +171,8 @@ def fetch_image(query: str) -> Path | None:
 
 # ── Parallel fetcher ───────────────────────────────────────────────────
 
-_TOTAL_TIMEOUT = 30   # wall-clock seconds for all images
-_PER_IMAGE_TIMEOUT = 15  # max seconds per individual image
+_TOTAL_TIMEOUT = 20   # wall-clock seconds for all images
+_PER_IMAGE_TIMEOUT = 8   # max seconds per individual image
 
 
 def fetch_images_parallel(
@@ -204,3 +211,13 @@ def fetch_images_parallel(
     logger.info("Images fetched: %d/%d (%d fallback to white)", success, total, failed)
 
     return results
+
+
+def cleanup_temp_images(paths: list[Path | None]) -> None:
+    """Remove temp image files after they've been used for slide generation."""
+    for p in paths:
+        if p is not None:
+            try:
+                Path(p).unlink(missing_ok=True)
+            except Exception:
+                pass

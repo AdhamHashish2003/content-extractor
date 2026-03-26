@@ -61,7 +61,11 @@ def _divider_color(p: Palette) -> str:
     return p.divider or p.accent
 
 def _handle_text(p: Palette) -> str:
-    return p.handle or f"@{p.name}"
+    if p.handle:
+        return p.handle
+    if p.name:
+        return f"@{p.name}"
+    return ""
 
 def _tagline_text(p: Palette) -> str:
     return p.tagline or "Save this post  ·  Share with a friend"
@@ -81,7 +85,8 @@ def _dim_color(hex_color: str, factor: float) -> str:
 def _load_and_cover_crop(image_path: Path) -> Image.Image | None:
     """Load an image, resize to cover 1080x1350, center-crop."""
     try:
-        img = Image.open(image_path).convert("RGB")
+        with Image.open(image_path) as raw:
+            img = raw.convert("RGB")
     except Exception:
         return None
 
@@ -232,19 +237,25 @@ class PillowRenderer:
 
     def _load_logo(self, palette: Palette, max_height: int = 40) -> Image.Image | None:
         """Load and resize the brand logo if one is set."""
+        print(f"[LOGO] logo_path={palette.logo_path!r}")
         if not palette.logo_path:
+            print("[LOGO] No logo_path set on palette")
             return None
         logo_file = Path(palette.logo_path)
         if not logo_file.exists():
+            print(f"[LOGO] File not found: {logo_file}")
             return None
         try:
-            logo = Image.open(logo_file).convert("RGBA")
+            with Image.open(logo_file) as raw:
+                logo = raw.convert("RGBA")
             # Scale to max_height while keeping aspect ratio
             ratio = max_height / logo.height
             new_w = int(logo.width * ratio)
             logo = logo.resize((new_w, max_height), Image.LANCZOS)
+            print(f"[LOGO] Loaded OK: {new_w}x{max_height}")
             return logo
-        except Exception:
+        except Exception as e:
+            print(f"[LOGO] Failed to load: {e}")
             return None
 
     def _paste_logo(self, img: Image.Image, logo: Image.Image, x: int, y: int) -> None:
@@ -258,21 +269,36 @@ class PillowRenderer:
 
     def _draw_footer(self, draw: ImageDraw.Draw, img: Image.Image, palette: Palette) -> None:
         """White-bg footer: dark divider + logo/handle."""
+        handle = _handle_text(palette)
+        logo = self._load_logo(palette)
+        has_content = logo or handle
+        if not has_content:
+            return
         line_y = SLIDE_HEIGHT - 130
         draw.line(
             [(PAD, line_y), (SLIDE_WIDTH - PAD, line_y)],
             fill=_divider_color(palette),
             width=1,
         )
-        logo = self._load_logo(palette)
-        if logo:
+        if logo and handle:
+            logo_x = (SLIDE_WIDTH - logo.width) // 2
+            logo_y = SLIDE_HEIGHT - 100 - logo.height // 2
+            self._paste_logo(img, logo, logo_x, logo_y)
+            draw.text(
+                (SLIDE_WIDTH // 2, SLIDE_HEIGHT - 55),
+                handle,
+                font=self.font_handle,
+                fill=_muted_color(palette),
+                anchor="mm",
+            )
+        elif logo:
             logo_x = (SLIDE_WIDTH - logo.width) // 2
             logo_y = SLIDE_HEIGHT - 80 - logo.height // 2
             self._paste_logo(img, logo, logo_x, logo_y)
-        else:
+        elif handle:
             draw.text(
                 (SLIDE_WIDTH // 2, SLIDE_HEIGHT - 80),
-                _handle_text(palette),
+                handle,
                 font=self.font_handle,
                 fill=_muted_color(palette),
                 anchor="mm",
@@ -280,28 +306,35 @@ class PillowRenderer:
 
     def _draw_footer_on_image(self, draw: ImageDraw.Draw, img: Image.Image, palette: Palette) -> None:
         """Image-bg footer: white divider at 30% + logo/handle."""
+        handle = _handle_text(palette)
+        logo = self._load_logo(palette)
+        has_content = logo or handle
+        if not has_content:
+            return
         line_y = SLIDE_HEIGHT - 130
-        # White at 30% opacity on dark bg → ~77/255
         draw.line(
             [(PAD, line_y), (SLIDE_WIDTH - PAD, line_y)],
             fill=(255, 255, 255, 77),
             width=1,
         )
-        logo = self._load_logo(palette)
-        if logo:
+        if logo and handle:
+            logo_x = (SLIDE_WIDTH - logo.width) // 2
+            logo_y = SLIDE_HEIGHT - 100 - logo.height // 2
+            self._paste_logo(img, logo, logo_x, logo_y)
+            _draw_text_shadow(
+                draw, (SLIDE_WIDTH // 2, SLIDE_HEIGHT - 55), handle,
+                font=self.font_handle, fill="#FFFFFF", anchor="mm",
+                shadow_offset=1, shadow_opacity=0.3,
+            )
+        elif logo:
             logo_x = (SLIDE_WIDTH - logo.width) // 2
             logo_y = SLIDE_HEIGHT - 80 - logo.height // 2
             self._paste_logo(img, logo, logo_x, logo_y)
-        else:
+        elif handle:
             _draw_text_shadow(
-                draw,
-                (SLIDE_WIDTH // 2, SLIDE_HEIGHT - 80),
-                _handle_text(palette),
-                font=self.font_handle,
-                fill="#FFFFFF",
-                anchor="mm",
-                shadow_offset=1,
-                shadow_opacity=0.3,
+                draw, (SLIDE_WIDTH // 2, SLIDE_HEIGHT - 80), handle,
+                font=self.font_handle, fill="#FFFFFF", anchor="mm",
+                shadow_offset=1, shadow_opacity=0.3,
             )
 
     # ── Title Slide ────────────────────────────────────────────────────
@@ -449,24 +482,31 @@ class PillowRenderer:
 
     def render_cta(self, palette: Palette) -> Image.Image:
         img, draw = self._new_canvas(palette)
-
         handle = _handle_text(palette)
-        cta_text = f"Follow {handle}"
-        draw.text(
-            (SLIDE_WIDTH // 2, SLIDE_HEIGHT // 2 - 30),
-            cta_text,
-            font=self.font_cta_main,
-            fill=palette.text,
-            anchor="mm",
-        )
+        tagline = _tagline_text(palette)
+        logo = self._load_logo(palette, max_height=60)
+        cy = SLIDE_HEIGHT // 2
 
-        draw.text(
-            (SLIDE_WIDTH // 2, SLIDE_HEIGHT // 2 + 50),
-            _tagline_text(palette),
-            font=self.font_cta_sub,
-            fill=_muted_color(palette),
-            anchor="mm",
-        )
+        if logo and handle:
+            logo_x = (SLIDE_WIDTH - logo.width) // 2
+            self._paste_logo(img, logo, logo_x, cy - 80)
+            draw.text((SLIDE_WIDTH // 2, cy + 10), f"Follow {handle}",
+                       font=self.font_cta_main, fill=palette.text, anchor="mm")
+            draw.text((SLIDE_WIDTH // 2, cy + 80), tagline,
+                       font=self.font_cta_sub, fill=_muted_color(palette), anchor="mm")
+        elif logo:
+            logo_x = (SLIDE_WIDTH - logo.width) // 2
+            self._paste_logo(img, logo, logo_x, cy - 40)
+            draw.text((SLIDE_WIDTH // 2, cy + 50), tagline,
+                       font=self.font_cta_sub, fill=_muted_color(palette), anchor="mm")
+        elif handle:
+            draw.text((SLIDE_WIDTH // 2, cy - 30), f"Follow {handle}",
+                       font=self.font_cta_main, fill=palette.text, anchor="mm")
+            draw.text((SLIDE_WIDTH // 2, cy + 50), tagline,
+                       font=self.font_cta_sub, fill=_muted_color(palette), anchor="mm")
+        else:
+            draw.text((SLIDE_WIDTH // 2, cy), tagline,
+                       font=self.font_cta_sub, fill=_muted_color(palette), anchor="mm")
 
         self._draw_footer(draw, img, palette)
         return img
@@ -499,6 +539,7 @@ def generate_carousel(
     )
     path = output_dir / "slide_01_title.png"
     title_img.save(path, "PNG")
+    title_img.close()
     saved.append(path)
 
     # Content slides
@@ -510,12 +551,14 @@ def generate_carousel(
         )
         path = output_dir / f"slide_{i + 2:02d}.png"
         content_img.save(path, "PNG")
+        content_img.close()
         saved.append(path)
 
     # CTA slide
     cta_img = renderer.render_cta(palette)
     path = output_dir / f"slide_{total_slides:02d}_cta.png"
     cta_img.save(path, "PNG")
+    cta_img.close()
     saved.append(path)
 
     return saved

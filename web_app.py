@@ -2,9 +2,12 @@
 print("Starting ContentExtractor server...")
 
 import json
+import logging
 import os
+import time
 import traceback
 import uuid
+from collections import defaultdict
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -12,10 +15,13 @@ from dotenv import load_dotenv
 _env_path = Path(__file__).parent / ".env"
 load_dotenv(_env_path)
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+logger = logging.getLogger("contentextractor")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 app = FastAPI(title="ContentExtractor")
 
@@ -36,13 +42,14 @@ try:
     import zipfile
     from datetime import datetime, timezone
 
-    from config import BRANDS, CONTENT_TYPES, OUTPUT_DIR, LOGOS_DIR, DATA_DIR, Palette
+    from config import BRANDS, DEFAULT_BRAND, CONTENT_TYPES, OUTPUT_DIR, LOGOS_DIR, DATA_DIR, Palette
     from transcript import detect_platform, fetch_metadata, _try_youtube_captions, _groq_pipeline, PLATFORM_LABELS, Platform
     from analyzer import extract_content  # also registers extra content types
-    from image_fetcher import fetch_images_parallel
+    from image_fetcher import fetch_images_parallel, cleanup_temp_images
     from designer import generate_carousel
     from output_formatter import format_all
 
+    _generation_sem = asyncio.Semaphore(5)
     _deps_loaded = True
 except Exception as _import_err:
     print(f"WARNING: Some imports failed: {_import_err}")
@@ -71,9 +78,9 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # ── Request / Response models ──────────────────────────────────────────
 
 class BrandSettings(BaseModel):
-    handle: str = "@undercurrenthq"
-    name: str = "UndercurrentHQ"
-    tagline: str = "The force beneath the surface."
+    handle: str = ""
+    name: str = ""
+    tagline: str = ""
     bg_color: str = "#0A0A0A"
     text_color: str = "#FFFFFF"
     accent_color: str = "#8B5CF6"
@@ -84,6 +91,39 @@ class ExtractRequest(BaseModel):
     mode: str = "facts"
     format: str = "carousel"
     brand: BrandSettings | None = None
+    num_items: int = 5
+
+
+# ── Rate limiting & concurrency ─────────────────────────────────────
+_rate_limits: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT_MAX = 10
+_RATE_LIMIT_WINDOW = 3600  # 1 hour
+
+TEXT_ONLY_MODES = {"summary", "hooks"}
+
+
+def _check_rate_limit(ip: str) -> bool:
+    """Return True if request is allowed."""
+    now = time.time()
+    _rate_limits[ip] = [t for t in _rate_limits[ip] if now - t < _RATE_LIMIT_WINDOW]
+    if len(_rate_limits[ip]) >= _RATE_LIMIT_MAX:
+        return False
+    _rate_limits[ip].append(now)
+    return True
+
+
+def _friendly_error(detail: str) -> str:
+    """Map technical errors to user-friendly messages."""
+    d = detail.lower()
+    if "no captions" in d or "could not get transcript" in d:
+        return "This video doesn't have captions available. Try a different video."
+    if "ratelimit" in d:
+        return "We're experiencing high demand. Please try again in a minute."
+    if "timeout" in d or "timed out" in d:
+        return "Processing took too long. Try a shorter video."
+    if "transcript too short" in d:
+        return "This video doesn't have enough spoken content. Try a different video."
+    return "Something went wrong. Please try again."
 
 
 class BulkExtractRequest(BaseModel):
@@ -134,7 +174,7 @@ _PIPELINE_TIMEOUT = 120  # seconds
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5) -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -144,11 +184,14 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         raise HTTPException(400, f"Invalid mode: {mode}. Use: {valid}")
 
     content_type = CONTENT_TYPES[mode]
+    num_items = max(3, min(7, num_items))
+    is_text_only = mode in TEXT_ONLY_MODES
 
     if brand:
         logo_path = ""
         if brand.logo:
             logo_file = LOGOS_DIR / brand.logo
+            print(f"[PIPELINE] Logo filename from request: {brand.logo!r}, full path: {logo_file}, exists: {logo_file.exists()}")
             if logo_file.exists():
                 logo_path = str(logo_file)
         palette = Palette(
@@ -156,176 +199,219 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             name=brand.name, handle=brand.handle, tagline=brand.tagline, logo_path=logo_path,
         )
     else:
-        palette = BRANDS["undercurrent"]
+        palette = BRANDS.get(DEFAULT_BRAND, list(BRANDS.values())[0])
 
-    # 1. Detect platform + fetch metadata
+    # Track temp files for cleanup
+    temp_image_files: list[Path | None] = []
+
     try:
-        platform = detect_platform(url)
-        meta = await asyncio.wait_for(
-            asyncio.to_thread(fetch_metadata, url, platform), timeout=30
-        )
-    except asyncio.TimeoutError:
-        raise HTTPException(400, "Step 1 failed: Metadata fetch timed out (30s). Check the URL.")
-    except Exception as e:
-        raise HTTPException(400, f"Step 1 failed: Could not fetch video metadata. {e}")
-
-    title_display = meta.title or "Untitled Video"
-
-    # 2. Fetch transcript
-    transcript = None
-    if platform == Platform.YOUTUBE:
-        # YouTube: use captions only (no yt-dlp — blocked on cloud servers)
+        # 1. Detect platform + fetch metadata
         try:
-            transcript = await asyncio.wait_for(
-                asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
-            )
-        except Exception:
-            transcript = None
-        if not transcript:
-            raise HTTPException(400,
-                "This YouTube video has no captions available. "
-                "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
-    else:
-        # Non-YouTube: use yt-dlp audio download + Groq Whisper
-        try:
-            transcript = await asyncio.wait_for(
-                asyncio.to_thread(_groq_pipeline, url), timeout=90
+            platform = detect_platform(url)
+            meta = await asyncio.wait_for(
+                asyncio.to_thread(fetch_metadata, url, platform), timeout=30
             )
         except asyncio.TimeoutError:
-            raise HTTPException(400, "Step 2 failed: Transcript extraction timed out (90s).")
+            raise HTTPException(400, "Metadata fetch timed out. Check the URL.")
         except Exception as e:
-            raise HTTPException(400, f"Step 2 failed: Could not get transcript. ({e})")
+            raise HTTPException(400, f"Could not fetch video metadata. {e}")
 
-    if not transcript or len(transcript.split()) < 50:
-        raise HTTPException(400, "Step 2 failed: Transcript too short (< 50 words). The video may not have spoken content.")
+        title_display = meta.title or "Untitled Video"
 
-    # Truncate to avoid LLM token limits
-    words = transcript.split()
-    if len(words) > _MAX_TRANSCRIPT_WORDS:
-        transcript = " ".join(words[:_MAX_TRANSCRIPT_WORDS])
+        # 2. Fetch transcript
+        transcript = None
+        if platform == Platform.YOUTUBE:
+            try:
+                transcript = await asyncio.wait_for(
+                    asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
+                )
+            except Exception:
+                transcript = None
+            if not transcript:
+                raise HTTPException(400,
+                    "This YouTube video has no captions available. "
+                    "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
+        else:
+            try:
+                transcript = await asyncio.wait_for(
+                    asyncio.to_thread(_groq_pipeline, url), timeout=90
+                )
+            except asyncio.TimeoutError:
+                raise HTTPException(400, "Transcript extraction timed out.")
+            except Exception as e:
+                raise HTTPException(400, f"Could not get transcript. ({e})")
 
-    # 3. Extract content via LLM
-    try:
-        video_title_for_prompt = meta.title or "this video"
-        result = await asyncio.wait_for(
-            asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt),
-            timeout=120,
-        )
-        items = result.items
-    except asyncio.TimeoutError:
-        raise HTTPException(400, "Step 3 failed: AI analysis timed out. Try a shorter video.")
-    except Exception as e:
-        raise HTTPException(400, f"Step 3 failed: AI content extraction error. {e}")
+        if not transcript or len(transcript.split()) < 50:
+            raise HTTPException(400, "Transcript too short (< 50 words). The video may not have spoken content.")
 
-    # 4. Fetch background images (non-fatal — skip all on failure)
-    title_image = None
-    content_images = [None] * len(items)
-    try:
-        queries = [result.title_image_query] + [item.image_query for item in items]
-        image_paths = await asyncio.wait_for(
-            asyncio.to_thread(fetch_images_parallel, queries), timeout=35
-        )
-        title_image = image_paths[0]
-        content_images = image_paths[1:]
-    except Exception as e:
-        print(f"WARNING: Image fetching failed, using white fallback: {e}")
+        words = transcript.split()
+        if len(words) > _MAX_TRANSCRIPT_WORDS:
+            transcript = " ".join(words[:_MAX_TRANSCRIPT_WORDS])
 
-    # 5. Generate slides
-    try:
-        job_id = str(uuid.uuid4())[:8]
-        output_path = OUTPUT_DIR / job_id / content_type.key
-        slide_paths = await asyncio.to_thread(
-            generate_carousel, items=items, video_title=title_display,
-            content_type=content_type, palette=palette, output_dir=output_path,
-            source=meta.author, title_image=title_image, content_images=content_images,
-        )
-    except Exception as e:
-        raise HTTPException(500, f"Step 5 failed: Slide generation error. {e}")
-
-    # 6. Create ZIP
-    zip_name = f"{job_id}.zip"
-    zip_path = DOWNLOADS_DIR / zip_name
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        for sp in slide_paths:
-            zf.write(sp, sp.name)
-
-    # 7. Build slide previews as base64
-    slides_data = []
-    for sp in slide_paths:
-        with open(sp, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode()
-        slides_data.append({"filename": sp.name, "data_url": f"data:image/png;base64,{b64}"})
-
-    # 8. Generate text formats
-    text_formats = {}
-    if output_format != "carousel":
+        # 3. Extract content via LLM
         try:
-            source_channel = meta.author or ""
-            handle = palette.handle or f"@{palette.name}"
-            all_formats = format_all(result, handle=handle, source_channel=source_channel)
-            if output_format == "all":
-                text_formats = all_formats
-            else:
-                key_map = {"twitter": "twitter_thread", "linkedin": "linkedin_post",
-                           "newsletter": "newsletter", "tiktok": "tiktok_script",
-                           "caption": "caption", "ad_copy": "ad_copy"}
-                fk = key_map.get(output_format)
-                if fk and fk in all_formats:
-                    text_formats = {fk: all_formats[fk]}
+            video_title_for_prompt = meta.title or "this video"
+            result = await asyncio.wait_for(
+                asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt, num_items),
+                timeout=120,
+            )
+            items = result.items
+        except asyncio.TimeoutError:
+            raise HTTPException(400, "AI analysis timed out. Try a shorter video.")
         except Exception as e:
-            print(f"WARNING: Text format generation failed: {e}")
+            raise HTTPException(400, f"AI content extraction error. {e}")
 
-    # 9. Schedule cleanup after 1 hour
-    async def _cleanup():
-        await asyncio.sleep(3600)
-        shutil.rmtree(output_path.parent, ignore_errors=True)
-        zip_path.unlink(missing_ok=True)
-    asyncio.create_task(_cleanup())
+        job_id = str(uuid.uuid4())[:8]
+        slides_data = []
+        slide_paths = []
+        zip_name = ""
+        zip_path = None
+        output_path = None
 
-    platform_label = PLATFORM_LABELS.get(platform, "Unknown")
+        if not is_text_only:
+            # 4. Fetch background images (non-fatal)
+            title_image = None
+            content_images = [None] * len(items)
+            try:
+                queries = [result.title_image_query] + [item.image_query for item in items]
+                image_paths = await asyncio.wait_for(
+                    asyncio.to_thread(fetch_images_parallel, queries), timeout=25
+                )
+                temp_image_files = list(image_paths)
+                title_image = image_paths[0]
+                content_images = image_paths[1:]
+            except Exception as e:
+                logger.warning("Image fetching failed, using white fallback: %s", e)
 
-    # 10. Save to history (non-fatal)
-    try:
-        thumb_b64 = slides_data[0]["data_url"] if slides_data else ""
-        _add_history_entry({
-            "job_id": job_id, "url": url, "title": title_display,
-            "source": meta.author or "", "platform": platform_label, "mode": mode,
-            "item_count": len(items), "slide_count": len(slide_paths),
-            "zip_url": f"/downloads/{zip_name}", "thumbnail": thumb_b64,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
-    except Exception:
-        pass
+            # 5. Generate slides
+            try:
+                output_path = OUTPUT_DIR / job_id / content_type.key
+                slide_paths = await asyncio.to_thread(
+                    generate_carousel, items=items, video_title=title_display,
+                    content_type=content_type, palette=palette, output_dir=output_path,
+                    source=meta.author, title_image=title_image, content_images=content_images,
+                )
+            except Exception as e:
+                raise HTTPException(500, f"Slide generation error. {e}")
 
-    response = {
-        "title": title_display, "source": meta.author, "platform": platform_label,
-        "item_count": len(items), "slides": slides_data, "zip_url": f"/downloads/{zip_name}",
-    }
-    response.update(text_formats)
-    return response
+            # 6. Create ZIP
+            zip_name = f"{job_id}.zip"
+            zip_path = DOWNLOADS_DIR / zip_name
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for sp in slide_paths:
+                    zf.write(sp, sp.name)
+
+            # 7. Build slide previews as base64
+            for sp in slide_paths:
+                with open(sp, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode()
+                slides_data.append({"filename": sp.name, "data_url": f"data:image/png;base64,{b64}"})
+
+        # 8. Generate text formats
+        text_formats = {}
+        if output_format != "carousel" or is_text_only:
+            try:
+                source_channel = meta.author or ""
+                handle = palette.handle or (f"@{palette.name}" if palette.name else "")
+                all_formats = format_all(result, handle=handle, source_channel=source_channel)
+                if output_format == "all" or is_text_only:
+                    text_formats = all_formats
+                else:
+                    key_map = {"twitter": "twitter_thread", "linkedin": "linkedin_post",
+                               "newsletter": "newsletter", "tiktok": "tiktok_script",
+                               "caption": "caption", "ad_copy": "ad_copy"}
+                    fk = key_map.get(output_format)
+                    if fk and fk in all_formats:
+                        text_formats = {fk: all_formats[fk]}
+            except Exception as e:
+                logger.warning("Text format generation failed: %s", e)
+
+        # 9. Schedule cleanup after 1 hour
+        if output_path or zip_path:
+            _output_path = output_path
+            _zip_path = zip_path
+            async def _cleanup():
+                await asyncio.sleep(3600)
+                if _output_path:
+                    shutil.rmtree(_output_path.parent, ignore_errors=True)
+                if _zip_path:
+                    _zip_path.unlink(missing_ok=True)
+            asyncio.create_task(_cleanup())
+
+        platform_label = PLATFORM_LABELS.get(platform, "Unknown")
+
+        # 10. Save to history (non-fatal)
+        try:
+            thumb_b64 = slides_data[0]["data_url"] if slides_data else ""
+            _add_history_entry({
+                "job_id": job_id, "url": url, "title": title_display,
+                "source": meta.author or "", "platform": platform_label, "mode": mode,
+                "item_count": len(items), "slide_count": len(slide_paths),
+                "zip_url": f"/downloads/{zip_name}" if zip_name else "", "thumbnail": thumb_b64,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception:
+            pass
+
+        response = {
+            "title": title_display, "source": meta.author, "platform": platform_label,
+            "item_count": len(items), "slides": slides_data,
+            "zip_url": f"/downloads/{zip_name}" if zip_name else "",
+            "has_slides": not is_text_only,
+        }
+        response.update(text_formats)
+        return response
+
+    finally:
+        # Clean up temp image files from fetcher
+        cleanup_temp_images(temp_image_files)
 
 
 # ── API endpoints ──────────────────────────────────────────────────────
 
 @app.post("/api/generate")
-async def api_generate(req: ExtractRequest):
-    try:
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand)
-        return JSONResponse(result)
-    except HTTPException:
-        raise
-    except Exception as e:
-        tb = traceback.format_exc()
-        print(f"ERROR in /api/generate: {e}\n{tb}")
+async def api_generate(req: ExtractRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip):
         return JSONResponse(
-            {"detail": f"{type(e).__name__}: {str(e)}", "traceback": tb},
-            status_code=500,
+            {"detail": "We're experiencing high demand. Please try again in a minute."},
+            status_code=429,
         )
+    start_time = time.time()
+    # Concurrency gate — return 503 immediately if all slots are busy
+    try:
+        await asyncio.wait_for(_generation_sem.acquire(), timeout=0.5)
+    except (asyncio.TimeoutError, Exception):
+        return JSONResponse(
+            {"detail": "Server busy, please try again in a moment."},
+            status_code=503,
+        )
+    try:
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items)
+        elapsed = time.time() - start_time
+        logger.info("OK ip=%s url=%s mode=%s items=%d time=%.1fs", ip, req.url[:80], req.mode, req.num_items, elapsed)
+        return JSONResponse(result)
+    except HTTPException as e:
+        elapsed = time.time() - start_time
+        logger.warning("FAIL ip=%s url=%s mode=%s time=%.1fs err=%s", ip, req.url[:80], req.mode, elapsed, e.detail[:120])
+        return JSONResponse({"detail": _friendly_error(e.detail)}, status_code=e.status_code)
+    except Exception as e:
+        elapsed = time.time() - start_time
+        logger.error("ERROR ip=%s url=%s mode=%s time=%.1fs", ip, req.url[:80], req.mode, elapsed, exc_info=True)
+        return JSONResponse({"detail": "Something went wrong. Please try again."}, status_code=500)
+    finally:
+        _generation_sem.release()
 
 
 @app.post("/api/generate-bulk")
-async def api_generate_bulk(req: BulkExtractRequest):
+async def api_generate_bulk(req: BulkExtractRequest, request: Request):
     """Process multiple URLs sequentially, return combined results."""
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip):
+        return JSONResponse(
+            {"detail": "We're experiencing high demand. Please try again in a minute."},
+            status_code=429,
+        )
     urls = [u.strip() for u in req.urls if u.strip()]
     if not urls:
         raise HTTPException(400, "No URLs provided")

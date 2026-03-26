@@ -58,7 +58,7 @@ BRANDS: dict[str, Palette] = {
     "general": Palette(bg="#111111", accent="#FF8800", text="#FFFFFF", name="general"),
 }
 
-DEFAULT_BRAND = "undercurrent"
+DEFAULT_BRAND = "general"
 
 # ── Content types ─────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ CONTENT_TYPES: dict[str, ContentType] = {
 
 # ── Slide constraints ─────────────────────────────────────────────────
 MIN_ITEMS = 1   # minimum content items (title + CTA added separately → 3 total)
-MAX_ITEMS = 5   # maximum content items (title + CTA added separately → 7 total)
+MAX_ITEMS = 7   # maximum content items (title + CTA added separately → 9 total)
 
 # ── Platforms ─────────────────────────────────────────────────────────
 

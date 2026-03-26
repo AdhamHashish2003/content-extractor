@@ -93,12 +93,12 @@ class ExtractedItem:
     image_query: str = ""
 
 
-def _build_prompt(content_type: ContentType, transcript: str, video_title: str) -> str:
+def _build_prompt(content_type: ContentType, transcript: str, video_title: str, num_items: int = 5) -> str:
     mode_instruction = MODE_PROMPTS.get(content_type.key, MODE_PROMPTS["facts"])
 
     return f"""You are an expert content analyst for social media.
 
-Analyze this video transcript and extract the {MIN_ITEMS} to {MAX_ITEMS} most compelling {content_type.label.lower()} from it.
+Analyze this video transcript and extract exactly {num_items} compelling {content_type.label.lower()} from it.
 
 Video title: "{video_title}"
 
@@ -109,7 +109,7 @@ MODE-SPECIFIC INSTRUCTIONS:
 {mode_instruction}
 
 GENERAL RULES:
-- Extract between {MIN_ITEMS} and {MAX_ITEMS} items (aim for {MAX_ITEMS} if the content supports it)
+- Return exactly {num_items} items
 - Each item must be rewritten to be punchy, concise, and social-media-ready
 - "headline" = a bold 3-8 word hook (no period at end)
 - "body" = 1-2 sentences max, clear and impactful
@@ -218,9 +218,11 @@ def extract_content(
     content_type: ContentType,
     transcript: str,
     video_title: str,
+    num_items: int = 5,
 ) -> ExtractionResult:
     """Extract structured content — Kimi K2.5 primary, Groq Llama fallback."""
-    prompt = _build_prompt(content_type, transcript, video_title)
+    num_items = max(3, min(7, num_items))
+    prompt = _build_prompt(content_type, transcript, video_title, num_items)
     raw = _call_llm(prompt)
 
     # Strip markdown bold/italic that models sometimes inject into JSON values
@@ -242,7 +244,7 @@ def extract_content(
         raise RuntimeError("Model returned no items.")
 
     # Enforce bounds
-    items_raw = items_raw[:MAX_ITEMS]
+    items_raw = items_raw[:num_items]
 
     items = [
         ExtractedItem(

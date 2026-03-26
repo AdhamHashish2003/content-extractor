@@ -333,6 +333,14 @@ img{max-width:100%;display:block}
 .mode-btn.mode-featured{background:var(--primary-light);border-left-color:var(--primary)}
 .mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--primary-gradient);font-size:.55rem;font-weight:700;color:#fff}
 
+/* Slide Count Selector */
+.slide-count-group{margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.slide-count-group label{font-size:.85rem;font-weight:600;color:var(--text)}
+.count-pills{display:flex;gap:6px}
+.count-pill{width:40px;height:36px;border-radius:var(--radius-xs);background:#fff;border:1px solid var(--card-border);color:var(--text-body);font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.count-pill:hover{border-color:var(--primary);color:var(--primary)}
+.count-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
 /* Status */
 .status-area{margin-bottom:20px;min-height:32px}
 .status-steps{padding:14px 18px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--card-border)}
@@ -340,7 +348,7 @@ img{max-width:100%;display:block}
 .status-step.active{color:var(--primary)}.status-step.done{color:var(--success)}.status-step.error{color:var(--error)}
 .status-step .step-icon{width:18px;text-align:center;flex-shrink:0}
 .status-msg{display:flex;align-items:flex-start;gap:10px;padding:14px 18px;border-radius:var(--radius-sm);background:var(--primary-light);border:1px solid rgba(124,58,237,.15);font-size:.9rem;color:var(--text-body)}
-.status-msg.error{background:#FEF2F2;border-color:rgba(239,68,68,.2);color:var(--error);white-space:pre-wrap;font-size:.8rem;font-family:'JetBrains Mono',monospace}
+.status-msg.error{background:#FEF2F2;border-color:rgba(239,68,68,.2);color:var(--error);font-size:.9rem;font-family:'Inter',sans-serif;display:flex;align-items:flex-start;gap:10px}
 .spinner{width:16px;height:16px;border:2px solid rgba(124,58,237,.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -461,17 +469,17 @@ img{max-width:100%;display:block}
     <div class="hero-samples fade-in">
       <div class="hero-sample-card">
         <div class="hc-label">FACT 01</div>
-        <div class="hc-title">Iran Controls Oil Chokepoint</div>
-        <div class="hc-subtitle">Strait of Hormuz</div>
+        <div class="hc-title">5 Key Insights From This Video</div>
+        <div class="hc-subtitle">AI-generated carousel</div>
       </div>
       <div class="hero-sample-card">
         <div class="hc-label">FACT 02</div>
-        <div class="hc-title">World's Largest Gas Field Attacked</div>
-        <div class="hc-subtitle">South Pars / North Dome</div>
+        <div class="hc-title">The Most Important Takeaway</div>
+        <div class="hc-subtitle">Ready to post</div>
       </div>
       <div class="hero-sample-card">
-        <div class="hc-label">Follow @undercurrenthq</div>
-        <div class="hc-title">The force beneath the surface.</div>
+        <div class="hc-label">Follow @yourbrand</div>
+        <div class="hc-title">Your tagline here</div>
       </div>
     </div>
   </div>
@@ -732,9 +740,9 @@ img{max-width:100%;display:block}
       <button class="brand-toggle" id="brand-toggle"><span>Brand Settings <span class="brand-summary" id="brand-summary"></span></span><span class="chevron" id="chevron">&#9660;</span></button>
       <div class="brand-body" id="brand-body">
         <div class="brand-grid">
-          <div class="brand-field"><label>Handle</label><input type="text" id="brand-handle" placeholder="@yourhandle"></div>
-          <div class="brand-field"><label>Brand Name</label><input type="text" id="brand-name" placeholder="Your Brand"></div>
-          <div class="brand-field full-width"><label>Tagline</label><input type="text" id="brand-tagline" placeholder="Your tagline here..."></div>
+          <div class="brand-field"><label>Handle</label><input type="text" id="brand-handle" placeholder="@yourbrand"></div>
+          <div class="brand-field"><label>Brand Name</label><input type="text" id="brand-name" placeholder="Your Brand Name"></div>
+          <div class="brand-field full-width"><label>Tagline</label><input type="text" id="brand-tagline" placeholder="Your tagline"></div>
           <div class="brand-field full-width"><label>Color Theme</label><select id="brand-theme"><option value="dark">Dark</option><option value="light">Light</option><option value="ocean">Ocean</option><option value="fire">Fire</option><option value="custom">Custom</option></select></div>
           <div class="custom-colors" id="custom-colors">
             <div class="brand-field"><label>Background</label><div class="color-field"><input type="color" id="brand-bg-picker" value="#0A0A0A"><input type="text" id="brand-bg" value="#0A0A0A"></div></div>
@@ -792,6 +800,18 @@ img{max-width:100%;display:block}
       <button class="mode-btn cat-teal" data-mode="takeaways"><span class="mode-icon">&#9989;</span><span class="mode-label">Takeaways</span><span class="mode-desc">Actionable items</span></button>
       <button class="mode-btn cat-teal" data-mode="counterarguments"><span class="mode-icon">&#9876;&#65039;</span><span class="mode-label">Counter</span><span class="mode-desc">Opposing arguments</span></button>
       <button class="mode-btn mode-featured cat-teal" data-mode="ad_creatives"><span class="mode-new-badge">NEW</span><span class="mode-icon">&#128226;</span><span class="mode-label">Ad Creatives</span><span class="mode-desc">Paid social ad copy</span></button>
+    </div>
+
+    <!-- Slide Count -->
+    <div class="slide-count-group" id="slide-count-group">
+      <label>Number of content slides</label>
+      <div class="count-pills">
+        <button class="count-pill" data-count="3">3</button>
+        <button class="count-pill" data-count="4">4</button>
+        <button class="count-pill active" data-count="5">5</button>
+        <button class="count-pill" data-count="6">6</button>
+        <button class="count-pill" data-count="7">7</button>
+      </div>
     </div>
 
     <!-- Status -->
@@ -930,12 +950,12 @@ $('hero-url-input').addEventListener('keydown',e=>{if(e.key==='Enter')heroExtrac
 
 /* --- BRAND SETTINGS --- */
 const THEMES={dark:{bg_color:'#0A0A0A',text_color:'#FFFFFF',accent_color:'#FFFFFF'},light:{bg_color:'#FFFFFF',text_color:'#1A1A1A',accent_color:'#2B2B2B'},ocean:{bg_color:'#0A1628',text_color:'#FFFFFF',accent_color:'#06B6D4'},fire:{bg_color:'#1A0A0A',text_color:'#FFFFFF',accent_color:'#F97316'}};
-const DEFAULT_BRAND={handle:'@undercurrenthq',name:'UndercurrentHQ',tagline:'The force beneath the surface.',theme:'dark',bg_color:'#0A0A0A',text_color:'#FFFFFF',accent_color:'#8B5CF6'};
+const DEFAULT_BRAND={handle:'',name:'',tagline:'',theme:'dark',bg_color:'#0A0A0A',text_color:'#FFFFFF',accent_color:'#8B5CF6'};
 function loadBrand(){try{return JSON.parse(localStorage.getItem('ce_brand'))||DEFAULT_BRAND}catch{return DEFAULT_BRAND}}
 function saveBrand(){localStorage.setItem('ce_brand',JSON.stringify(getBrandFromInputs()))}
 function getBrandFromInputs(){
   const t=$('brand-theme').value,c=t!=='custom'&&THEMES[t]?THEMES[t]:{bg_color:$('brand-bg').value,text_color:$('brand-text').value,accent_color:$('brand-accent').value};
-  return{handle:$('brand-handle').value||DEFAULT_BRAND.handle,name:$('brand-name').value||DEFAULT_BRAND.name,tagline:$('brand-tagline').value||DEFAULT_BRAND.tagline,theme:t,...c};
+  return{handle:$('brand-handle').value,name:$('brand-name').value,tagline:$('brand-tagline').value,theme:t,...c};
 }
 function populateBrandInputs(b){
   $('brand-handle').value=b.handle||'';$('brand-name').value=b.name||'';$('brand-tagline').value=b.tagline||'';
@@ -945,7 +965,7 @@ function populateBrandInputs(b){
   $('brand-accent').value=b.accent_color||'#8B5CF6';$('brand-accent-picker').value=b.accent_color||'#8B5CF6';
   toggleCustomColors(b.theme==='custom');updateBrandSummary(b);
 }
-function updateBrandSummary(b){$('brand-summary').textContent=` \u2014 ${b.name} (${b.handle})`}
+function updateBrandSummary(b){$('brand-summary').textContent=(b.name||b.handle)?` \u2014 ${b.name||''}${b.handle?' ('+b.handle+')':''}`:''}
 function toggleCustomColors(s){$('custom-colors').classList.toggle('open',s)}
 $('brand-toggle').addEventListener('click',()=>{$('brand-body').classList.toggle('open');$('chevron').classList.toggle('open')});
 $('brand-theme').addEventListener('change',()=>{
@@ -1001,10 +1021,21 @@ $('history-toggle').addEventListener('click',()=>{$('history-body').classList.to
 $('history-clear').addEventListener('click',async()=>{if(!confirm('Clear all history?'))return;await fetch('/api/history',{method:'DELETE'});renderHistory([])});
 loadHistory();
 
+/* --- SLIDE COUNT --- */
+let selectedSlideCount=5;
+document.querySelectorAll('.count-pill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('.count-pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    selectedSlideCount=parseInt(p.dataset.count);
+  });
+});
+
 /* --- GENERATION --- */
 const STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Fetching images...','Generating slides...'];
+const TEXT_ONLY_STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Formatting output...'];
 function showStepProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${STEPS.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
-function showError(m){$('status-area').innerHTML=`<div class="status-msg error">${escHtml(m)}</div>`}
+function showError(m){$('status-area').innerHTML=`<div class="status-msg error"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="10" cy="10" r="9" stroke="#EF4444" stroke-width="2"/><path d="M10 6v5M10 13.5v.5" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg><span>${escHtml(m)}</span></div>`}
 function clearStatus(){$('status-area').innerHTML=''}
 function setButtonsDisabled(d){document.querySelectorAll('.mode-btn').forEach(b=>b.disabled=d)}
 
@@ -1018,35 +1049,56 @@ $('url-input').addEventListener('keydown',e=>{if(e.key==='Enter'){if(urlMode==='
 async function generate(mode){
   const url=$('url-input').value.trim();
   if(!url){showError('Please paste a video URL first');return}
+  const isTextOnly=(mode==='summary'||mode==='hooks');
+  const steps=isTextOnly?TEXT_ONLY_STEPS:STEPS;
   $('results').classList.remove('visible');$('bulk-progress').style.display='none';
-  setButtonsDisabled(true);let si=0;showStepProgress(0);
-  const iv=setInterval(()=>{si++;if(si<STEPS.length)showStepProgress(si)},4000);
+  setButtonsDisabled(true);let si=0;
+  function showProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
+  showProgress(0);
+  const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},4000);
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
-    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,mode,format:'all',brand:bp})});
+    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,mode,format:'all',brand:bp,num_items:selectedSlideCount})});
     clearInterval(iv);const d=await r.json();
-    if(!r.ok){showError((d.detail||d.error||'Unknown error')+(d.traceback?'\n\n'+d.traceback:''));setButtonsDisabled(false);return}
+    if(!r.ok){showError(d.detail||'Something went wrong. Please try again.');setButtonsDisabled(false);return}
     clearStatus();showResults(d,mode);
-  }catch(e){clearInterval(iv);showError('Network error: '+e.message)}
+  }catch(e){clearInterval(iv);showError('Network error — please check your connection and try again.')}
   setButtonsDisabled(false);
 }
 
 function showResults(d,mode){
+  const hasSlides=d.has_slides!==false&&d.slides&&d.slides.length>0;
   $('result-title').textContent=d.title;
-  $('result-meta').textContent=`${d.platform} \u00B7 ${d.item_count} items \u00B7 ${d.slides.length} slides`;
-  $('download-btn').href=d.zip_url;
+  $('result-meta').textContent=hasSlides
+    ?`${d.platform} \u00B7 ${d.item_count} items \u00B7 ${d.slides.length} slides`
+    :`${d.platform} \u00B7 ${d.item_count} items \u00B7 text only`;
+  // Download button
+  $('download-btn').style.display=hasSlides?'':'none';
+  if(hasSlides)$('download-btn').href=d.zip_url;
+  // Carousel
   const v=$('carousel-viewer');v.innerHTML='';
-  d.slides.forEach(s=>{const div=document.createElement('div');div.className='slide-preview';const img=document.createElement('img');img.src=s.data_url;img.alt=s.filename;div.appendChild(img);v.appendChild(div)});
+  if(hasSlides){
+    d.slides.forEach(s=>{const div=document.createElement('div');div.className='slide-preview';const img=document.createElement('img');img.src=s.data_url;img.alt=s.filename;div.appendChild(img);v.appendChild(div)});
+  }
+  // Text outputs
   $('text-twitter').textContent=d.twitter_thread||'(not available)';
   $('text-linkedin').textContent=d.linkedin_post||'(not available)';
   $('text-newsletter').textContent=d.newsletter||'(not available)';
   $('text-tiktok').textContent=d.tiktok_script||'(not available)';
   $('text-caption').textContent=d.caption||'(not available)';
   $('text-ad_copy').textContent=d.ad_copy||'(not available)';
+  // Tabs — hide carousel tab for text-only modes
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelector('.tab-btn[data-tab="carousel"]').classList.add('active');
-  $('panel-carousel').classList.add('active');
+  const carouselTab=document.querySelector('.tab-btn[data-tab="carousel"]');
+  carouselTab.style.display=hasSlides?'':'none';
+  if(hasSlides){
+    carouselTab.classList.add('active');
+    $('panel-carousel').classList.add('active');
+  }else{
+    const firstTextTab=document.querySelector('.tab-btn[data-tab="linkedin"]')||document.querySelector('.tab-btn[data-tab="twitter"]');
+    if(firstTextTab){firstTextTab.classList.add('active');$('panel-'+firstTextTab.dataset.tab).classList.add('active')}
+  }
   $('results').classList.add('visible');
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
   loadHistory();
@@ -1066,7 +1118,7 @@ async function generateBulk(mode){
   for(let i=0;i<urls.length;i++){
     const el=$('bp-'+i);el.className='bulk-progress-item running';el.querySelector('.bp-status').innerHTML='<div class="spinner"></div>';
     try{
-      const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:urls[i],mode,format:'all',brand:bp})});
+      const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:urls[i],mode,format:'all',brand:bp,num_items:selectedSlideCount})});
       if(!r.ok){const e=await r.json().catch(()=>({detail:'Failed'}));el.className='bulk-progress-item error';el.querySelector('.bp-status').textContent='\u2717';ae.push({url:urls[i],detail:e.detail});continue}
       const d=await r.json();d.url=urls[i];ar.push(d);
       el.className='bulk-progress-item done';el.querySelector('.bp-status').textContent='\u2713';
