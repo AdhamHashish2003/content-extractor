@@ -247,21 +247,44 @@ def _try_youtube_captions(video_id: str) -> str | None:
     import html as htmlmod
     import requests
 
-    # Source 1: youtube-transcript-api with multi-language fallback
-    for lang_codes in [["en", "en-US", "en-GB"], ["ar"], None]:
-        try:
-            api = YouTubeTranscriptApi()
-            if lang_codes is not None:
-                result = api.fetch(video_id, languages=lang_codes)
-            else:
-                # Last resort: fetch any available transcript
-                result = api.fetch(video_id)
+    # Source 1: youtube-transcript-api — list available transcripts, then fetch best match
+    try:
+        api = YouTubeTranscriptApi()
+        transcript_list = api.list(video_id)
+        available = list(transcript_list)
+        if available:
+            codes = [t.language_code for t in available]
+            logger.info("[yt-captions] available languages for %s: %s", video_id, codes)
+
+            # Priority order: manual first, then auto-generated
+            manual = [t for t in available if not t.is_generated]
+            generated = [t for t in available if t.is_generated]
+
+            # Try preferred languages in order across both pools
+            preferred = ["en", "ar"]
+            chosen = None
+            for pool in [manual, generated]:
+                for pref in preferred:
+                    for t in pool:
+                        if t.language_code == pref or t.language_code.startswith(pref + "-"):
+                            chosen = t
+                            break
+                    if chosen:
+                        break
+                if chosen:
+                    break
+
+            # If no preferred match, take the first available transcript
+            if not chosen:
+                chosen = manual[0] if manual else available[0]
+
+            result = chosen.fetch()
             text = " ".join(snippet.text for snippet in result)
             if len(text.split()) >= 50:
-                logger.info("[yt-captions] youtube-transcript-api OK for %s (langs=%s)", video_id, lang_codes)
+                logger.info("[yt-captions] youtube-transcript-api OK for %s (lang=%s)", video_id, chosen.language_code)
                 return text
-        except Exception as e:
-            logger.info("[yt-captions] youtube-transcript-api failed for langs=%s: %s", lang_codes, e)
+    except Exception as e:
+        logger.info("[yt-captions] youtube-transcript-api failed: %s", e)
 
     # Source 2: Scrape caption track URLs from page HTML and fetch XML directly
     try:
