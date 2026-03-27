@@ -236,6 +236,45 @@ def fetch_metadata(url: str, platform: Platform) -> VideoMeta:
     )
 
 
+# ── Caption XML parsing ──────────────────────────────────────────────
+
+def _parse_caption_xml(xml_text: str) -> str:
+    """Parse YouTube caption XML.
+
+    Handles:
+    - Format 1: ``<text start="..." dur="...">words</text>``
+    - Format 3 with segments: ``<p t="..."><s>word</s><s>word</s></p>``
+    - Format 3 bare: ``<p t="...">[Applause]</p>`` (no ``<s>`` children)
+    """
+    import html as htmlmod
+
+    # Format 1: <text> tags
+    texts = re.findall(r"<text[^>]*>(.*?)</text>", xml_text, re.DOTALL)
+    if texts:
+        clean = [htmlmod.unescape(t).strip() for t in texts if t.strip()]
+        return " ".join(clean)
+
+    # Format 3 with <s> segments (most auto-generated captions)
+    segments = re.findall(r"<s[^>]*>(.*?)</s>", xml_text, re.DOTALL)
+    if segments:
+        clean = [htmlmod.unescape(s).strip() for s in segments if s.strip()]
+        return " ".join(clean)
+
+    # Format 3 bare <p> tags (e.g. music-only videos with [Applause])
+    paras = re.findall(r"<p[^>]*>(.*?)</p>", xml_text, re.DOTALL)
+    if paras:
+        # Strip any nested tags first
+        clean = []
+        for p in paras:
+            stripped = re.sub(r"<[^>]+>", "", p)
+            stripped = htmlmod.unescape(stripped).strip()
+            if stripped:
+                clean.append(stripped)
+        return " ".join(clean)
+
+    return ""
+
+
 # ── YouTube Transcript (multi-source fallback) ──────────────────────
 
 def _try_youtube_captions(video_id: str) -> str | None:
@@ -286,35 +325,70 @@ def _try_youtube_captions(video_id: str) -> str | None:
     except Exception as e:
         logger.info("[yt-captions] youtube-transcript-api failed: %s", e)
 
-    # Source 2: Scrape caption track URLs from page HTML and fetch XML directly
+    # Source 2: Innertube ANDROID player API — bypasses exp=xpe restriction and
+    # works from cloud server IPs where the WEB timedtext API returns empty.
     try:
         session = requests.Session()
         session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         })
-        # Set CONSENT cookie to bypass EU consent page
         session.cookies.set("CONSENT", "YES+1", domain=".youtube.com")
 
+        # Get innertube API key from page
         page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
-        match = re.search(r'"captionTracks":\s*(\[.*?\])', page.text)
-        if match:
-            import json as _json
-            tracks = _json.loads(match.group(1))
-            for track in tracks:
-                base_url = track.get("baseUrl", "")
-                if not base_url:
-                    continue
-                cc_resp = session.get(base_url, timeout=15)
-                if cc_resp.ok and len(cc_resp.text) > 100:
-                    texts = re.findall(r"<text[^>]*>(.*?)</text>", cc_resp.text, re.DOTALL)
-                    clean = [htmlmod.unescape(t).strip() for t in texts if t.strip()]
-                    text = " ".join(clean)
-                    if len(text.split()) >= 50:
-                        logger.info("[yt-captions] direct page scrape OK for %s", video_id)
-                        return text
+        api_key_match = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
+        api_key = api_key_match.group(1) if api_key_match else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+
+        # Call player API with ANDROID client (returns caption URLs without exp=xpe)
+        player_resp = session.post(
+            f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
+            json={
+                "context": {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}},
+                "videoId": video_id,
+            },
+            timeout=15,
+        )
+        if player_resp.ok:
+            player_data = player_resp.json()
+            captions_data = (
+                player_data.get("captions", {})
+                .get("playerCaptionsTracklistRenderer", {})
+                .get("captionTracks", [])
+            )
+            if captions_data:
+                logger.info("[yt-captions] innertube found %d tracks for %s: %s",
+                            len(captions_data), video_id,
+                            [t.get("languageCode", "?") for t in captions_data])
+
+                # Pick best track: en > ar > any, manual over auto
+                def _track_sort_key(t):
+                    lang = t.get("languageCode", "")
+                    kind = t.get("kind", "")
+                    is_auto = 1 if kind == "asr" else 0
+                    if lang == "en" or lang.startswith("en-"):
+                        prio = 0
+                    elif lang == "ar" or lang.startswith("ar-"):
+                        prio = 1
+                    else:
+                        prio = 2
+                    return (prio, is_auto)
+
+                captions_data.sort(key=_track_sort_key)
+
+                for track in captions_data:
+                    base_url = track.get("baseUrl", "")
+                    if not base_url:
+                        continue
+                    cc_resp = session.get(base_url, timeout=15)
+                    if cc_resp.ok and len(cc_resp.text) > 100:
+                        text = _parse_caption_xml(cc_resp.text)
+                        if len(text.split()) >= 50:
+                            lang = track.get("languageCode", "unknown")
+                            logger.info("[yt-captions] innertube OK for %s (lang=%s, words=%d)",
+                                        video_id, lang, len(text.split()))
+                            return text
     except Exception as e:
-        logger.info("[yt-captions] direct page scrape failed: %s", e)
+        logger.info("[yt-captions] innertube fallback failed: %s", e)
 
     return None
 
