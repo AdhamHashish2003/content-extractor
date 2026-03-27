@@ -275,31 +275,48 @@ def _parse_caption_xml(xml_text: str) -> str:
     return ""
 
 
-# ── YouTube Transcript (multi-source fallback) ──────────────────────
+# ── Language priority helper ──────────────────────────────────────────
+
+def _track_sort_key(t) -> tuple:
+    """Sort caption tracks: en > ar > other, manual > auto-generated."""
+    lang = t.get("languageCode", "") if isinstance(t, dict) else getattr(t, "language_code", "")
+    kind = t.get("kind", "") if isinstance(t, dict) else ("asr" if getattr(t, "is_generated", False) else "")
+    is_auto = 1 if kind == "asr" else 0
+    if lang == "en" or lang.startswith("en-"):
+        return (0, is_auto)
+    if lang == "ar" or lang.startswith("ar-"):
+        return (1, is_auto)
+    return (2, is_auto)
+
+
+# ── YouTube Transcript (multi-source fallback with debug logging) ────
 
 def _try_youtube_captions(video_id: str) -> str | None:
     """Fetch YouTube transcript with multiple fallbacks for cloud servers.
 
-    1. youtube-transcript-api (uses Innertube internally — best option)
-    2. Direct page scrape → extract captionTrack URLs → fetch XML
+    Source 1: youtube-transcript-api (Innertube internally)
+    Source 2: Innertube ANDROID player API (bypasses exp=xpe, works on cloud)
+    Returns None if all sources fail — caller can fall back to Groq Whisper.
     """
-    import html as htmlmod
     import requests
 
-    # Source 1: youtube-transcript-api — list available transcripts, then fetch best match
+    debug: list[str] = []  # Accumulate debug info for error messages
+
+    # ── Source 1: youtube-transcript-api ──────────────────────────────
+    debug.append(f"=== CAPTION DEBUG for {video_id} ===")
+    debug.append("Source 1 (youtube-transcript-api): trying...")
     try:
         api = YouTubeTranscriptApi()
         transcript_list = api.list(video_id)
         available = list(transcript_list)
         if available:
-            codes = [t.language_code for t in available]
-            logger.info("[yt-captions] available languages for %s: %s", video_id, codes)
+            codes = [(t.language_code, "auto" if t.is_generated else "manual") for t in available]
+            debug.append(f"Source 1: languages found: {codes}")
+            logger.info("[yt-captions] Source 1 languages for %s: %s", video_id, codes)
 
-            # Priority order: manual first, then auto-generated
             manual = [t for t in available if not t.is_generated]
             generated = [t for t in available if t.is_generated]
 
-            # Try preferred languages in order across both pools
             preferred = ["en", "ar"]
             chosen = None
             for pool in [manual, generated]:
@@ -312,34 +329,48 @@ def _try_youtube_captions(video_id: str) -> str | None:
                         break
                 if chosen:
                     break
-
-            # If no preferred match, take the first available transcript
             if not chosen:
                 chosen = manual[0] if manual else available[0]
 
+            debug.append(f"Source 1: chose {chosen.language_code}, fetching...")
             result = chosen.fetch()
             text = " ".join(snippet.text for snippet in result)
-            if len(text.split()) >= 50:
-                logger.info("[yt-captions] youtube-transcript-api OK for %s (lang=%s)", video_id, chosen.language_code)
-                return text
-    except Exception as e:
-        logger.info("[yt-captions] youtube-transcript-api failed: %s", e)
+            word_count = len(text.split())
+            debug.append(f"Source 1: fetched {word_count} words")
 
-    # Source 2: Innertube ANDROID player API — bypasses exp=xpe restriction and
-    # works from cloud server IPs where the WEB timedtext API returns empty.
+            if word_count >= 50:
+                logger.info("[yt-captions] Source 1 OK for %s (lang=%s, words=%d)",
+                            video_id, chosen.language_code, word_count)
+                return text
+            else:
+                debug.append(f"Source 1: too few words ({word_count}), skipping")
+        else:
+            debug.append("Source 1: no transcripts available")
+    except Exception as e:
+        err_type = type(e).__name__
+        debug.append(f"Source 1 FAILED: {err_type}: {e}")
+        logger.info("[yt-captions] Source 1 failed for %s: %s: %s", video_id, err_type, e)
+
+    # ── Source 2: Innertube ANDROID player API ───────────────────────
+    debug.append("Source 2 (Innertube ANDROID): trying...")
     try:
         session = requests.Session()
         session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         })
-        session.cookies.set("CONSENT", "YES+1", domain=".youtube.com")
+        # Robust consent cookie to bypass EU consent page
+        session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
 
-        # Get innertube API key from page
+        # Fetch page to get API key (with fallback to hardcoded public key)
         page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
+        debug.append(f"Source 2: page fetch status={page.status_code} len={len(page.text)}")
+
         api_key_match = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
         api_key = api_key_match.group(1) if api_key_match else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+        debug.append(f"Source 2: API key {'from page' if api_key_match else 'HARDCODED FALLBACK'}: {api_key[:20]}...")
 
-        # Call player API with ANDROID client (returns caption URLs without exp=xpe)
+        # Call player API with ANDROID client
         player_resp = session.post(
             f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
             json={
@@ -348,48 +379,71 @@ def _try_youtube_captions(video_id: str) -> str | None:
             },
             timeout=15,
         )
+        debug.append(f"Source 2: player response status={player_resp.status_code}")
+
         if player_resp.ok:
             player_data = player_resp.json()
-            captions_data = (
-                player_data.get("captions", {})
-                .get("playerCaptionsTracklistRenderer", {})
-                .get("captionTracks", [])
-            )
-            if captions_data:
-                logger.info("[yt-captions] innertube found %d tracks for %s: %s",
-                            len(captions_data), video_id,
-                            [t.get("languageCode", "?") for t in captions_data])
 
-                # Pick best track: en > ar > any, manual over auto
-                def _track_sort_key(t):
-                    lang = t.get("languageCode", "")
-                    kind = t.get("kind", "")
-                    is_auto = 1 if kind == "asr" else 0
-                    if lang == "en" or lang.startswith("en-"):
-                        prio = 0
-                    elif lang == "ar" or lang.startswith("ar-"):
-                        prio = 1
-                    else:
-                        prio = 2
-                    return (prio, is_auto)
+            # Check both possible caption paths
+            captions_obj = player_data.get("captions", {})
+            captions_data = (
+                captions_obj.get("playerCaptionsTracklistRenderer", {}).get("captionTracks", [])
+                or captions_obj.get("playerCaptionsRenderer", {}).get("captionTracks", [])
+            )
+
+            if captions_data:
+                langs = [(t.get("languageCode", "?"), t.get("kind", "")) for t in captions_data]
+                debug.append(f"Source 2: {len(captions_data)} tracks found: {langs}")
+                logger.info("[yt-captions] Source 2 found %d tracks for %s: %s",
+                            len(captions_data), video_id, langs)
 
                 captions_data.sort(key=_track_sort_key)
 
                 for track in captions_data:
                     base_url = track.get("baseUrl", "")
+                    lang = track.get("languageCode", "?")
                     if not base_url:
+                        debug.append(f"Source 2: track {lang} has no baseUrl, skipping")
                         continue
+
+                    has_xpe = "exp=xpe" in base_url
+                    debug.append(f"Source 2: fetching track {lang} (xpe={has_xpe})")
+
                     cc_resp = session.get(base_url, timeout=15)
+                    debug.append(f"Source 2: caption response status={cc_resp.status_code} len={len(cc_resp.text)}")
+
                     if cc_resp.ok and len(cc_resp.text) > 100:
                         text = _parse_caption_xml(cc_resp.text)
-                        if len(text.split()) >= 50:
-                            lang = track.get("languageCode", "unknown")
-                            logger.info("[yt-captions] innertube OK for %s (lang=%s, words=%d)",
-                                        video_id, lang, len(text.split()))
-                            return text
-    except Exception as e:
-        logger.info("[yt-captions] innertube fallback failed: %s", e)
+                        word_count = len(text.split())
+                        debug.append(f"Source 2: parsed {word_count} words from {lang}")
 
+                        if word_count >= 50:
+                            logger.info("[yt-captions] Source 2 OK for %s (lang=%s, words=%d)",
+                                        video_id, lang, word_count)
+                            return text
+                        else:
+                            debug.append(f"Source 2: too few words from {lang}, trying next track")
+                    else:
+                        debug.append(f"Source 2: empty/short response for {lang}")
+            else:
+                debug.append("Source 2: no captionTracks in player response")
+                # Log what keys ARE present for debugging
+                cap_keys = list(captions_obj.keys()) if captions_obj else []
+                debug.append(f"Source 2: captions object keys: {cap_keys}")
+        else:
+            debug.append(f"Source 2: player API returned {player_resp.status_code}")
+    except Exception as e:
+        err_type = type(e).__name__
+        debug.append(f"Source 2 FAILED: {err_type}: {e}")
+        logger.info("[yt-captions] Source 2 failed for %s: %s: %s", video_id, err_type, e)
+
+    # ── All sources failed — log full debug trace ────────────────────
+    debug.append(f"=== FINAL RESULT: FAILED (all sources exhausted) ===")
+    debug_text = "\n".join(debug)
+    logger.warning("[yt-captions] All caption sources failed for %s:\n%s", video_id, debug_text)
+
+    # Store debug info so the API layer can include it in the error message
+    _try_youtube_captions._last_debug = debug_text  # type: ignore[attr-defined]
     return None
 
 
@@ -539,6 +593,95 @@ def _groq_pipeline(url: str, progress: TranscriptionProgress | None = None) -> s
             progress.on_transcribe_done(word_count)
 
         return transcript
+
+
+# ── Video Frame Extraction (Podcast Mode) ─────────────────────────────
+
+def extract_video_frames(url: str, num_frames: int = 5) -> list[Path]:
+    """Download video and extract evenly-spaced frames for podcast mode.
+
+    Returns a list of frame file paths (JPEG). Filters out dark/blank frames.
+    """
+    import subprocess
+    import yt_dlp
+    from PIL import Image
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="podcast_frames_"))
+    video_path = tmp_dir / "video.mp4"
+
+    # Download video at low quality (360p max)
+    ydl_opts = {
+        "format": "worst[height>=360][ext=mp4]/worst[ext=mp4]/worst",
+        "outtmpl": str(video_path),
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception as e:
+        logger.error("Video download for frames failed: %s", e)
+        return []
+
+    # Find the actual downloaded file (yt-dlp may change extension)
+    video_files = list(tmp_dir.glob("video.*"))
+    if not video_files:
+        return []
+    video_path = video_files[0]
+
+    # Extract more frames than needed so we can filter dark ones
+    raw_count = num_frames * 3
+    frames_dir = tmp_dir / "frames"
+    frames_dir.mkdir()
+
+    try:
+        # Get video duration
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)],
+            capture_output=True, text=True, timeout=10,
+        )
+        duration = float(probe.stdout.strip()) if probe.stdout.strip() else 60.0
+
+        # Calculate interval to get evenly-spaced frames
+        interval = max(1, duration / (raw_count + 1))
+
+        # Extract frames using ffmpeg select filter
+        subprocess.run(
+            ["ffmpeg", "-i", str(video_path), "-vf",
+             f"fps=1/{interval:.1f}", "-frames:v", str(raw_count),
+             "-q:v", "3", str(frames_dir / "frame_%03d.jpg")],
+            capture_output=True, timeout=60,
+        )
+    except Exception as e:
+        logger.error("Frame extraction failed: %s", e)
+        return []
+
+    # Filter out dark/blank frames
+    frame_paths = sorted(frames_dir.glob("frame_*.jpg"))
+    good_frames: list[Path] = []
+
+    for fp in frame_paths:
+        try:
+            img = Image.open(fp).convert("L")  # grayscale
+            avg_brightness = sum(img.getdata()) / (img.width * img.height)
+            if avg_brightness > 30:  # skip nearly black frames
+                good_frames.append(fp)
+        except Exception:
+            continue
+
+    # If we filtered too aggressively, fall back to all frames
+    if len(good_frames) < num_frames and frame_paths:
+        good_frames = list(frame_paths)
+
+    # Evenly pick num_frames from good_frames
+    if len(good_frames) <= num_frames:
+        return good_frames
+
+    step = len(good_frames) / num_frames
+    selected = [good_frames[int(i * step)] for i in range(num_frames)]
+    return selected
 
 
 # ── Public API ─────────────────────────────────────────────────────────

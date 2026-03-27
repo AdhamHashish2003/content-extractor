@@ -32,7 +32,7 @@ app = FastAPI(title="ContentExtractor")
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.1-arabic-fix"}
 
 
 # ── Heavy imports (wrapped so server starts even if a dep has issues) ─
@@ -120,6 +120,8 @@ class ExtractRequest(BaseModel):
     brand: BrandSettings | None = None
     num_items: int = 5
     selected_topics: list[str] | None = None
+    podcast_mode: bool = False
+    podcast_type: str | None = None
 
 
 # ── Rate limiting & concurrency ─────────────────────────────────────
@@ -421,23 +423,24 @@ async def api_analyze_topics(request: Request):
             asyncio.to_thread(fetch_metadata, url, platform), timeout=30
         )
 
-        # 2. Fetch transcript
+        # 2. Fetch transcript — try captions first, fall back to Groq Whisper
         transcript = None
         if platform == Platform.YOUTUBE:
             try:
                 transcript = await asyncio.wait_for(
-                    asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
+                    asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=30
                 )
             except Exception:
                 pass
-            if not transcript:
-                raise HTTPException(400,
-                    "This YouTube video has no captions available. "
-                    "Try a different video with subtitles.")
-        else:
-            transcript = await asyncio.wait_for(
-                asyncio.to_thread(_groq_pipeline, url), timeout=90
-            )
+
+        # Groq Whisper fallback (reliable on cloud servers where YouTube blocks captions)
+        if not transcript:
+            try:
+                transcript = await asyncio.wait_for(
+                    asyncio.to_thread(_groq_pipeline, url), timeout=120
+                )
+            except Exception as e:
+                raise HTTPException(400, f"Could not get transcript: {e}")
 
         if not transcript or len(transcript.split()) < 50:
             raise HTTPException(400, "Transcript too short. The video may not have spoken content.")
@@ -481,7 +484,7 @@ _PIPELINE_TIMEOUT = 120  # seconds
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None, selected_topics: list[str] | None = None) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None, selected_topics: list[str] | None = None, podcast_mode: bool = False, podcast_type: str | None = None) -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -491,7 +494,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         raise HTTPException(400, f"Invalid mode: {mode}. Use: {valid}")
 
     content_type = CONTENT_TYPES[mode]
-    num_items = max(3, min(7, num_items))
+    num_items = max(3, min(10, num_items))
     is_text_only = mode in TEXT_ONLY_MODES
 
     if brand:
@@ -539,14 +542,25 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             if platform == Platform.YOUTUBE:
                 try:
                     transcript = await asyncio.wait_for(
-                        asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
+                        asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=30
                     )
                 except Exception:
                     transcript = None
+
+                # Fallback: if captions failed, try Groq Whisper audio transcription
                 if not transcript:
-                    raise HTTPException(400,
-                        "This YouTube video has no captions available. "
-                        "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
+                    logger.info("[pipeline] Captions failed for %s, trying Groq Whisper fallback", meta.video_id)
+                    try:
+                        transcript = await asyncio.wait_for(
+                            asyncio.to_thread(_groq_pipeline, url), timeout=120
+                        )
+                    except Exception as whisper_err:
+                        # Build error with debug info from caption attempts
+                        debug_info = getattr(_try_youtube_captions, "_last_debug", "")
+                        caption_detail = f"\n\nCaption debug:\n{debug_info}" if debug_info else ""
+                        raise HTTPException(400,
+                            f"No captions found and audio transcription failed ({whisper_err}). "
+                            f"Try a different video with subtitles.{caption_detail}")
             else:
                 try:
                     transcript = await asyncio.wait_for(
@@ -574,7 +588,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             video_title_for_prompt = meta.title or "this video"
             result = await asyncio.wait_for(
                 asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt, num_items,
-                                  selected_topics=selected_topics, language=detected_lang),
+                                  selected_topics=selected_topics, language=detected_lang, podcast_type=podcast_type),
                 timeout=120,
             )
             items = result.items
@@ -594,16 +608,36 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             # 4. Fetch background images (non-fatal)
             title_image = None
             content_images = [None] * len(items)
-            try:
-                queries = [result.title_image_query] + [item.image_query for item in items]
-                image_paths = await asyncio.wait_for(
-                    asyncio.to_thread(fetch_images_parallel, queries), timeout=25
-                )
-                temp_image_files = list(image_paths)
-                title_image = image_paths[0]
-                content_images = image_paths[1:]
-            except Exception as e:
-                logger.warning("Image fetching failed, using white fallback: %s", e)
+
+            if podcast_mode:
+                # Podcast mode: extract frames from the video itself
+                try:
+                    from transcript import extract_video_frames
+                    frame_paths = await asyncio.wait_for(
+                        asyncio.to_thread(extract_video_frames, url, len(items) + 1), timeout=90
+                    )
+                    if frame_paths:
+                        title_image = frame_paths[0]
+                        content_images = frame_paths[1:len(items) + 1]
+                        # Pad with None if not enough frames
+                        while len(content_images) < len(items):
+                            content_images.append(None)
+                        temp_image_files = list(frame_paths)
+                except Exception as e:
+                    logger.warning("Podcast frame extraction failed, falling back to web images: %s", e)
+
+            # Fall back to web images if podcast frames failed or not podcast mode
+            if title_image is None:
+                try:
+                    queries = [result.title_image_query] + [item.image_query for item in items]
+                    image_paths = await asyncio.wait_for(
+                        asyncio.to_thread(fetch_images_parallel, queries), timeout=25
+                    )
+                    temp_image_files = list(image_paths)
+                    title_image = image_paths[0]
+                    content_images = image_paths[1:]
+                except Exception as e:
+                    logger.warning("Image fetching failed, using white fallback: %s", e)
 
             # 5. Generate slides
             try:
@@ -733,7 +767,7 @@ async def api_generate(req: ExtractRequest, request: Request):
         )
     try:
         _uid = user["id"] if user else None
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid, selected_topics=req.selected_topics)
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid, selected_topics=req.selected_topics, podcast_mode=req.podcast_mode, podcast_type=req.podcast_type)
         # Increment usage for logged-in users
         if user and _auth_loaded:
             db.increment_daily_usage(user["id"])

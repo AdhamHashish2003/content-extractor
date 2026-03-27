@@ -360,6 +360,25 @@ img{max-width:100%;display:block}
 .result-text-rtl{direction:rtl;text-align:right}
 .mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--primary-gradient);font-size:.55rem;font-weight:700;color:#fff}
 
+/* Podcast Mode */
+.podcast-mode-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;margin-bottom:16px;background:linear-gradient(135deg,#faf5ff,#ede9fe);border:2px solid #8B5CF6;border-radius:var(--radius-sm);color:#6D28D9;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;transition:all .2s}
+.podcast-mode-btn:hover{background:linear-gradient(135deg,#ede9fe,#ddd6fe);transform:translateY(-1px);box-shadow:0 4px 12px rgba(139,92,246,.2)}
+.podcast-mode-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.podcast-sub-panel{display:none;margin-bottom:16px;padding:16px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm)}
+.podcast-sub-panel.active{display:block}
+.podcast-sub-label{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:10px}
+.podcast-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.podcast-pill{padding:8px 16px;border:1px solid var(--card-border);border-radius:100px;background:#fff;color:var(--text);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .15s}
+.podcast-pill:hover{border-color:#8B5CF6;background:#faf5ff}
+.podcast-pill.active{border-color:#8B5CF6;background:#8B5CF6;color:#fff}
+.podcast-extract-btn{padding:10px 24px;background:#8B5CF6;color:#fff;border:none;border-radius:var(--radius-sm);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s}
+.podcast-extract-btn:hover{background:#7C3AED}
+.podcast-extract-btn:disabled{opacity:.5;cursor:not-allowed}
+.podcast-classify-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:#faf5ff;border:1px solid #DDD6FE;border-radius:var(--radius-sm);font-size:.75rem;color:#6D28D9}
+.podcast-classify-badge .pcb-icon{font-size:1rem}
+.podcast-classify-badge .pcb-text{font-weight:600}
+.podcast-classify-badge .pcb-detail{color:var(--text-muted);margin-left:auto}
+
 /* Slide Count Selector */
 .slide-count-group{margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .slide-count-group label{font-size:.85rem;font-weight:600;color:var(--text)}
@@ -902,6 +921,27 @@ img{max-width:100%;display:block}
       </div>
     </div>
 
+    <!-- Podcast Classification Badge (shown after topic analysis) -->
+    <div class="podcast-classify-badge" id="podcast-classify-badge" style="display:none">
+      <span class="pcb-icon" id="pcb-icon"></span>
+      <span class="pcb-text" id="pcb-text"></span>
+      <span class="pcb-detail" id="pcb-detail"></span>
+    </div>
+
+    <!-- Podcast Mode -->
+    <button class="podcast-mode-btn" id="podcast-mode-btn" onclick="togglePodcastPanel()">&#127897; Podcast Mode<span style="font-size:.7rem;font-weight:400;opacity:.7;margin-left:6px">Uses video frames as backgrounds</span></button>
+    <div class="podcast-sub-panel" id="podcast-sub-panel">
+      <div class="podcast-sub-label">What do you want to extract from this podcast?</div>
+      <div class="podcast-pills" id="podcast-pills">
+        <button class="podcast-pill active" data-pmode="facts">Facts</button>
+        <button class="podcast-pill" data-pmode="quotes">Quotes</button>
+        <button class="podcast-pill" data-pmode="opinions">Opinions</button>
+        <button class="podcast-pill" data-pmode="takeaways">Takeaways</button>
+        <button class="podcast-pill" data-pmode="hooks">Key Moments</button>
+      </div>
+      <button class="podcast-extract-btn" id="podcast-extract-btn" onclick="generatePodcast()">Extract from Podcast &#8594;</button>
+    </div>
+
     <!-- Mode Buttons -->
     <div class="mode-grid" id="mode-buttons">
       <button class="mode-btn" data-mode="facts"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
@@ -924,6 +964,9 @@ img{max-width:100%;display:block}
         <button class="count-pill active" data-count="5">5</button>
         <button class="count-pill" data-count="6">6</button>
         <button class="count-pill" data-count="7">7</button>
+        <button class="count-pill" data-count="8">8</button>
+        <button class="count-pill" data-count="9">9</button>
+        <button class="count-pill" data-count="10">10</button>
       </div>
     </div>
 
@@ -1216,6 +1259,9 @@ async function analyzeTopics(){
     badge.style.display='inline-flex';
     badge.className='lang-badge'+(lang==='ar'?' ar':'');
     badge.textContent=lang==='ar'?'\uD83C\uDF10 Arabic detected':'\uD83C\uDF10 English detected';
+    // Show podcast classification if available
+    if(d.podcast_type)showPodcastClassification(d);
+
     // Render topic cards
     renderTopics(analyzedTopics);
     $('topics-panel').style.display='';
@@ -1271,6 +1317,70 @@ function getSelectedTopics(){
   return selectedTopics.length>0?selectedTopics:null;
 }
 
+/* --- PODCAST MODE --- */
+let podcastPanelOpen=false;
+let selectedPodcastMode='facts';
+let lastPodcastType=null;
+
+const PODCAST_TYPE_ICONS={'academic':'\uD83C\uDF93','political':'\uD83D\uDDF3\uFE0F','entertainment':'\uD83C\uDFAC','business':'\uD83D\uDCBC','tech':'\u2699\uFE0F','religion':'\uD83D\uDD4C','sports':'\u26BD','health':'\uD83C\uDFE5','interview':'\uD83C\uDF99\uFE0F','news':'\uD83D\uDCF0'};
+
+function togglePodcastPanel(){
+  podcastPanelOpen=!podcastPanelOpen;
+  $('podcast-sub-panel').classList.toggle('active',podcastPanelOpen);
+}
+
+// Podcast pill selection
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.podcast-pill').forEach(pill=>{
+    pill.addEventListener('click',()=>{
+      document.querySelectorAll('.podcast-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedPodcastMode=pill.dataset.pmode;
+    });
+  });
+});
+
+function showPodcastClassification(data){
+  const badge=$('podcast-classify-badge');
+  const ptype=data.podcast_type||'interview';
+  const formality=data.formality||'mixed';
+  const speakers=data.speakers||[];
+  const speakerCount=speakers.length;
+  lastPodcastType=ptype;
+
+  const icon=PODCAST_TYPE_ICONS[ptype]||'\uD83C\uDF99\uFE0F';
+  const label=ptype.charAt(0).toUpperCase()+ptype.slice(1);
+  $('pcb-icon').textContent=icon;
+  $('pcb-text').textContent=label+' Podcast';
+  $('pcb-detail').textContent=formality.charAt(0).toUpperCase()+formality.slice(1)+' \u00B7 '+speakerCount+' Speaker'+(speakerCount!==1?'s':'');
+  badge.style.display='flex';
+}
+
+async function generatePodcast(){
+  const url=$('url-input').value.trim();
+  if(!url){showError('Please paste a video URL first');return}
+  const btn=$('podcast-extract-btn');
+  btn.disabled=true;btn.textContent='Downloading video frames...';
+
+  const PODCAST_STEPS=['Detecting platform...','Fetching transcript...','Downloading video frames...','Analyzing with AI...','Generating slides...'];
+  $('status-area').innerHTML=`<div class="status-steps">${PODCAST_STEPS.map((s,i)=>{let c='status-step active';return`<div class="${c}"><span class="step-icon"><div class="spinner"></div></span>${s}</div>`}).join('')}</div>`;
+
+  try{
+    const hdrs={'Content-Type':'application/json',...authHeaders()};
+    const payload={url,mode:selectedPodcastMode,format:'all',num_items:selectedSlideCount,podcast_mode:true};
+    const st=getSelectedTopics();if(st)payload.selected_topics=st;
+    if(lastPodcastType)payload.podcast_type=lastPodcastType;
+    const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(!r.ok){
+      if(r.status===429&&d.limit_reached)openUpgradeModal();
+      showError(d.detail||'Extraction failed');return;
+    }
+    showResults(d);showToast('Podcast extracted!');
+  }catch(e){showError('Network error')}
+  finally{btn.disabled=false;btn.textContent='Extract from Podcast \u2192';$('status-area').innerHTML=''}
+}
+
 /* --- GENERATION --- */
 const STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Fetching images...','Generating slides...'];
 const TEXT_ONLY_STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Formatting output...'];
@@ -1301,6 +1411,7 @@ async function generate(mode){
     const hdrs={'Content-Type':'application/json',...authHeaders()};
     const payload={url,mode,format:'all',brand:bp,num_items:selectedSlideCount};
     const st=getSelectedTopics();if(st)payload.selected_topics=st;
+    if(lastPodcastType)payload.podcast_type=lastPodcastType;
     const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
     clearInterval(iv);const d=await r.json();
     if(!r.ok){

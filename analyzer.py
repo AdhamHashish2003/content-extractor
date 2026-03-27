@@ -109,7 +109,45 @@ class ExtractedItem:
     image_query: str = ""
 
 
-def _build_prompt(content_type: ContentType, transcript: str, video_title: str, num_items: int = 5, selected_topics: list[str] | None = None, language: str = "en") -> str:
+_PODCAST_TONE_GUIDES = {
+    "academic": (
+        "TONE: Academic/educational podcast. Use precise, formal language. "
+        "Headlines should be informative, not clickbait. Include 'According to [speaker]' attribution. "
+        "Use technical terms from the discussion. Avoid sensationalism."
+    ),
+    "political": (
+        "TONE: Political analysis podcast. Present claims as opinions/analysis, not absolute facts. "
+        "Include speaker attribution. Use neutral framing. Headlines can be bold but not misleading."
+    ),
+    "entertainment": (
+        "TONE: Entertainment podcast. Casual, punchy tone. Focus on viral moments and memorable quotes. "
+        "More hook-style writing. Keep it fun and shareable."
+    ),
+    "business": (
+        "TONE: Business podcast. Focus on actionable insights and data points. "
+        "Highlight metrics, strategies, and frameworks. Use professional language."
+    ),
+    "religious": (
+        "TONE: Religious podcast. Use respectful, accurate religious terminology. "
+        "Include proper references if mentioned (Quran, Hadith, etc). "
+        "Use appropriate honorifics. Never misattribute or loosely paraphrase religious texts."
+    ),
+    "news": (
+        "TONE: News podcast. Factual, neutral tone. Date-stamp claims when possible. "
+        "Clearly separate facts from commentary."
+    ),
+    "interview": (
+        "TONE: Interview podcast. Attribute key statements to the speaker. "
+        "Focus on the most revealing or insightful answers. Include the guest's expertise context."
+    ),
+    "tech": (
+        "TONE: Tech podcast. Highlight technical insights, product implications, and industry trends. "
+        "Be precise with tech terminology."
+    ),
+}
+
+
+def _build_prompt(content_type: ContentType, transcript: str, video_title: str, num_items: int = 5, selected_topics: list[str] | None = None, language: str = "en", podcast_type: str | None = None) -> str:
     mode_instruction = MODE_PROMPTS.get(content_type.key, MODE_PROMPTS["facts"])
 
     topic_filter = ""
@@ -130,6 +168,10 @@ Keep the JSON keys in English but write ALL values (headline, body, source_quote
 image_query and title_image_query should remain in English for search purposes.
 """
 
+    podcast_instruction = ""
+    if podcast_type and podcast_type in _PODCAST_TONE_GUIDES:
+        podcast_instruction = "\n" + _PODCAST_TONE_GUIDES[podcast_type] + "\n"
+
     return f"""You are an expert content analyst for social media.
 
 Analyze this video transcript and extract exactly {num_items} compelling {content_type.label.lower()} from it.
@@ -137,6 +179,7 @@ Analyze this video transcript and extract exactly {num_items} compelling {conten
 Video title: "{video_title}"
 {topic_filter}
 {language_instruction}
+{podcast_instruction}
 TRANSCRIPT:
 {transcript[:12000]}
 
@@ -257,13 +300,15 @@ def extract_content(
     num_items: int = 5,
     selected_topics: list[str] | None = None,
     language: str | None = None,
+    podcast_type: str | None = None,
 ) -> ExtractionResult:
     """Extract structured content — Kimi K2.5 primary, Groq Llama fallback."""
-    num_items = max(3, min(7, num_items))
+    num_items = max(3, min(10, num_items))
     if language is None:
         language = detect_language(transcript)
     prompt = _build_prompt(content_type, transcript, video_title, num_items,
-                           selected_topics=selected_topics, language=language)
+                           selected_topics=selected_topics, language=language,
+                           podcast_type=podcast_type)
     raw = _call_llm(prompt)
 
     # Strip markdown bold/italic that models sometimes inject into JSON values
@@ -322,6 +367,7 @@ def analyze_topics(transcript: str, video_title: str) -> dict:
         )
 
     prompt = f"""Analyze this transcript and identify the main topics discussed.
+Also classify the podcast/video type.
 
 Video title: "{video_title}"
 {lang_instruction}
@@ -334,6 +380,12 @@ Return a JSON object with:
   "video_title": "{video_title}",
   "duration_estimate": "estimated duration based on word count",
   "language": "{language}",
+  "podcast_type": "academic" or "political" or "entertainment" or "business" or "tech" or "religion" or "sports" or "health" or "interview" or "news",
+  "formality": "formal" or "casual" or "mixed",
+  "speakers": [
+    {{"name": "Speaker Name or Host", "role": "Guest - their expertise" or "Host" or "Interviewer"}}
+  ],
+  "tone_guidance": "A short sentence describing the recommended tone for content extraction",
   "topics": [
     {{
       "topic": "Name of the topic discussed",
@@ -345,6 +397,7 @@ Return a JSON object with:
 }}
 
 Return 3-8 topics. Each topic should be specific, not vague.
+For podcast_type, pick the SINGLE best match. For speakers, list the main people heard.
 CRITICAL: Return ONLY valid JSON. No markdown fences, no explanation."""
 
     raw = _call_llm(prompt)
