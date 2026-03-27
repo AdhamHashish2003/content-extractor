@@ -220,10 +220,14 @@ async def auth_signup(request: Request):
     if len(password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
 
+    # Check if email already exists BEFORE creating the user
+    if db.get_user_by_email(email):
+        raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
+
     try:
         user = db.create_user(email, password)
     except ValueError:
-        raise HTTPException(409, "Email already registered")
+        raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
 
     token = _create_jwt(user["id"], user["email"])
     return JSONResponse({

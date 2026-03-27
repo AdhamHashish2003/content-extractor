@@ -1294,15 +1294,24 @@ document.querySelectorAll('.auth-tab').forEach(b=>{b.addEventListener('click',()
 /* --- Signup --- */
 $('auth-form-signup').addEventListener('submit',async()=>{
   const email=$('signup-email').value.trim(),pw=$('signup-password').value,confirm=$('signup-confirm').value;
-  $('signup-error').textContent='';
-  if(pw!==confirm){$('signup-error').textContent='Passwords do not match';return}
-  if(pw.length<6){$('signup-error').textContent='Password must be at least 6 characters';return}
+  const errEl=$('signup-error');
+  errEl.innerHTML='';
+  // Client-side validation — block before any API call
+  const emailRe=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  if(!emailRe.test(email)){errEl.textContent='Please enter a valid email';return}
+  if(pw.length<6){errEl.textContent='Password must be at least 6 characters';return}
+  if(pw!==confirm){errEl.textContent='Passwords don\'t match';return}
   try{
     const r=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
     const d=await r.json();
-    if(!r.ok){$('signup-error').textContent=d.detail||'Signup failed';return}
+    if(!r.ok){
+      if(r.status===409){
+        errEl.innerHTML=d.detail+' <a href="#" onclick="switchAuthTab(\'login\');return false" style="color:var(--primary);text-decoration:underline">Log in instead</a>';
+      }else{errEl.textContent=d.detail||'Signup failed'}
+      return;
+    }
     setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');
-  }catch(e){$('signup-error').textContent='Network error'}
+  }catch(e){errEl.textContent='Network error'}
 });
 
 /* --- Login --- */
