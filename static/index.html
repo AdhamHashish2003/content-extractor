@@ -332,11 +332,20 @@ img{max-width:100%;display:block}
 .mode-btn .mode-desc{font-size:.65rem;color:var(--text-muted)}
 .mode-btn.mode-featured{background:var(--primary-light);border-left-color:var(--primary)}
 
+/* Workflow Toggle */
+.workflow-toggle{display:flex;gap:0;margin-bottom:16px;border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
+.wf-btn{flex:1;padding:12px 16px;background:#fff;border:none;color:var(--text-muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;transition:all .15s}
+.wf-btn:first-child{border-right:1px solid var(--card-border)}
+.wf-btn:hover{background:var(--surface)}
+.wf-btn.active{background:var(--primary);color:#fff}
+.wf-panel{margin-bottom:8px}
+.more-modes{margin-top:8px}
+.more-modes summary{font-size:.78rem;color:var(--text-muted);cursor:pointer;padding:6px 0;font-weight:600}
+.more-modes summary:hover{color:var(--primary)}
+.mode-grid-extra{margin-top:8px}
+.podcast-hint{font-size:.78rem;color:var(--text-muted);text-align:center;padding:8px 0}
+
 /* Topic Analysis */
-.topic-analyze-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.topic-analyze-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:transparent;border:2px solid var(--primary);border-radius:var(--radius-sm);color:var(--primary);cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}
-.topic-analyze-btn:hover{background:var(--primary-light)}
-.topic-analyze-btn:disabled{opacity:.5;cursor:not-allowed}
 .lang-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:.72rem;font-weight:600;background:var(--surface);border:1px solid var(--card-border);color:var(--text-muted)}
 .lang-badge.ar{background:#FEF3C7;border-color:#F59E0B;color:#92400E}
 
@@ -360,20 +369,7 @@ img{max-width:100%;display:block}
 .result-text-rtl{direction:rtl;text-align:right}
 .mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--primary-gradient);font-size:.55rem;font-weight:700;color:#fff}
 
-/* Podcast Mode */
-.podcast-mode-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;margin-bottom:16px;background:linear-gradient(135deg,#faf5ff,#ede9fe);border:2px solid #8B5CF6;border-radius:var(--radius-sm);color:#6D28D9;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;transition:all .2s}
-.podcast-mode-btn:hover{background:linear-gradient(135deg,#ede9fe,#ddd6fe);transform:translateY(-1px);box-shadow:0 4px 12px rgba(139,92,246,.2)}
-.podcast-mode-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.podcast-sub-panel{display:none;margin-bottom:16px;padding:16px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm)}
-.podcast-sub-panel.active{display:block}
-.podcast-sub-label{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:10px}
-.podcast-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.podcast-pill{padding:8px 16px;border:1px solid var(--card-border);border-radius:100px;background:#fff;color:var(--text);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .15s}
-.podcast-pill:hover{border-color:#8B5CF6;background:#faf5ff}
-.podcast-pill.active{border-color:#8B5CF6;background:#8B5CF6;color:#fff}
-.podcast-extract-btn{padding:10px 24px;background:#8B5CF6;color:#fff;border:none;border-radius:var(--radius-sm);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s}
-.podcast-extract-btn:hover{background:#7C3AED}
-.podcast-extract-btn:disabled{opacity:.5;cursor:not-allowed}
+/* Podcast Classification Badge */
 .podcast-classify-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:#faf5ff;border:1px solid #DDD6FE;border-radius:var(--radius-sm);font-size:.75rem;color:#6D28D9}
 .podcast-classify-badge .pcb-icon{font-size:1rem}
 .podcast-classify-badge .pcb-text{font-weight:600}
@@ -904,55 +900,63 @@ img{max-width:100%;display:block}
     <!-- Bulk Progress -->
     <div class="bulk-progress" id="bulk-progress" style="display:none"></div>
 
-    <!-- Topic Analysis -->
-    <div class="topic-analyze-row">
-      <button class="topic-analyze-btn" id="analyze-topics-btn" onclick="analyzeTopics()">&#128269; Analyze Topics</button>
-      <span class="lang-badge" id="lang-badge" style="display:none"></span>
+    <!-- Workflow Toggle -->
+    <div class="workflow-toggle" id="workflow-toggle">
+      <button class="wf-btn active" id="wf-quick" data-wf="quick">Quick Extract</button>
+      <button class="wf-btn" id="wf-podcast" data-wf="podcast">&#127897; Podcast Deep Dive</button>
     </div>
-    <div class="topics-panel" id="topics-panel" style="display:none">
-      <div class="topics-header" onclick="toggleTopicsPanel()">
-        <h4>Topics Found in This Video</h4>
-        <span class="topics-collapse" id="topics-collapse-text">collapse</span>
+    <span class="lang-badge" id="lang-badge" style="display:none"></span>
+
+    <!-- ═══ QUICK EXTRACT PANEL ═══ -->
+    <div class="wf-panel" id="panel-quick">
+      <div class="mode-grid" id="mode-buttons">
+        <button class="mode-btn" data-mode="facts"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
+        <button class="mode-btn" data-mode="quotes"><span class="mode-icon">&#128142;</span><span class="mode-label">Quotes</span><span class="mode-desc">Shareable direct quotes</span></button>
+        <button class="mode-btn" data-mode="opinions"><span class="mode-icon">&#128172;</span><span class="mode-label">Opinions</span><span class="mode-desc">Bold viewpoints</span></button>
+        <button class="mode-btn" data-mode="predictions"><span class="mode-icon">&#128302;</span><span class="mode-label">Predictions</span><span class="mode-desc">Forward-looking claims</span></button>
+        <button class="mode-btn" data-mode="takeaways"><span class="mode-icon">&#9989;</span><span class="mode-label">Takeaways</span><span class="mode-desc">Actionable items</span></button>
+        <button class="mode-btn mode-featured" data-mode="ad_creatives"><span class="mode-new-badge">NEW</span><span class="mode-icon">&#128226;</span><span class="mode-label">Ad Creatives</span><span class="mode-desc">Paid social ad copy</span></button>
       </div>
-      <div class="topics-body" id="topics-body"></div>
-      <div class="topics-actions">
-        <span id="topics-selected-count">0 selected</span>
-        <span>Select topics, then choose extraction mode below</span>
-      </div>
+      <details class="more-modes">
+        <summary>More modes &#9660;</summary>
+        <div class="mode-grid mode-grid-extra" id="mode-buttons-extra">
+          <button class="mode-btn cat-blue" data-mode="summary"><span class="mode-icon">&#128203;</span><span class="mode-label">Summary</span><span class="mode-desc">Timeline breakdown</span></button>
+          <button class="mode-btn cat-blue" data-mode="hooks"><span class="mode-icon">&#127907;</span><span class="mode-label">Hooks</span><span class="mode-desc">Viral opening lines</span></button>
+          <button class="mode-btn cat-teal" data-mode="counterarguments"><span class="mode-icon">&#9876;&#65039;</span><span class="mode-label">Counter</span><span class="mode-desc">Opposing arguments</span></button>
+        </div>
+      </details>
     </div>
 
-    <!-- Podcast Classification Badge (shown after topic analysis) -->
-    <div class="podcast-classify-badge" id="podcast-classify-badge" style="display:none">
-      <span class="pcb-icon" id="pcb-icon"></span>
-      <span class="pcb-text" id="pcb-text"></span>
-      <span class="pcb-detail" id="pcb-detail"></span>
-    </div>
-
-    <!-- Podcast Mode -->
-    <button class="podcast-mode-btn" id="podcast-mode-btn" onclick="togglePodcastPanel()">&#127897; Podcast Mode<span style="font-size:.7rem;font-weight:400;opacity:.7;margin-left:6px">Uses video frames as backgrounds</span></button>
-    <div class="podcast-sub-panel" id="podcast-sub-panel">
-      <div class="podcast-sub-label">What do you want to extract from this podcast?</div>
-      <div class="podcast-pills" id="podcast-pills">
-        <button class="podcast-pill active" data-pmode="facts">Facts</button>
-        <button class="podcast-pill" data-pmode="quotes">Quotes</button>
-        <button class="podcast-pill" data-pmode="opinions">Opinions</button>
-        <button class="podcast-pill" data-pmode="takeaways">Takeaways</button>
-        <button class="podcast-pill" data-pmode="hooks">Key Moments</button>
+    <!-- ═══ PODCAST DEEP DIVE PANEL ═══ -->
+    <div class="wf-panel" id="panel-podcast" style="display:none">
+      <!-- Classification badge (shown after analysis) -->
+      <div class="podcast-classify-badge" id="podcast-classify-badge" style="display:none">
+        <span class="pcb-icon" id="pcb-icon"></span>
+        <span class="pcb-text" id="pcb-text"></span>
+        <span class="pcb-detail" id="pcb-detail"></span>
       </div>
-      <button class="podcast-extract-btn" id="podcast-extract-btn" onclick="generatePodcast()">Extract from Podcast &#8594;</button>
-    </div>
 
-    <!-- Mode Buttons -->
-    <div class="mode-grid" id="mode-buttons">
-      <button class="mode-btn" data-mode="facts"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
-      <button class="mode-btn" data-mode="predictions"><span class="mode-icon">&#128302;</span><span class="mode-label">Predictions</span><span class="mode-desc">Forward-looking claims</span></button>
-      <button class="mode-btn" data-mode="opinions"><span class="mode-icon">&#128172;</span><span class="mode-label">Opinions</span><span class="mode-desc">Bold viewpoints</span></button>
-      <button class="mode-btn cat-blue" data-mode="quotes"><span class="mode-icon">&#128142;</span><span class="mode-label">Quotes</span><span class="mode-desc">Shareable direct quotes</span></button>
-      <button class="mode-btn cat-blue" data-mode="summary"><span class="mode-icon">&#128203;</span><span class="mode-label">Summary</span><span class="mode-desc">Timeline breakdown</span></button>
-      <button class="mode-btn cat-blue" data-mode="hooks"><span class="mode-icon">&#127907;</span><span class="mode-label">Hooks</span><span class="mode-desc">Viral opening lines</span></button>
-      <button class="mode-btn cat-teal" data-mode="takeaways"><span class="mode-icon">&#9989;</span><span class="mode-label">Takeaways</span><span class="mode-desc">Actionable items</span></button>
-      <button class="mode-btn cat-teal" data-mode="counterarguments"><span class="mode-icon">&#9876;&#65039;</span><span class="mode-label">Counter</span><span class="mode-desc">Opposing arguments</span></button>
-      <button class="mode-btn mode-featured cat-teal" data-mode="ad_creatives"><span class="mode-new-badge">NEW</span><span class="mode-icon">&#128226;</span><span class="mode-label">Ad Creatives</span><span class="mode-desc">Paid social ad copy</span></button>
+      <!-- Topic cards (shown after analysis) -->
+      <div class="topics-panel" id="topics-panel" style="display:none">
+        <div class="topics-header" onclick="toggleTopicsPanel()">
+          <h4>Topics Found</h4>
+          <span class="topics-collapse" id="topics-collapse-text">collapse</span>
+        </div>
+        <div class="topics-body" id="topics-body"></div>
+        <div class="topics-actions">
+          <span id="topics-selected-count">0 selected</span>
+          <span>Select topics, then choose a mode below</span>
+        </div>
+      </div>
+
+      <!-- Podcast mode buttons (same modes, podcast_mode=true) -->
+      <div class="mode-grid" id="podcast-mode-buttons">
+        <button class="mode-btn" data-mode="facts" data-podcast="1"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
+        <button class="mode-btn" data-mode="quotes" data-podcast="1"><span class="mode-icon">&#128142;</span><span class="mode-label">Quotes</span><span class="mode-desc">Shareable direct quotes</span></button>
+        <button class="mode-btn" data-mode="opinions" data-podcast="1"><span class="mode-icon">&#128172;</span><span class="mode-label">Opinions</span><span class="mode-desc">Bold viewpoints</span></button>
+        <button class="mode-btn" data-mode="takeaways" data-podcast="1"><span class="mode-icon">&#9989;</span><span class="mode-label">Takeaways</span><span class="mode-desc">Actionable items</span></button>
+      </div>
+      <div class="podcast-hint" id="podcast-hint">Paste a URL above, then click a mode. Topics will be analyzed automatically.</div>
     </div>
 
     <!-- Slide Count -->
@@ -1234,76 +1238,81 @@ document.querySelectorAll('.count-pill').forEach(p=>{
   });
 });
 
-/* --- TOPIC ANALYSIS --- */
+/* --- WORKFLOW TOGGLE --- */
+let currentWorkflow='quick'; // 'quick' or 'podcast'
 let analyzedTopics=[];
 let selectedTopics=[];
 let topicsPanelOpen=true;
+let lastPodcastType=null;
+let podcastAnalyzed=false;
 
-async function analyzeTopics(){
+const PODCAST_TYPE_ICONS={'academic':'\uD83C\uDF93','political':'\uD83D\uDDF3\uFE0F','entertainment':'\uD83C\uDFAC','business':'\uD83D\uDCBC','tech':'\u2699\uFE0F','religion':'\uD83D\uDD4C','sports':'\u26BD','health':'\uD83C\uDFE5','interview':'\uD83C\uDF99\uFE0F','news':'\uD83D\uDCF0'};
+
+document.querySelectorAll('.wf-btn').forEach(b=>{b.addEventListener('click',()=>{
+  const wf=b.dataset.wf;
+  currentWorkflow=wf;
+  document.querySelectorAll('.wf-btn').forEach(x=>x.classList.toggle('active',x.dataset.wf===wf));
+  $('panel-quick').style.display=wf==='quick'?'':'none';
+  $('panel-podcast').style.display=wf==='podcast'?'':'none';
+})});
+
+function getSelectedTopics(){return selectedTopics.length>0?selectedTopics:null}
+
+/* --- PODCAST DEEP DIVE — auto topic analysis --- */
+async function runPodcastAnalysis(){
   const url=$('url-input').value.trim();
-  if(!url){showError('Please paste a video URL first');return}
-  const btn=$('analyze-topics-btn');
-  btn.disabled=true;btn.innerHTML='<div class="spinner" style="width:14px;height:14px;display:inline-block"></div> Analyzing...';
+  if(!url){showError('Please paste a video URL first');return false}
+  if(podcastAnalyzed)return true;
+
+  $('podcast-hint').innerHTML='<div class="spinner" style="width:14px;height:14px;display:inline-block"></div> Analyzing podcast...';
   $('topics-panel').style.display='none';
-  $('lang-badge').style.display='none';
+  $('podcast-classify-badge').style.display='none';
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};
     const r=await fetch('/api/analyze-topics',{method:'POST',headers:hdrs,body:JSON.stringify({url})});
     const d=await r.json();
-    if(!r.ok){showError(d.detail||'Topic analysis failed');return}
-    analyzedTopics=d.topics||[];
-    selectedTopics=[];
-    // Show language badge
+    if(!r.ok){showError(d.detail||'Analysis failed');$('podcast-hint').textContent='Analysis failed. Click a mode to extract without topics.';return false}
+    analyzedTopics=d.topics||[];selectedTopics=[];
+
+    // Language badge
     const lang=d.language||'en';
     const badge=$('lang-badge');
     badge.style.display='inline-flex';
     badge.className='lang-badge'+(lang==='ar'?' ar':'');
-    badge.textContent=lang==='ar'?'\uD83C\uDF10 Arabic detected':'\uD83C\uDF10 English detected';
-    // Show podcast classification if available
-    if(d.podcast_type)showPodcastClassification(d);
+    badge.textContent=lang==='ar'?'\uD83C\uDF10 Arabic':'\uD83C\uDF10 English';
 
-    // Render topic cards
-    renderTopics(analyzedTopics);
+    // Classification badge
+    if(d.podcast_type){
+      const ptype=d.podcast_type||'interview';
+      const formality=d.formality||'mixed';
+      const speakers=d.speakers||[];
+      lastPodcastType=ptype;
+      const icon=PODCAST_TYPE_ICONS[ptype]||'\uD83C\uDF99\uFE0F';
+      const label=ptype.charAt(0).toUpperCase()+ptype.slice(1);
+      $('pcb-icon').textContent=icon;
+      $('pcb-text').textContent=label+' Podcast';
+      $('pcb-detail').textContent=formality.charAt(0).toUpperCase()+formality.slice(1)+' \u00B7 '+speakers.length+' Speaker'+(speakers.length!==1?'s':'');
+      $('podcast-classify-badge').style.display='flex';
+    }
+
+    // Topic cards
+    const body=$('topics-body');
+    body.innerHTML=analyzedTopics.map((t,i)=>`<div class="topic-card" data-idx="${i}" onclick="toggleTopic(${i})"><input type="checkbox" id="tc-${i}"><div class="tc-content"><div class="tc-name">${escHtml(t.topic)}</div><div class="tc-desc">${escHtml(t.description||'')}</div><div class="tc-meta"><span class="tc-tag">${escHtml(t.timestamp_hint||'')}</span><span class="tc-tag">${t.relevance||'medium'}</span></div></div></div>`).join('');
     $('topics-panel').style.display='';
-    topicsPanelOpen=true;
-    $('topics-body').style.display='';
-    $('topics-collapse-text').textContent='collapse';
-  }catch(e){showError('Network error during topic analysis')}
-  finally{btn.disabled=false;btn.innerHTML='&#128269; Analyze Topics'}
-}
-
-function renderTopics(topics){
-  const body=$('topics-body');
-  body.innerHTML=topics.map((t,i)=>{
-    const rel=t.relevance||'medium';
-    return`<div class="topic-card" data-idx="${i}" onclick="toggleTopic(${i})">
-      <input type="checkbox" id="tc-${i}" ${selectedTopics.includes(t.topic)?'checked':''}>
-      <div class="tc-content">
-        <div class="tc-name">${escHtml(t.topic)}</div>
-        <div class="tc-desc">${escHtml(t.description||'')}</div>
-        <div class="tc-meta">
-          <span class="tc-tag">${escHtml(t.timestamp_hint||'')}</span>
-          <span class="tc-tag">${rel}</span>
-        </div>
-      </div>
-    </div>`
-  }).join('');
-  updateTopicCount();
+    $('topics-selected-count').textContent='0 selected';
+    $('podcast-hint').textContent='Select topics (optional), then click a mode below.';
+    podcastAnalyzed=true;
+    return true;
+  }catch(e){showError('Network error');$('podcast-hint').textContent='Analysis failed.';return false}
 }
 
 function toggleTopic(idx){
   const topic=analyzedTopics[idx].topic;
   const pos=selectedTopics.indexOf(topic);
   if(pos===-1)selectedTopics.push(topic);else selectedTopics.splice(pos,1);
-  // Update checkbox + card style
   const card=$('topics-body').children[idx];
-  const cb=card.querySelector('input[type=checkbox]');
-  cb.checked=pos===-1;
+  card.querySelector('input[type=checkbox]').checked=pos===-1;
   card.classList.toggle('selected',pos===-1);
-  updateTopicCount();
-}
-
-function updateTopicCount(){
   $('topics-selected-count').textContent=selectedTopics.length+' selected';
 }
 
@@ -1313,73 +1322,8 @@ function toggleTopicsPanel(){
   $('topics-collapse-text').textContent=topicsPanelOpen?'collapse':'expand';
 }
 
-function getSelectedTopics(){
-  return selectedTopics.length>0?selectedTopics:null;
-}
-
-/* --- PODCAST MODE --- */
-let podcastPanelOpen=false;
-let selectedPodcastMode='facts';
-let lastPodcastType=null;
-
-const PODCAST_TYPE_ICONS={'academic':'\uD83C\uDF93','political':'\uD83D\uDDF3\uFE0F','entertainment':'\uD83C\uDFAC','business':'\uD83D\uDCBC','tech':'\u2699\uFE0F','religion':'\uD83D\uDD4C','sports':'\u26BD','health':'\uD83C\uDFE5','interview':'\uD83C\uDF99\uFE0F','news':'\uD83D\uDCF0'};
-
-function togglePodcastPanel(){
-  podcastPanelOpen=!podcastPanelOpen;
-  $('podcast-sub-panel').classList.toggle('active',podcastPanelOpen);
-}
-
-// Podcast pill selection
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.podcast-pill').forEach(pill=>{
-    pill.addEventListener('click',()=>{
-      document.querySelectorAll('.podcast-pill').forEach(p=>p.classList.remove('active'));
-      pill.classList.add('active');
-      selectedPodcastMode=pill.dataset.pmode;
-    });
-  });
-});
-
-function showPodcastClassification(data){
-  const badge=$('podcast-classify-badge');
-  const ptype=data.podcast_type||'interview';
-  const formality=data.formality||'mixed';
-  const speakers=data.speakers||[];
-  const speakerCount=speakers.length;
-  lastPodcastType=ptype;
-
-  const icon=PODCAST_TYPE_ICONS[ptype]||'\uD83C\uDF99\uFE0F';
-  const label=ptype.charAt(0).toUpperCase()+ptype.slice(1);
-  $('pcb-icon').textContent=icon;
-  $('pcb-text').textContent=label+' Podcast';
-  $('pcb-detail').textContent=formality.charAt(0).toUpperCase()+formality.slice(1)+' \u00B7 '+speakerCount+' Speaker'+(speakerCount!==1?'s':'');
-  badge.style.display='flex';
-}
-
-async function generatePodcast(){
-  const url=$('url-input').value.trim();
-  if(!url){showError('Please paste a video URL first');return}
-  const btn=$('podcast-extract-btn');
-  btn.disabled=true;btn.textContent='Downloading video frames...';
-
-  const PODCAST_STEPS=['Detecting platform...','Fetching transcript...','Downloading video frames...','Analyzing with AI...','Generating slides...'];
-  $('status-area').innerHTML=`<div class="status-steps">${PODCAST_STEPS.map((s,i)=>{let c='status-step active';return`<div class="${c}"><span class="step-icon"><div class="spinner"></div></span>${s}</div>`}).join('')}</div>`;
-
-  try{
-    const hdrs={'Content-Type':'application/json',...authHeaders()};
-    const payload={url,mode:selectedPodcastMode,format:'all',num_items:selectedSlideCount,podcast_mode:true};
-    const st=getSelectedTopics();if(st)payload.selected_topics=st;
-    if(lastPodcastType)payload.podcast_type=lastPodcastType;
-    const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
-    const d=await r.json();
-    if(!r.ok){
-      if(r.status===429&&d.limit_reached)openUpgradeModal();
-      showError(d.detail||'Extraction failed');return;
-    }
-    showResults(d);showToast('Podcast extracted!');
-  }catch(e){showError('Network error')}
-  finally{btn.disabled=false;btn.textContent='Extract from Podcast \u2192';$('status-area').innerHTML=''}
-}
+// Reset podcast state when URL changes
+$('url-input').addEventListener('input',()=>{podcastAnalyzed=false;analyzedTopics=[];selectedTopics=[];lastPodcastType=null})
 
 /* --- GENERATION --- */
 const STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Fetching images...','Generating slides...'];
@@ -1389,29 +1333,45 @@ function showError(m){$('status-area').innerHTML=`<div class="status-msg error">
 function clearStatus(){$('status-area').innerHTML=''}
 function setButtonsDisabled(d){document.querySelectorAll('.mode-btn').forEach(b=>b.disabled=d)}
 
-document.querySelectorAll('.mode-btn').forEach(b=>{b.addEventListener('click',()=>{if(urlMode==='bulk')generateBulk(b.dataset.mode);else generate(b.dataset.mode)})});
+// Quick extract mode buttons
+document.querySelectorAll('#panel-quick .mode-btn, #mode-buttons-extra .mode-btn').forEach(b=>{
+  b.addEventListener('click',()=>{if(urlMode==='bulk')generateBulk(b.dataset.mode);else generate(b.dataset.mode)});
+});
+// Podcast mode buttons — auto-analyze topics first, then extract with podcast_mode=true
+document.querySelectorAll('#podcast-mode-buttons .mode-btn').forEach(b=>{
+  b.addEventListener('click',async()=>{
+    await runPodcastAnalysis();
+    generate(b.dataset.mode,{podcast_mode:true,podcast_type:lastPodcastType});
+  });
+});
 document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active')})});
 document.querySelectorAll('.copy-btn').forEach(b=>{b.addEventListener('click',()=>{navigator.clipboard.writeText($(b.dataset.target).textContent);b.textContent='Copied \u2713';b.classList.add('copied');setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied')},2000)})});
 $('carousel-left').addEventListener('click',()=>{$('carousel-viewer').scrollBy({left:-280,behavior:'smooth'})});
 $('carousel-right').addEventListener('click',()=>{$('carousel-viewer').scrollBy({left:280,behavior:'smooth'})});
 $('url-input').addEventListener('keydown',e=>{if(e.key==='Enter'){if(urlMode==='bulk')generateBulk('facts');else generate('facts')}});
 
-async function generate(mode){
+async function generate(mode,opts){
+  opts=opts||{};
   const url=$('url-input').value.trim();
   if(!url){showError('Please paste a video URL first');return}
+  const isPodcast=!!opts.podcast_mode;
   const isTextOnly=(mode==='summary'||mode==='hooks');
-  const steps=isTextOnly?TEXT_ONLY_STEPS:STEPS;
+  const steps=isPodcast
+    ?['Detecting platform...','Transcribing audio...','Downloading video frames...','Analyzing with AI...','Generating slides...']
+    :(isTextOnly?TEXT_ONLY_STEPS:STEPS);
   $('results').classList.remove('visible');$('bulk-progress').style.display='none';
   setButtonsDisabled(true);let si=0;
   function showProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
   showProgress(0);
-  const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},4000);
+  const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},isPodcast?6000:4000);
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};
     const payload={url,mode,format:'all',brand:bp,num_items:selectedSlideCount};
     const st=getSelectedTopics();if(st)payload.selected_topics=st;
-    if(lastPodcastType)payload.podcast_type=lastPodcastType;
+    if(opts.podcast_mode)payload.podcast_mode=true;
+    if(opts.podcast_type)payload.podcast_type=opts.podcast_type;
+    else if(lastPodcastType)payload.podcast_type=lastPodcastType;
     const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
     clearInterval(iv);const d=await r.json();
     if(!r.ok){

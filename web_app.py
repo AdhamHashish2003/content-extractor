@@ -165,15 +165,16 @@ def _check_rate_limit(ip: str) -> bool:
 def _friendly_error(detail: str) -> str:
     """Map technical errors to user-friendly messages."""
     d = detail.lower()
-    if "no captions" in d or "could not get transcript" in d:
-        return "This video doesn't have captions available. Try a different video."
-    if "ratelimit" in d:
-        return "We're experiencing high demand. Please try again in a minute."
+    if "ratelimit" in d or "rate limit" in d:
+        return "Transcription service is busy. Please try again in a minute."
     if "timeout" in d or "timed out" in d:
         return "Processing took too long. Try a shorter video."
     if "transcript too short" in d:
         return "This video doesn't have enough spoken content. Try a different video."
-    return "Something went wrong. Please try again."
+    if "transcription failed" in d:
+        return "Could not transcribe this video. The audio may be too long or the service is busy. Try again in a minute."
+    # Pass through detailed messages instead of hiding them
+    return detail if len(detail) < 200 else "Something went wrong. Please try again."
 
 
 class BulkExtractRequest(BaseModel):
@@ -435,12 +436,16 @@ async def api_analyze_topics(request: Request):
 
         # Groq Whisper fallback (reliable on cloud servers where YouTube blocks captions)
         if not transcript:
+            logger.info("[analyze-topics] Captions unavailable, using Groq Whisper for %s", url[:60])
             try:
                 transcript = await asyncio.wait_for(
-                    asyncio.to_thread(_groq_pipeline, url), timeout=120
+                    asyncio.to_thread(_groq_pipeline, url), timeout=180
                 )
+                logger.info("[analyze-topics] Groq Whisper OK: %d words", len((transcript or "").split()))
+            except asyncio.TimeoutError:
+                raise HTTPException(400, "Audio transcription timed out. Try a shorter video.")
             except Exception as e:
-                raise HTTPException(400, f"Could not get transcript: {e}")
+                raise HTTPException(400, f"Audio transcription failed: {e}")
 
         if not transcript or len(transcript.split()) < 50:
             raise HTTPException(400, "Transcript too short. The video may not have spoken content.")
@@ -552,15 +557,16 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     logger.info("[pipeline] Captions failed for %s, trying Groq Whisper fallback", meta.video_id)
                     try:
                         transcript = await asyncio.wait_for(
-                            asyncio.to_thread(_groq_pipeline, url), timeout=120
+                            asyncio.to_thread(_groq_pipeline, url), timeout=180
                         )
-                    except Exception as whisper_err:
-                        # Build error with debug info from caption attempts
-                        debug_info = getattr(_try_youtube_captions, "_last_debug", "")
-                        caption_detail = f"\n\nCaption debug:\n{debug_info}" if debug_info else ""
+                        logger.info("[pipeline] Groq Whisper OK for %s: %d words", meta.video_id, len((transcript or "").split()))
+                    except asyncio.TimeoutError:
                         raise HTTPException(400,
-                            f"No captions found and audio transcription failed ({whisper_err}). "
-                            f"Try a different video with subtitles.{caption_detail}")
+                            "Audio transcription timed out. Try a shorter video (under 15 minutes).")
+                    except Exception as whisper_err:
+                        logger.error("[pipeline] Groq Whisper failed for %s: %s", meta.video_id, whisper_err)
+                        raise HTTPException(400,
+                            f"Audio transcription failed: {whisper_err}")
             else:
                 try:
                     transcript = await asyncio.wait_for(
