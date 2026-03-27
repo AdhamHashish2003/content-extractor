@@ -217,17 +217,33 @@ async def auth_signup(request: Request):
 
     if not email or not _EMAIL_RE.match(email):
         raise HTTPException(400, "Invalid email address")
-    if len(password) < 6:
+    if not password or len(password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
 
     # Check if email already exists BEFORE creating the user
-    if db.get_user_by_email(email):
-        raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
-
-    try:
-        user = db.create_user(email, password)
-    except ValueError:
-        raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
+    existing = db.get_user_by_email(email)
+    if existing:
+        # Ghost user recovery: if the account was created by the old bug
+        # (last_extraction_date is still NULL — never completed signup),
+        # allow re-registration by resetting the password.
+        # Legitimate users always have last_extraction_date set to at least
+        # 'registered' after a successful signup.
+        is_ghost = (
+            existing.get("last_extraction_date") is None
+            and (existing.get("daily_extractions") or 0) == 0
+        )
+        if is_ghost:
+            db.reset_user_password(existing["id"], password)
+            db.mark_signup_complete(existing["id"])
+            user = db.get_user_by_id(existing["id"])
+        else:
+            raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
+    else:
+        try:
+            user = db.create_user(email, password)
+        except ValueError:
+            raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
+        db.mark_signup_complete(user["id"])
 
     token = _create_jwt(user["id"], user["email"])
     return JSONResponse({

@@ -142,6 +142,38 @@ def get_user_by_id(user_id: str) -> dict | None:
     return user
 
 
+def reset_user_password(user_id: str, new_password: str) -> None:
+    """Reset a user's password (used for ghost-user recovery)."""
+    pw_hash = bcrypt.hash(new_password)
+    conn, ph = _connect()
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE users SET password_hash = {ph} WHERE id = {ph}",
+        (pw_hash, user_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def mark_signup_complete(user_id: str) -> None:
+    """Stamp user so they're no longer treated as a ghost.
+
+    Uses the sentinel value 'registered' in last_extraction_date.
+    All date comparisons in usage tracking compare against today's
+    ISO date, so 'registered' != today → usage correctly reads as 0.
+    """
+    conn, ph = _connect()
+    cur = conn.cursor()
+    cur.execute(
+        f"UPDATE users SET last_extraction_date = 'registered' WHERE id = {ph}",
+        (user_id,),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.verify(plain, hashed)
 

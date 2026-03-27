@@ -923,14 +923,14 @@ img{max-width:100%;display:block}
       <button class="auth-tab active" data-auth-tab="signup">Sign Up</button>
       <button class="auth-tab" data-auth-tab="login">Log In</button>
     </div>
-    <form class="auth-form active" id="auth-form-signup" onsubmit="return false">
+    <form class="auth-form active" id="auth-form-signup">
       <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com" required></div>
       <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="Min 6 characters" minlength="6" required></div>
       <div class="auth-field"><label>Confirm Password</label><input type="password" id="signup-confirm" placeholder="Confirm password" minlength="6" required></div>
       <button class="auth-submit" id="signup-btn" type="submit">Create Account</button>
       <div class="auth-error" id="signup-error"></div>
     </form>
-    <form class="auth-form" id="auth-form-login" onsubmit="return false">
+    <form class="auth-form" id="auth-form-login">
       <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" required></div>
       <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="Password" required></div>
       <button class="auth-submit" id="login-btn" type="submit">Log In</button>
@@ -1292,38 +1292,62 @@ $('auth-modal').addEventListener('click',e=>{if(e.target===$('auth-modal'))close
 document.querySelectorAll('.auth-tab').forEach(b=>{b.addEventListener('click',()=>switchAuthTab(b.dataset.authTab))});
 
 /* --- Signup --- */
-$('auth-form-signup').addEventListener('submit',async()=>{
-  const email=$('signup-email').value.trim(),pw=$('signup-password').value,confirm=$('signup-confirm').value;
+$('auth-form-signup').addEventListener('submit',function handleSignup(e){
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const email=$('signup-email').value.trim();
+  const password=$('signup-password').value;
+  const confirm=$('signup-confirm').value;
   const errEl=$('signup-error');
   errEl.innerHTML='';
-  // Client-side validation — block before any API call
-  const emailRe=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-  if(!emailRe.test(email)){errEl.textContent='Please enter a valid email';return}
-  if(pw.length<6){errEl.textContent='Password must be at least 6 characters';return}
-  if(pw!==confirm){errEl.textContent='Passwords don\'t match';return}
-  try{
-    const r=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok){
-      if(r.status===409){
-        errEl.innerHTML=d.detail+' <a href="#" onclick="switchAuthTab(\'login\');return false" style="color:var(--primary);text-decoration:underline">Log in instead</a>';
-      }else{errEl.textContent=d.detail||'Signup failed'}
-      return;
-    }
-    setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');
-  }catch(e){errEl.textContent='Network error'}
+
+  /* ── BLOCK 1: validate BEFORE any API call ── */
+  if(!email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+    errEl.textContent='Please enter a valid email';return;
+  }
+  if(password.length<6){
+    errEl.textContent='Password must be at least 6 characters';return;
+  }
+  if(password!==confirm){
+    errEl.textContent='Passwords don\'t match';return;
+  }
+
+  /* ── BLOCK 2: only reaches here if ALL validation passed ── */
+  (async function(){
+    try{
+      const r=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+      const d=await r.json();
+      if(!r.ok){
+        if(r.status===409){
+          errEl.innerHTML=d.detail+' <a href="#" onclick="switchAuthTab(\'login\');return false" style="color:var(--primary);text-decoration:underline">Log in instead</a>';
+        }else{errEl.textContent=d.detail||'Signup failed'}
+        return;
+      }
+      setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');
+    }catch(err){errEl.textContent='Network error'}
+  })();
 });
 
 /* --- Login --- */
-$('auth-form-login').addEventListener('submit',async()=>{
-  const email=$('login-email').value.trim(),pw=$('login-password').value;
-  $('login-error').textContent='';
-  try{
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok){$('login-error').textContent=d.detail||'Login failed';return}
-    setToken(d.token);closeAuthModal();await refreshUser();showToast('Welcome back!');
-  }catch(e){$('login-error').textContent='Network error'}
+$('auth-form-login').addEventListener('submit',function handleLogin(e){
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const email=$('login-email').value.trim();
+  const pw=$('login-password').value;
+  const errEl=$('login-error');
+  errEl.textContent='';
+
+  if(!email){errEl.textContent='Please enter your email';return;}
+  if(!pw){errEl.textContent='Please enter your password';return;}
+
+  (async function(){
+    try{
+      const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+      const d=await r.json();
+      if(!r.ok){errEl.textContent=d.detail||'Login failed';return}
+      setToken(d.token);closeAuthModal();await refreshUser();showToast('Welcome back!');
+    }catch(err){errEl.textContent='Network error'}
+  })();
 });
 
 /* --- Refresh user info --- */

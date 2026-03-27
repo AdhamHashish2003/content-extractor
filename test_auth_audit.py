@@ -372,14 +372,14 @@ html_text = html.read_text()
 
 # Test 41a-d: Signup form validation
 T(43, "FE signup: email regex check before API",
-  "emailRe.test(email)" in html_text or "emailRe" in html_text,
-  "checks /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/")
+  "test(email)" in html_text and "@" in html_text and "Please enter a valid email" in html_text,
+  "checks email regex before fetch")
 
 T(44, "FE signup: password length check before API",
-  "pw.length<6" in html_text, "")
+  "password.length<6" in html_text or "pw.length<6" in html_text, "")
 
 T(45, "FE signup: password match check before API",
-  "pw!==confirm" in html_text, "")
+  "password!==confirm" in html_text or "pw!==confirm" in html_text, "")
 
 T(46, "FE signup: specific error messages",
   "Please enter a valid email" in html_text
