@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ContentExtractor AI — Turn Any Video Into Viral Content</title>
-<meta name="description" content="AI-powered tool that turns YouTube, Instagram, TikTok and X videos into branded carousel slides, Twitter threads, LinkedIn posts, ad creatives, and more. Free to use.">
+<title>ContentExtractor AI — Extract Intelligence From Any Video</title>
+<meta name="description" content="AI-powered tool that extracts facts, quotes, and insights from YouTube, Instagram, TikTok videos. Generates branded carousel slides, Twitter threads, LinkedIn posts, and ad creatives in seconds. Free to use.">
 <meta name="keywords" content="AI video to carousel, AI content repurposing, video to social media posts, AI carousel generator, video to twitter thread, AI ad creative generator">
-<meta property="og:title" content="ContentExtractor AI — Turn Any Video Into Viral Content">
-<meta property="og:description" content="Paste any video link. Get branded carousel slides, threads, ad copy, and more — in seconds.">
+<meta property="og:title" content="ContentExtractor AI — Extract Intelligence From Any Video">
+<meta property="og:description" content="Paste any video link. AI extracts facts, quotes, insights — generates branded carousels, threads, ad copy in seconds.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://content-extractor-production-9224.up.railway.app">
 <meta name="twitter:card" content="summary_large_image">
@@ -15,33 +15,37 @@
 <meta name="twitter:description" content="AI-powered video to content engine. Free.">
 <link rel="canonical" href="https://content-extractor-production-9224.up.railway.app">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   RESET & VARIABLES
+   RESET & VARIABLES — Midnight Signal
    ============================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#FFFFFF;
-  --surface:#F9FAFB;
-  --card-border:#E5E7EB;
-  --primary:#7C3AED;
-  --primary-light:#EDE9FE;
-  --primary-dark:#5B21B6;
-  --primary-gradient:linear-gradient(135deg,#7C3AED,#2563EB);
-  --accent-warm:#F97316;
-  --text:#111827;
-  --text-body:#4B5563;
-  --text-muted:#9CA3AF;
-  --success:#10B981;
-  --error:#EF4444;
+  --bg:#0C0C0F;
+  --surface:#141418;
+  --surface2:#1C1C22;
+  --card-border:rgba(255,255,255,0.06);
+  --primary:#00D4AA;
+  --primary-glow:rgba(0,212,170,0.15);
+  --primary-light:rgba(0,212,170,0.08);
+  --primary-dark:#00B08A;
+  --primary-gradient:linear-gradient(135deg,#00D4AA,#0088FF);
+  --accent-warm:#FF6B35;
+  --accent-gold:#FFD700;
+  --text:#F0EDE8;
+  --text-body:#B0ADA8;
+  --text-muted:#8A8A95;
+  --text-dim:#55555F;
+  --success:#00D4AA;
+  --error:#FF4757;
   --radius:16px;
   --radius-sm:10px;
   --radius-xs:6px;
 }
 html{scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.6}
-h1,h2,h3,h4,h5,h6{font-family:'Plus Jakarta Sans','Inter',sans-serif;color:var(--text);letter-spacing:-0.02em}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.6}
+h1,h2,h3,h4,h5,h6{font-family:'Syne','DM Sans',sans-serif;color:var(--text);letter-spacing:-0.02em}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 .container{max-width:1200px;margin:0 auto;padding:0 24px}
@@ -49,99 +53,99 @@ img{max-width:100%;display:block}
 .section-heading{text-align:center;margin-bottom:60px}
 .section-heading h2{font-size:clamp(2rem,4vw,2.75rem);font-weight:800;margin-bottom:12px}
 .section-heading p{color:var(--text-body);font-size:1.1rem;max-width:600px;margin:0 auto}
-.card{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:600;font-size:1rem;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;text-decoration:none}
-.btn-primary:hover{transform:scale(1.02);box-shadow:0 8px 24px rgba(124,58,237,0.25)}
-.btn-outline{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:100px;background:transparent;color:var(--primary);font-weight:600;font-size:1rem;border:2px solid var(--primary);cursor:pointer;transition:all .2s;text-decoration:none}
-.btn-outline:hover{background:var(--primary-light);box-shadow:0 2px 8px rgba(124,58,237,0.1)}
-.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}.fade-in.visible{opacity:1;transform:translateY(0)}
+.card{background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius)}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-weight:700;font-size:1rem;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;text-decoration:none;font-family:'DM Sans',sans-serif}
+.btn-primary:hover{transform:scale(1.02);box-shadow:0 0 30px var(--primary-glow)}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:100px;background:transparent;color:var(--primary);font-weight:600;font-size:1rem;border:2px solid var(--primary);cursor:pointer;transition:all .2s;text-decoration:none;font-family:'DM Sans',sans-serif}
+.btn-outline:hover{background:var(--primary-light);box-shadow:0 0 20px var(--primary-glow)}
+.fade-in{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}.fade-in.visible{opacity:1;transform:translateY(0)}
 
 /* ============================================================
-   NAV
+   NAV — glass morphism
    ============================================================ */
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0;background:#fff;border-bottom:1px solid var(--card-border);transition:box-shadow .3s}
-.nav.scrolled{box-shadow:0 1px 8px rgba(0,0,0,0.06)}
-.nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 24px}
-.nav-logo{display:flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text)}
-.nav-logo .ai-badge{padding:2px 8px;border-radius:6px;background:var(--primary-gradient);color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.5px}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0;background:transparent;transition:background .4s,backdrop-filter .4s,box-shadow .3s}
+.nav.scrolled{background:rgba(12,12,15,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 1px 0 var(--card-border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:16px 24px}
+.nav-logo{display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--text)}
+.nav-logo .ai-badge{color:var(--primary);font-weight:800}
 .nav-links{display:flex;gap:32px;list-style:none}
-.nav-links a{color:var(--text-body);font-size:.9rem;font-weight:500;transition:color .2s}
+.nav-links a{color:var(--text-muted);font-size:.9rem;font-weight:500;transition:color .2s}
 .nav-links a:hover{color:var(--text)}
-.nav-cta{padding:10px 24px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:600;font-size:.9rem;border:none;cursor:pointer;transition:transform .2s;text-decoration:none}
-.nav-cta:hover{transform:scale(1.02)}
+.nav-cta{padding:10px 24px;border-radius:100px;background:transparent;color:var(--primary);font-weight:600;font-size:.9rem;border:1.5px solid var(--primary);cursor:pointer;transition:all .2s;text-decoration:none;font-family:'DM Sans',sans-serif}
+.nav-cta:hover{background:var(--primary);color:#0C0C0F;box-shadow:0 0 20px var(--primary-glow)}
 .nav-hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
 .mobile-only{display:none}
 
 /* ============================================================
-   HERO
+   HERO — full viewport with particle canvas
    ============================================================ */
-.hero{padding:120px 0 80px;background:#fff;text-align:center}
-.hero-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:100px;font-size:.85rem;font-weight:600;color:var(--primary);margin-bottom:24px;background:linear-gradient(var(--primary-light),var(--primary-light)) padding-box,var(--primary-gradient) border-box;border:1.5px solid transparent}
-.hero h1{font-size:clamp(2.5rem,5vw,3.5rem);font-weight:800;line-height:1.15;margin-bottom:20px;color:var(--text)}
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 0 60px;background:var(--bg);text-align:center;overflow:hidden}
+#hero-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0.4;z-index:0}
+.hero-content{position:relative;z-index:1}
+.hero-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:100px;font-size:.85rem;font-weight:600;color:var(--primary);margin-bottom:28px;background:var(--primary-light);border:1px solid rgba(0,212,170,0.15)}
+.hero h1{font-size:clamp(2.8rem,5.5vw,4.2rem);font-weight:800;line-height:1.1;margin-bottom:24px;color:var(--text)}
 .hero h1 .line2{display:block;background:var(--primary-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-subtitle{font-size:1.1rem;color:var(--text-body);line-height:1.7;margin:0 auto 40px;max-width:640px}
+.hero-subtitle{font-size:1.1rem;color:var(--text-body);line-height:1.7;margin:0 auto 44px;max-width:580px}
 
 /* Hero Tool */
-.hero-tool{max-width:700px;margin:0 auto 24px}
+.hero-tool{max-width:640px;margin:0 auto 28px}
 .hero-url-wrapper{position:relative;margin-bottom:14px}
-.hero-url-input{width:100%;padding:16px 20px;background:#fff;border:2px solid var(--card-border);border-radius:var(--radius);font-size:1rem;font-family:'Inter',sans-serif;color:var(--text);transition:border-color .2s,box-shadow .2s}
-.hero-url-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(124,58,237,0.1)}
-.hero-url-input::placeholder{color:var(--text-muted)}
-.hero-mode-pills{display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.hero-mode-pill{padding:6px 16px;border-radius:100px;background:var(--surface);border:1px solid var(--card-border);color:var(--text-body);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.hero-url-input{width:100%;padding:18px 22px;background:var(--surface);border:1.5px solid var(--card-border);border-radius:var(--radius);font-size:1rem;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color .2s,box-shadow .2s}
+.hero-url-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-glow)}
+.hero-url-input::placeholder{color:var(--text-dim)}
+.hero-mode-pills{display:flex;justify-content:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.hero-mode-pill{padding:7px 18px;border-radius:100px;background:transparent;border:1px solid var(--card-border);color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
 .hero-mode-pill:hover{border-color:var(--primary);color:var(--primary)}
-.hero-mode-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.hero-extract-btn{display:inline-flex;align-items:center;gap:8px;padding:16px 48px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:700;font-size:1.1rem;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;font-family:'Inter',sans-serif;margin-bottom:16px}
-.hero-extract-btn:hover{transform:scale(1.03);box-shadow:0 12px 32px rgba(124,58,237,0.3)}
-.hero-trust{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;font-size:.85rem;color:var(--text-muted);font-weight:500}
+.hero-mode-pill.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
+.hero-extract-btn{display:inline-flex;align-items:center;gap:8px;padding:16px 52px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-weight:700;font-size:1.1rem;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;font-family:'DM Sans',sans-serif;margin-bottom:16px}
+.hero-extract-btn:hover{transform:scale(1.03);box-shadow:0 0 40px var(--primary-glow)}
+.hero-trust{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;font-size:.85rem;color:var(--text-dim);font-weight:500}
 .hero-trust span{display:flex;align-items:center;gap:4px}
-.hero-trust span::before{content:'\2713';color:var(--success);font-weight:700}
-.hero-trust .separator{color:var(--card-border)}
-.hero-trust .separator::before{content:'';display:none}
+.hero-trust span::before{content:'\2713';color:var(--primary);font-weight:700}
+.hero-trust .separator{color:var(--card-border)}.hero-trust .separator::before{content:'';display:none}
 
 /* Hero Sample Cards */
 .hero-samples{display:flex;justify-content:center;align-items:center;margin-top:60px;padding:0 20px}
-.hero-sample-card{width:200px;height:260px;border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 20px 40px rgba(0,0,0,0.12);flex-shrink:0;color:#fff;transition:transform .3s}
-.hero-sample-card:nth-child(1){background:linear-gradient(135deg,#1a1a2e,#16213e);transform:rotate(-2deg);margin-right:-16px;z-index:1}
-.hero-sample-card:nth-child(2){background:linear-gradient(135deg,#0f3460,#533483);transform:translateY(-10px);z-index:2;box-shadow:0 24px 48px rgba(0,0,0,0.18)}
-.hero-sample-card:nth-child(3){background:#fff;color:var(--text);transform:rotate(2deg);margin-left:-16px;z-index:1;border:1px solid var(--card-border)}
-.hero-sample-card .hc-label{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;opacity:.7;margin-bottom:6px;font-weight:600}
-.hero-sample-card .hc-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;line-height:1.3}
-.hero-sample-card .hc-subtitle{font-size:.75rem;opacity:.6;margin-top:6px}
-.hero-sample-card:nth-child(3) .hc-label{color:var(--text-muted)}
-.hero-sample-card:nth-child(3) .hc-title{color:var(--text)}
-.hero-sample-card:nth-child(3) .hc-subtitle{color:var(--text-muted)}
+.hero-sample-card{width:200px;height:260px;border-radius:16px;padding:24px 20px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 20px 40px rgba(0,0,0,0.4);flex-shrink:0;color:#fff;transition:transform .3s}
+.hero-sample-card:nth-child(1){background:linear-gradient(135deg,#0a2a3c,#0d3b4f);transform:rotate(-2deg);margin-right:-16px;z-index:1}
+.hero-sample-card:nth-child(2){background:linear-gradient(135deg,#003d36,#00574a);transform:translateY(-10px);z-index:2;box-shadow:0 24px 48px rgba(0,0,0,0.4)}
+.hero-sample-card:nth-child(3){background:var(--surface2);color:var(--text);transform:rotate(2deg);margin-left:-16px;z-index:1;border:1px solid var(--card-border)}
+.hero-sample-card .hc-label{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;opacity:.6;margin-bottom:6px;font-weight:600}
+.hero-sample-card .hc-title{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;line-height:1.3}
+.hero-sample-card .hc-subtitle{font-size:.75rem;opacity:.5;margin-top:6px}
 
 /* ============================================================
-   SOCIAL PROOF / PLATFORMS
+   PLATFORMS
    ============================================================ */
 .platforms{padding:40px 0;background:var(--surface)}
 .platforms-inner{text-align:center}
-.platforms-inner p{color:var(--text-muted);font-size:.9rem;font-weight:500;margin-bottom:16px}
+.platforms-inner p{color:var(--text-dim);font-size:.9rem;font-weight:500;margin-bottom:16px}
 .platform-pills{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-.platform-pill{padding:8px 18px;border-radius:100px;font-size:.8rem;font-weight:600;color:#fff;border:none}
-.platform-pill.yt{background:#FF0000}
-.platform-pill.ig{background:#E1306C}
-.platform-pill.tt{background:#000000}
-.platform-pill.tw{background:#14171A}
-.platform-pill.li{background:#0A66C2}
+.platform-pill{padding:8px 18px;border-radius:100px;font-size:.8rem;font-weight:600;color:var(--text-muted);border:1px solid var(--card-border);background:transparent;transition:all .2s;cursor:default}
+.platform-pill:hover{border-color:var(--text-muted)}
+.platform-pill.yt:hover{color:#FF0000;border-color:#FF0000}
+.platform-pill.ig:hover{color:#E1306C;border-color:#E1306C}
+.platform-pill.tt:hover{color:#fff;border-color:#fff}
+.platform-pill.tw:hover{color:#fff;border-color:#fff}
+.platform-pill.li:hover{color:#0A66C2;border-color:#0A66C2}
 
 /* ============================================================
-   HOW IT WORKS
+   HOW IT WORKS — horizontal timeline
    ============================================================ */
-.how-it-works{padding:100px 0;background:#fff}
+.how-it-works{padding:100px 0;background:var(--bg)}
 .steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
-.steps-row::before{content:'';position:absolute;top:36px;left:calc(16.66% + 24px);right:calc(16.66% + 24px);height:2px;border-top:2px dashed rgba(124,58,237,0.3);z-index:0}
-.step-card{padding:40px 28px;text-align:center;background:#fff;border-radius:var(--radius);border:1px solid var(--card-border);box-shadow:0 1px 3px rgba(0,0,0,0.04);position:relative;z-index:1}
-.step-num{width:48px;height:48px;border-radius:50%;background:var(--primary-gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.1rem;margin:0 auto 16px;font-family:'Plus Jakarta Sans',sans-serif}
+.steps-row::before{content:'';position:absolute;top:36px;left:calc(16.66% + 24px);right:calc(16.66% + 24px);height:2px;background:linear-gradient(90deg,var(--primary),var(--accent-warm));z-index:0;opacity:.4}
+.step-card{padding:40px 28px;text-align:center;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--card-border);position:relative;z-index:1;transition:border-color .3s,box-shadow .3s}
+.step-card:hover{border-color:rgba(0,212,170,0.2);box-shadow:0 8px 30px rgba(0,212,170,0.05)}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#0C0C0F;font-weight:800;font-size:1.1rem;margin:0 auto 16px;font-family:'Syne',sans-serif}
 .step-icon{font-size:2rem;margin-bottom:12px}
 .step-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
 .step-card p{color:var(--text-body);font-size:.9rem;line-height:1.6}
 
 /* ============================================================
-   FEATURES (alternating blocks)
+   FEATURES
    ============================================================ */
-.features{padding:100px 0}
+.features{padding:100px 0;background:var(--surface)}
 .feature-block{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;margin-bottom:80px}
 .feature-block:last-child{margin-bottom:0}
 .feature-block.reversed{direction:rtl}
@@ -150,64 +154,73 @@ img{max-width:100%;display:block}
 .feature-text p{color:var(--text-body);font-size:1rem;line-height:1.7;max-width:480px}
 .feature-new-badge{display:inline-flex;padding:4px 10px;border-radius:100px;background:var(--accent-warm);color:#fff;font-size:.7rem;font-weight:700}
 
-/* Feature Visual: 3x3 Mode Grid */
+/* Feature: 3x3 Mode Grid */
 .modes-visual{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.mode-vis-card{padding:16px 12px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.mode-vis-card{padding:16px 12px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;transition:border-color .2s}
+.mode-vis-card:hover{border-color:rgba(0,212,170,0.2)}
 .mode-vis-card .mv-icon{font-size:1.3rem;margin-bottom:4px}
 .mode-vis-card .mv-label{font-size:.7rem;font-weight:600;color:var(--text-body)}
 
-/* Feature Visual: Carousel Stack */
+/* Feature: Carousel Stack */
 .carousel-visual{position:relative;display:flex;justify-content:center;align-items:center;min-height:300px}
-.cv-card{position:absolute;width:200px;height:250px;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;padding:20px;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,0.12)}
-.cv-card:nth-child(1){background:linear-gradient(135deg,#7C3AED,#a855f7);transform:rotate(-4deg) translateX(-30px);z-index:1}
-.cv-card:nth-child(2){background:linear-gradient(135deg,#2563EB,#3b82f6);transform:translateY(-10px);z-index:2}
-.cv-card:nth-child(3){background:linear-gradient(135deg,#10B981,#34d399);transform:rotate(4deg) translateX(30px);z-index:1}
+.cv-card{position:absolute;width:200px;height:250px;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;padding:20px;color:#fff;box-shadow:0 16px 40px rgba(0,0,0,0.3)}
+.cv-card:nth-child(1){background:linear-gradient(135deg,#003d36,#00574a);transform:rotate(-4deg) translateX(-30px);z-index:1}
+.cv-card:nth-child(2){background:linear-gradient(135deg,#0a2a3c,#004466);transform:translateY(-10px);z-index:2}
+.cv-card:nth-child(3){background:linear-gradient(135deg,#2a1a00,#553300);transform:rotate(4deg) translateX(30px);z-index:1}
 .cv-card .cv-label{font-size:.55rem;text-transform:uppercase;letter-spacing:2px;opacity:.7;margin-bottom:4px}
-.cv-card .cv-text{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.85rem;line-height:1.3}
+.cv-card .cv-text{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;line-height:1.3}
 
-/* Feature Visual: Tabs Mockup */
-.tabs-visual{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06)}
+/* Feature: Tabs Mockup */
+.tabs-visual{background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
 .tv-tabs{display:flex;border-bottom:1px solid var(--card-border);padding:4px;gap:2px}
-.tv-tab{padding:8px 16px;border-radius:var(--radius-xs);font-size:.75rem;font-weight:600;color:var(--text-muted);background:transparent}
-.tv-tab.active{background:var(--primary);color:#fff}
+.tv-tab{padding:8px 16px;border-radius:var(--radius-xs);font-size:.75rem;font-weight:600;color:var(--text-dim);background:transparent}
+.tv-tab.active{background:var(--primary);color:#0C0C0F}
 .tv-body{padding:20px;min-height:140px}
-.tv-line{height:8px;border-radius:4px;background:var(--surface);margin-bottom:10px}
-.tv-line:nth-child(1){width:100%}
-.tv-line:nth-child(2){width:85%}
-.tv-line:nth-child(3){width:70%}
-.tv-line:nth-child(4){width:90%;margin-bottom:0}
+.tv-line{height:8px;border-radius:4px;background:rgba(255,255,255,0.05);margin-bottom:10px}
+.tv-line:nth-child(1){width:100%}.tv-line:nth-child(2){width:85%}.tv-line:nth-child(3){width:70%}.tv-line:nth-child(4){width:90%;margin-bottom:0}
 
-/* Feature Visual: Ad Copy Mockup */
-.ad-visual{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06)}
+/* Feature: Ad Copy Mockup */
+.ad-visual{background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
 .av-header{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--card-border)}
-.av-variant{padding:6px 14px;border-radius:100px;font-size:.7rem;font-weight:700;background:var(--surface);color:var(--text-muted);border:1px solid var(--card-border)}
-.av-variant.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.av-variant{padding:6px 14px;border-radius:100px;font-size:.7rem;font-weight:700;background:transparent;color:var(--text-dim);border:1px solid var(--card-border)}
+.av-variant.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
 .av-body{padding:20px}
-.av-platform{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:600;margin-bottom:8px}
-.av-headline{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)}
+.av-platform{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;margin-bottom:8px}
+.av-headline{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:6px}
 .av-desc{font-size:.85rem;color:var(--text-body);line-height:1.5;margin-bottom:10px}
-.av-cta-pill{display:inline-block;padding:6px 16px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-size:.75rem;font-weight:600}
+.av-cta-pill{display:inline-block;padding:6px 16px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-size:.75rem;font-weight:600}
 
 /* ============================================================
    STATS BAR
    ============================================================ */
-.stats-bar{padding:60px 0;background:var(--primary-gradient);color:#fff}
+.stats-bar{padding:70px 0;background:var(--bg);border-top:1px solid var(--card-border);border-bottom:1px solid var(--card-border)}
 .stats-row{display:flex;justify-content:center;gap:80px;flex-wrap:wrap}
 .stat-item{text-align:center}
-.stat-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(2.5rem,5vw,3.5rem);font-weight:800;line-height:1;margin-bottom:4px}
-.stat-label{font-size:.95rem;font-weight:500;opacity:.85}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:clamp(2.5rem,5vw,3.5rem);font-weight:500;line-height:1;margin-bottom:4px;color:var(--primary)}
+.stat-num.accent{color:var(--accent-warm)}
+.stat-label{font-size:.95rem;font-weight:500;color:var(--text-muted)}
+
+/* ============================================================
+   PODCAST SECTION
+   ============================================================ */
+.podcast-section{padding:100px 0;background:linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)}
+.podcast-inner{text-align:center;max-width:700px;margin:0 auto}
+.podcast-features{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:24px}
+.podcast-feat{padding:8px 18px;border-radius:100px;background:var(--primary-light);border:1px solid rgba(0,212,170,0.15);color:var(--primary);font-size:.8rem;font-weight:600}
+.podcast-types{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.podcast-type-pill{padding:5px 12px;border-radius:100px;background:transparent;border:1px solid var(--card-border);color:var(--text-dim);font-size:.72rem;font-weight:500}
 
 /* ============================================================
    PRICING
    ============================================================ */
-.pricing{padding:100px 0;background:#fff}
+.pricing{padding:100px 0;background:var(--bg)}
 .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
-.pricing-card{padding:36px 28px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-.pricing-card.featured{border-color:var(--primary);border-width:2px;box-shadow:0 8px 30px rgba(124,58,237,0.12)}
-.pricing-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);padding:6px 18px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-size:.75rem;font-weight:700;white-space:nowrap}
-.pricing-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--text)}
-.pricing-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.5rem;font-weight:800;margin-bottom:4px;color:var(--text)}
-.pricing-price span{font-size:1rem;color:var(--text-muted);font-weight:500}
+.pricing-card{padding:36px 28px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);position:relative}
+.pricing-card.featured{border-color:var(--primary);border-width:2px;box-shadow:0 0 40px rgba(0,212,170,0.08)}
+.pricing-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);padding:6px 18px;border-radius:100px;background:var(--accent-gold);color:#0C0C0F;font-size:.75rem;font-weight:700;white-space:nowrap}
+.pricing-card h3{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.pricing-price{font-family:'JetBrains Mono',monospace;font-size:2.5rem;font-weight:500;margin-bottom:4px}
+.pricing-price span{font-size:1rem;color:var(--text-muted);font-weight:400}
 .pricing-list{list-style:none;margin:24px 0;display:flex;flex-direction:column;gap:10px}
 .pricing-list li{display:flex;align-items:flex-start;gap:8px;font-size:.9rem;color:var(--text-body)}
 .pricing-list li::before{content:'\2713';color:var(--primary);font-weight:700;font-size:.85rem;flex-shrink:0;margin-top:2px}
@@ -218,10 +231,10 @@ img{max-width:100%;display:block}
    ============================================================ */
 .faq{padding:100px 0;background:var(--surface)}
 .faq-list{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.faq-item{background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
-.faq-q{width:100%;padding:18px 24px;background:transparent;border:none;color:var(--text);font-size:1rem;font-weight:600;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:'Inter',sans-serif;gap:12px}
-.faq-q::after{content:'+';font-size:1.3rem;color:var(--text-muted);transition:transform .3s;flex-shrink:0}
-.faq-item.open .faq-q::after{transform:rotate(45deg)}
+.faq-item{background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
+.faq-q{width:100%;padding:18px 24px;background:transparent;border:none;color:var(--text);font-size:1rem;font-weight:600;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:'DM Sans',sans-serif;gap:12px}
+.faq-q::after{content:'+';font-size:1.3rem;color:var(--text-dim);transition:transform .3s;flex-shrink:0}
+.faq-item.open .faq-q::after{transform:rotate(45deg);color:var(--primary)}
 .faq-a{max-height:0;overflow:hidden;transition:max-height .3s,padding .3s}
 .faq-item.open .faq-a{max-height:200px;padding:0 24px 18px}
 .faq-a p{color:var(--text-body);font-size:.95rem;line-height:1.7}
@@ -229,84 +242,85 @@ img{max-width:100%;display:block}
 /* ============================================================
    FINAL CTA
    ============================================================ */
-.final-cta{padding:80px 0;text-align:center;background:var(--primary-gradient);color:#fff}
-.final-cta h2{font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;margin-bottom:12px;color:#fff}
-.final-cta p{color:rgba(255,255,255,.85);font-size:1.05rem;margin-bottom:28px}
-.final-cta .btn-white{display:inline-flex;align-items:center;gap:8px;padding:16px 40px;border-radius:100px;background:#fff;color:var(--primary);font-weight:700;font-size:1.05rem;border:none;cursor:pointer;transition:transform .2s}
+.final-cta{padding:80px 0;text-align:center;background:var(--primary);color:#0C0C0F}
+.final-cta h2{font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;margin-bottom:12px;color:#0C0C0F}
+.final-cta p{color:rgba(12,12,15,.7);font-size:1.05rem;margin-bottom:28px}
+.final-cta .btn-white{display:inline-flex;align-items:center;gap:8px;padding:16px 40px;border-radius:100px;background:#0C0C0F;color:var(--primary);font-weight:700;font-size:1.05rem;border:none;cursor:pointer;transition:transform .2s;font-family:'DM Sans',sans-serif}
 .final-cta .btn-white:hover{transform:scale(1.03)}
 
 /* ============================================================
    FOOTER
    ============================================================ */
-.footer{padding:60px 0 28px;background:#111827;color:#fff}
+.footer{padding:60px 0 28px;background:#08080A;color:var(--text)}
 .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-.footer-brand h4{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:8px}
-.footer-brand p{color:#9CA3AF;font-size:.85rem;line-height:1.6}
-.footer-col h5{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:#9CA3AF;font-weight:600;margin-bottom:14px}
+.footer-brand h4{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:8px}
+.footer-brand p{color:var(--text-dim);font-size:.85rem;line-height:1.6}
+.footer-col h5{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;margin-bottom:14px}
 .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-.footer-col a{color:#D1D5DB;font-size:.85rem;transition:color .2s}
-.footer-col a:hover{color:#fff}
-.footer-bottom{text-align:center;padding-top:28px;border-top:1px solid rgba(255,255,255,0.1);color:#9CA3AF;font-size:.8rem}
+.footer-col a{color:var(--text-muted);font-size:.85rem;transition:color .2s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{text-align:center;padding-top:28px;border-top:1px solid var(--card-border);color:var(--text-dim);font-size:.8rem}
 
 /* ============================================================
-   APP SECTION
+   APP SECTION — dark themed
    ============================================================ */
-.app-section{padding:60px 0 100px;display:none;background:var(--surface)}
+.app-section{padding:60px 0 100px;display:none;background:var(--bg)}
 .app-section.visible{display:block}
 .app-header{text-align:center;margin-bottom:40px}
 .app-header h2{font-size:1.75rem;font-weight:800;margin-bottom:8px}
 .app-header p{color:var(--text-body)}
 
-.brand-panel{margin-bottom:24px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
-.brand-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff;border:none;color:var(--text);cursor:pointer;font-size:.9rem;font-family:'Inter',sans-serif;font-weight:600}
+.brand-panel{margin-bottom:24px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
+.brand-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface2);border:none;color:var(--text);cursor:pointer;font-size:.9rem;font-family:'DM Sans',sans-serif;font-weight:600}
 .brand-summary{color:var(--text-muted);font-size:.8rem;font-weight:400}
 .chevron{transition:transform .3s;color:var(--text-muted)}.chevron.open{transform:rotate(180deg)}
 .brand-body{display:none;padding:20px;background:var(--surface);border-top:1px solid var(--card-border)}.brand-body.open{display:block}
 .brand-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .brand-grid .full-width{grid-column:1/-1}
 .brand-field label{display:block;font-size:.75rem;color:var(--text-muted);margin-bottom:4px;font-weight:600}
-.brand-field input,.brand-field select{width:100%;padding:9px 12px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-xs);color:var(--text);font-size:.85rem;font-family:'Inter',sans-serif}
-.brand-field input:focus,.brand-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.brand-field input,.brand-field select{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-xs);color:var(--text);font-size:.85rem;font-family:'DM Sans',sans-serif}
+.brand-field input:focus,.brand-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.brand-field select option{background:var(--surface2);color:var(--text)}
 .custom-colors{display:none;grid-column:1/-1}.custom-colors.open{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .color-field{display:flex;align-items:center;gap:6px}
-.color-field input[type="color"]{width:32px;height:32px;padding:2px;border:1px solid var(--card-border);border-radius:6px;background:#fff;cursor:pointer}
+.color-field input[type="color"]{width:32px;height:32px;padding:2px;border:1px solid var(--card-border);border-radius:6px;background:var(--surface);cursor:pointer}
 .color-field input[type="text"]{flex:1;padding:7px 8px;font-size:.8rem;font-family:'JetBrains Mono',monospace}
 .logo-upload-area{margin-top:4px}
-.logo-upload-btn{width:100%;padding:20px 16px;background:#fff;border:2px dashed rgba(124,58,237,.3);border-radius:var(--radius-sm);color:var(--text-muted);font-size:.85rem;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;text-align:center}
+.logo-upload-btn{width:100%;padding:20px 16px;background:var(--surface);border:2px dashed rgba(0,212,170,.2);border-radius:var(--radius-sm);color:var(--text-muted);font-size:.85rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;text-align:center}
 .logo-upload-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
-.logo-preview{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-xs)}
+.logo-preview{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-xs)}
 .logo-preview img{max-height:36px;max-width:140px;object-fit:contain}
 .logo-remove{background:none;border:none;color:var(--error);font-size:1.1rem;cursor:pointer;padding:2px 6px}
 
-.history-panel{margin-bottom:24px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
-.history-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff;border:none;color:var(--text);cursor:pointer;font-size:.9rem;font-family:'Inter',sans-serif;font-weight:600}
+.history-panel{margin-bottom:24px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden}
+.history-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface2);border:none;color:var(--text);cursor:pointer;font-size:.9rem;font-family:'DM Sans',sans-serif;font-weight:600}
 .history-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--primary-light);color:var(--primary);font-size:.7rem;font-weight:700;margin-left:6px}
 .history-body{display:none;padding:14px;background:var(--surface);max-height:360px;overflow-y:auto;border-top:1px solid var(--card-border)}.history-body.open{display:block}
 .history-actions{display:flex;justify-content:flex-end;padding:0 0 10px}
-.history-clear-btn{padding:5px 12px;background:none;border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-xs);color:var(--error);font-size:.7rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
-.history-card{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:center;padding:10px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:6px;transition:box-shadow .2s}
-.history-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.history-clear-btn{padding:5px 12px;background:none;border:1px solid rgba(255,71,87,.3);border-radius:var(--radius-xs);color:var(--error);font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.history-card{display:grid;grid-template-columns:50px 1fr auto;gap:10px;align-items:center;padding:10px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:6px;transition:box-shadow .2s}
+.history-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .history-thumb{width:50px;height:62px;border-radius:6px;overflow:hidden;background:var(--surface)}
 .history-thumb img{width:100%;height:100%;object-fit:cover}
 .history-info h4{font-size:.8rem;font-weight:600;margin-bottom:3px;line-height:1.3}
 .history-info .history-meta{font-size:.7rem;color:var(--text-muted)}
 .history-info .history-meta span{margin-right:6px}
-.history-download{padding:5px 10px;background:var(--primary-light);border:none;border-radius:var(--radius-xs);color:var(--primary);font-size:.7rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none}
+.history-download{padding:5px 10px;background:var(--primary-light);border:none;border-radius:var(--radius-xs);color:var(--primary);font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none}
 
 .url-group{margin-bottom:24px}
 .url-group label{display:block;font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--text)}
 .url-mode-toggle{display:flex;gap:0;margin-bottom:8px}
-.url-mode-btn{flex:1;padding:8px 16px;background:#fff;border:1px solid var(--card-border);color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.url-mode-btn{flex:1;padding:8px 16px;background:var(--surface2);border:1px solid var(--card-border);color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
 .url-mode-btn:first-child{border-radius:var(--radius-xs) 0 0 var(--radius-xs)}
 .url-mode-btn:last-child{border-radius:0 var(--radius-xs) var(--radius-xs) 0;border-left:none}
-.url-mode-btn.active{background:var(--primary-light);border-color:rgba(124,58,237,.3);color:var(--primary)}
-.url-input{width:100%;padding:14px 18px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text);font-size:1rem;font-family:'Inter',sans-serif;transition:border-color .2s,box-shadow .2s}
-.url-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
-.url-input::placeholder{color:var(--text-muted)}
-.platform-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:600;background:rgba(16,185,129,.1);color:var(--success);margin-top:6px}
-.bulk-url-input{width:100%;min-height:90px;padding:14px 18px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:'JetBrains Mono',monospace;resize:vertical;line-height:1.8}
+.url-mode-btn.active{background:var(--primary-light);border-color:rgba(0,212,170,.2);color:var(--primary)}
+.url-input{width:100%;padding:14px 18px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text);font-size:1rem;font-family:'DM Sans',sans-serif;transition:border-color .2s,box-shadow .2s}
+.url-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.url-input::placeholder{color:var(--text-dim)}
+.platform-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.75rem;font-weight:600;background:var(--primary-light);color:var(--primary);margin-top:6px}
+.bulk-url-input{width:100%;min-height:90px;padding:14px 18px;background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;font-family:'JetBrains Mono',monospace;resize:vertical;line-height:1.8}
 .bulk-url-input:focus{outline:none;border-color:var(--primary)}
-.bulk-hint{font-size:.7rem;color:var(--text-muted);margin-top:4px}
+.bulk-hint{font-size:.7rem;color:var(--text-dim);margin-top:4px}
 .bulk-progress{margin-bottom:20px}
 .bulk-progress-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--card-border);font-size:.8rem}
 .bulk-progress-item:last-child{border-bottom:none}
@@ -317,27 +331,28 @@ img{max-width:100%;display:block}
 .bulk-progress-item.running .bp-status{color:var(--primary)}
 .bulk-progress-item.done .bp-status{color:var(--success)}
 .bulk-progress-item.error .bp-status{color:var(--error)}
-.bulk-results-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:14px;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm)}
+.bulk-results-summary{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;margin-bottom:14px;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius-sm)}
 .bulk-results-summary .brs-text{font-size:.85rem;color:var(--text-body)}.bulk-results-summary .brs-text strong{color:var(--text)}
 
 /* Mode Buttons */
 .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
-.mode-btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px 16px;background:#fff;border:1px solid var(--card-border);border-left:3px solid var(--primary);border-radius:var(--radius-sm);color:var(--text);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;position:relative}
-.mode-btn:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-2px)}
+.mode-btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px 16px;background:var(--surface2);border:1px solid var(--card-border);border-left:3px solid var(--primary);border-radius:var(--radius-sm);color:var(--text);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;position:relative}
+.mode-btn:hover{box-shadow:0 0 20px rgba(0,212,170,0.06);border-color:rgba(0,212,170,0.15);transform:translateY(-2px)}
 .mode-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.mode-btn.cat-blue{border-left-color:#2563EB}
-.mode-btn.cat-teal{border-left-color:var(--success)}
+.mode-btn.cat-blue{border-left-color:#0088FF}
+.mode-btn.cat-teal{border-left-color:var(--primary)}
 .mode-btn .mode-icon{font-size:1.1rem}
 .mode-btn .mode-label{font-size:.8rem;font-weight:700}
 .mode-btn .mode-desc{font-size:.65rem;color:var(--text-muted)}
-.mode-btn.mode-featured{background:var(--primary-light);border-left-color:var(--primary)}
+.mode-btn.mode-featured{background:var(--primary-light);border-left-color:var(--accent-warm)}
+.mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--accent-warm);font-size:.55rem;font-weight:700;color:#fff}
 
 /* Workflow Toggle */
 .workflow-toggle{display:flex;gap:0;margin-bottom:16px;border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
-.wf-btn{flex:1;padding:12px 16px;background:#fff;border:none;color:var(--text-muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;transition:all .15s}
+.wf-btn{flex:1;padding:12px 16px;background:var(--surface2);border:none;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;transition:all .15s}
 .wf-btn:first-child{border-right:1px solid var(--card-border)}
 .wf-btn:hover{background:var(--surface)}
-.wf-btn.active{background:var(--primary);color:#fff}
+.wf-btn.active{background:var(--primary);color:#0C0C0F}
 .wf-panel{margin-bottom:8px}
 .more-modes{margin-top:8px}
 .more-modes summary{font-size:.78rem;color:var(--text-muted);cursor:pointer;padding:6px 0;font-weight:600}
@@ -347,51 +362,47 @@ img{max-width:100%;display:block}
 
 /* Topic Analysis */
 .lang-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:.72rem;font-weight:600;background:var(--surface);border:1px solid var(--card-border);color:var(--text-muted)}
-.lang-badge.ar{background:#FEF3C7;border-color:#F59E0B;color:#92400E}
-
+.lang-badge.ar{background:rgba(255,183,0,.1);border-color:rgba(255,183,0,.3);color:#FFB700}
 .topics-panel{margin-bottom:20px;border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
 .topics-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--card-border);cursor:pointer}
 .topics-header h4{font-size:.9rem;margin:0;color:var(--text)}
 .topics-header .topics-collapse{font-size:.7rem;color:var(--text-muted)}
 .topics-body{padding:12px}
 .topic-card{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:all .15s}
-.topic-card:hover{border-color:var(--primary);background:var(--primary-light)}
+.topic-card:hover{border-color:rgba(0,212,170,0.3);background:var(--primary-light)}
 .topic-card.selected{border-color:var(--primary);background:var(--primary-light)}
 .topic-card input[type=checkbox]{margin-top:3px;accent-color:var(--primary)}
 .topic-card .tc-content{flex:1}
 .topic-card .tc-name{font-size:.82rem;font-weight:700;color:var(--text)}
 .topic-card .tc-desc{font-size:.7rem;color:var(--text-muted);margin-top:2px}
 .topic-card .tc-meta{display:flex;gap:8px;margin-top:4px}
-.topic-card .tc-tag{font-size:.6rem;padding:2px 6px;border-radius:8px;background:var(--surface);color:var(--text-muted)}
+.topic-card .tc-tag{font-size:.6rem;padding:2px 6px;border-radius:8px;background:var(--surface);color:var(--text-dim)}
 .topics-actions{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px;font-size:.75rem;color:var(--text-muted)}
-
-/* RTL support for results */
 .result-text-rtl{direction:rtl;text-align:right}
-.mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--primary-gradient);font-size:.55rem;font-weight:700;color:#fff}
 
-/* Podcast Classification Badge */
-.podcast-classify-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:#faf5ff;border:1px solid #DDD6FE;border-radius:var(--radius-sm);font-size:.75rem;color:#6D28D9}
+/* Podcast Classification */
+.podcast-classify-badge{display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.15);border-radius:var(--radius-sm);font-size:.75rem;color:var(--primary)}
 .podcast-classify-badge .pcb-icon{font-size:1rem}
 .podcast-classify-badge .pcb-text{font-weight:600}
 .podcast-classify-badge .pcb-detail{color:var(--text-muted);margin-left:auto}
 
-/* Slide Count Selector */
+/* Slide Count */
 .slide-count-group{margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .slide-count-group label{font-size:.85rem;font-weight:600;color:var(--text)}
 .count-pills{display:flex;gap:6px}
-.count-pill{width:40px;height:36px;border-radius:var(--radius-xs);background:#fff;border:1px solid var(--card-border);color:var(--text-body);font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.count-pill{width:40px;height:36px;border-radius:var(--radius-xs);background:var(--surface2);border:1px solid var(--card-border);color:var(--text-muted);font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center}
 .count-pill:hover{border-color:var(--primary);color:var(--primary)}
-.count-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.count-pill.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
 
 /* Status */
 .status-area{margin-bottom:20px;min-height:32px}
-.status-steps{padding:14px 18px;border-radius:var(--radius-sm);background:#fff;border:1px solid var(--card-border)}
+.status-steps{padding:14px 18px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--card-border)}
 .status-step{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.85rem;color:var(--text-muted);transition:color .3s}
 .status-step.active{color:var(--primary)}.status-step.done{color:var(--success)}.status-step.error{color:var(--error)}
 .status-step .step-icon{width:18px;text-align:center;flex-shrink:0}
-.status-msg{display:flex;align-items:flex-start;gap:10px;padding:14px 18px;border-radius:var(--radius-sm);background:var(--primary-light);border:1px solid rgba(124,58,237,.15);font-size:.9rem;color:var(--text-body)}
-.status-msg.error{background:#FEF2F2;border-color:rgba(239,68,68,.2);color:var(--error);font-size:.9rem;font-family:'Inter',sans-serif;display:flex;align-items:flex-start;gap:10px}
-.spinner{width:16px;height:16px;border:2px solid rgba(124,58,237,.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+.status-msg{display:flex;align-items:flex-start;gap:10px;padding:14px 18px;border-radius:var(--radius-sm);background:var(--primary-light);border:1px solid rgba(0,212,170,.15);font-size:.9rem;color:var(--text-body)}
+.status-msg.error{background:rgba(255,71,87,.08);border-color:rgba(255,71,87,.2);color:var(--error)}
+.spinner{width:16px;height:16px;border:2px solid rgba(0,212,170,.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Results */
@@ -401,54 +412,54 @@ img{max-width:100%;display:block}
 .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .result-header h3{font-size:1.15rem;font-weight:700}
 .result-meta{color:var(--text-muted);font-size:.8rem}
-.download-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:600;font-size:.9rem;text-decoration:none;transition:transform .2s}
-.download-btn:hover{transform:scale(1.02)}
+.download-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-weight:600;font-size:.9rem;text-decoration:none;transition:transform .2s}
+.download-btn:hover{transform:scale(1.02);box-shadow:0 0 20px var(--primary-glow)}
 .output-tabs{display:flex;gap:4px;margin-bottom:20px;padding:4px;background:var(--surface);border-radius:100px;overflow-x:auto;border:1px solid var(--card-border)}
-.tab-btn{padding:8px 16px;background:none;border:none;border-radius:100px;color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;transition:all .2s}
-.tab-btn:hover{color:var(--text-body);background:rgba(0,0,0,.03)}
-.tab-btn.active{background:var(--primary-gradient);color:#fff}
+.tab-btn{padding:8px 16px;background:none;border:none;border-radius:100px;color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s}
+.tab-btn:hover{color:var(--text-body);background:rgba(255,255,255,.03)}
+.tab-btn.active{background:var(--primary);color:#0C0C0F}
 .tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .3s ease}
 .carousel-container{position:relative}
 .carousel-viewer{display:flex;gap:14px;overflow-x:auto;scroll-behavior:smooth;padding:8px 0;scrollbar-width:none}
 .carousel-viewer::-webkit-scrollbar{display:none}
-.slide-preview{flex-shrink:0;width:260px;border-radius:12px;overflow:hidden;border:1px solid var(--card-border);background:#fff;transition:transform .2s}
+.slide-preview{flex-shrink:0;width:260px;border-radius:12px;overflow:hidden;border:1px solid var(--card-border);background:var(--surface2);transition:transform .2s}
 .slide-preview:hover{transform:scale(1.02)}
 .slide-preview img{width:100%;display:block}
-.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--card-border);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.carousel-arrow:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--card-border);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;transition:box-shadow .2s}
+.carousel-arrow:hover{box-shadow:0 0 12px var(--primary-glow);border-color:var(--primary)}
 .carousel-arrow-left{left:-14px}.carousel-arrow-right{right:-14px}
 .text-output-container{position:relative}
-.text-output{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:20px;font-size:.85rem;line-height:1.8;color:var(--text-body);white-space:pre-wrap;max-height:450px;overflow-y:auto}
-.copy-btn{position:absolute;top:10px;right:10px;padding:5px 12px;border-radius:100px;background:#fff;border:1px solid var(--card-border);color:var(--text-muted);font-size:.75rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
-.copy-btn:hover{color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.copy-btn.copied{color:var(--success);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+.text-output{background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:20px;font-size:.85rem;line-height:1.8;color:var(--text-body);white-space:pre-wrap;max-height:450px;overflow-y:auto;font-family:'JetBrains Mono',monospace}
+.copy-btn{position:absolute;top:10px;right:10px;padding:5px 12px;border-radius:100px;background:var(--surface2);border:1px solid var(--card-border);color:var(--text-muted);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.copy-btn:hover{color:var(--primary);border-color:var(--primary)}
+.copy-btn.copied{color:var(--success);border-color:rgba(0,212,170,.3);background:var(--primary-light)}
 
 /* ============================================================
-   AUTH MODAL
+   AUTH MODAL — dark
    ============================================================ */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:center;justify-content:center}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:none;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:var(--radius);padding:36px 32px;width:100%;max-width:420px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:fadeUp .3s ease}
+.modal{background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:420px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:fadeUp .3s ease}
 .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted)}
 .modal h2{font-size:1.3rem;font-weight:800;margin-bottom:20px;text-align:center}
 .auth-tabs{display:flex;gap:0;margin-bottom:20px;border-radius:100px;overflow:hidden;border:1px solid var(--card-border)}
-.auth-tab{flex:1;padding:10px;text-align:center;background:#fff;border:none;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--text-muted);font-family:'Inter',sans-serif;transition:all .2s}
-.auth-tab.active{background:var(--primary-gradient);color:#fff}
+.auth-tab{flex:1;padding:10px;text-align:center;background:var(--surface);border:none;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all .2s}
+.auth-tab.active{background:var(--primary);color:#0C0C0F}
 .auth-form{display:none}.auth-form.active{display:block}
 .auth-field{margin-bottom:14px}
 .auth-field label{display:block;font-size:.8rem;font-weight:600;color:var(--text-body);margin-bottom:4px}
-.auth-field input{width:100%;padding:12px 14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);font-size:.9rem;font-family:'Inter',sans-serif;color:var(--text)}
-.auth-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
-.auth-submit{width:100%;padding:14px;border-radius:100px;background:var(--primary-gradient);color:#fff;font-weight:700;font-size:.95rem;border:none;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;transition:transform .2s}
-.auth-submit:hover{transform:scale(1.02)}
+.auth-field input{width:100%;padding:12px 14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);font-size:.9rem;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface)}
+.auth-field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.auth-submit{width:100%;padding:14px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-weight:700;font-size:.95rem;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;transition:transform .2s}
+.auth-submit:hover{transform:scale(1.02);box-shadow:0 0 20px var(--primary-glow)}
 .auth-error{color:var(--error);font-size:.8rem;margin-top:8px;text-align:center;min-height:20px}
 
-/* User nav dropdown */
+/* User nav */
 .nav-user{position:relative;display:none;align-items:center}
-.nav-user-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:100px;background:var(--primary-light);border:1px solid rgba(124,58,237,.2);color:var(--primary);font-weight:600;font-size:.8rem;cursor:pointer;font-family:'Inter',sans-serif}
-.nav-user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--card-border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,.1);min-width:200px;display:none;z-index:1001}
+.nav-user-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:100px;background:var(--primary-light);border:1px solid rgba(0,212,170,.2);color:var(--primary);font-weight:600;font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+.nav-user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface2);border:1px solid var(--card-border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:200px;display:none;z-index:1001}
 .nav-user-dropdown.open{display:block}
-.nav-user-dropdown .nud-item{display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;font-size:.85rem;cursor:pointer;color:var(--text-body);font-family:'Inter',sans-serif;transition:background .2s}
+.nav-user-dropdown .nud-item{display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;font-size:.85rem;cursor:pointer;color:var(--text-body);font-family:'DM Sans',sans-serif;transition:background .2s}
 .nav-user-dropdown .nud-item:hover{background:var(--surface)}
 .nav-user-dropdown .nud-item.nud-plan{font-weight:600;color:var(--primary);cursor:default}
 .nav-user-dropdown .nud-item.nud-plan:hover{background:transparent}
@@ -461,23 +472,17 @@ img{max-width:100%;display:block}
 .upgrade-body p{color:var(--text-body);font-size:.9rem;margin-bottom:20px}
 .upgrade-actions{display:flex;flex-direction:column;gap:10px}
 .upgrade-actions .btn-primary{justify-content:center}
-.upgrade-dismiss{background:none;border:none;color:var(--text-muted);font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;padding:8px}
+.upgrade-dismiss{background:none;border:none;color:var(--text-muted);font-size:.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;padding:8px}
 
-/* Signup banner */
-.signup-banner{display:none;padding:12px 20px;background:var(--primary-light);border:1px solid rgba(124,58,237,.15);border-radius:var(--radius-sm);text-align:center;font-size:.85rem;color:var(--text-body);margin-bottom:20px;cursor:pointer}
-.signup-banner:hover{background:rgba(124,58,237,.12)}
+/* Banners & badges */
+.signup-banner{display:none;padding:12px 20px;background:var(--primary-light);border:1px solid rgba(0,212,170,.15);border-radius:var(--radius-sm);text-align:center;font-size:.85rem;color:var(--text-body);margin-bottom:20px;cursor:pointer}
+.signup-banner:hover{background:rgba(0,212,170,.1)}
 .signup-banner strong{color:var(--primary);font-weight:600}
-
-/* Bulk lock badge */
 .bulk-lock{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;color:var(--text-muted);cursor:help}
 .bulk-lock::before{content:'\1F512'}
-
-/* Watermark badge */
 .watermark-badge{display:none;font-size:.7rem;color:var(--text-muted);margin-top:6px}
 .watermark-badge.visible{display:block}
-
-/* Toast */
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:14px 28px;border-radius:100px;background:var(--success);color:#fff;font-weight:600;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:3000;animation:fadeUp .3s ease;pointer-events:none}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:14px 28px;border-radius:100px;background:var(--primary);color:#0C0C0F;font-weight:600;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:3000;animation:fadeUp .3s ease;pointer-events:none}
 .toast.hidden{display:none}
 
 /* ============================================================
@@ -485,16 +490,15 @@ img{max-width:100%;display:block}
    ============================================================ */
 @media(max-width:768px){
   .nav-links{display:none}.nav-cta{display:none}.nav-hamburger{display:block}.mobile-only{display:list-item}
-  .nav-links.mobile-open{display:flex;flex-direction:column;position:absolute;top:56px;left:0;right:0;background:#fff;padding:20px;gap:14px;border-bottom:1px solid var(--card-border);box-shadow:0 4px 12px rgba(0,0,0,.06)}
-  .hero{padding:100px 0 60px}
-  .hero h1{font-size:clamp(2rem,6vw,2.5rem)}
+  .nav-links.mobile-open{display:flex;flex-direction:column;position:absolute;top:56px;left:0;right:0;background:rgba(12,12,15,0.95);backdrop-filter:blur(20px);padding:20px;gap:14px;border-bottom:1px solid var(--card-border)}
+  .hero{padding:100px 0 60px;min-height:auto}
+  .hero h1{font-size:clamp(2rem,7vw,2.8rem)}
   .hero-samples{flex-wrap:wrap;gap:16px}
   .hero-sample-card{width:160px;height:200px}
   .hero-sample-card:nth-child(1){margin-right:0;transform:rotate(-2deg)}
   .hero-sample-card:nth-child(2){transform:none}
   .hero-sample-card:nth-child(3){margin-left:0;transform:rotate(2deg)}
-  .steps-row{grid-template-columns:1fr}
-  .steps-row::before{display:none}
+  .steps-row{grid-template-columns:1fr}.steps-row::before{display:none}
   .feature-block{grid-template-columns:1fr;gap:32px}
   .feature-block.reversed{direction:ltr}
   .stats-row{gap:40px}
@@ -503,10 +507,10 @@ img{max-width:100%;display:block}
   .brand-grid{grid-template-columns:1fr}.custom-colors.open{grid-template-columns:1fr}
   .footer-top{grid-template-columns:1fr 1fr;gap:24px}
   .history-card{grid-template-columns:1fr}.history-thumb{display:none}
+  .podcast-section .section-heading h2{font-size:1.5rem}
 }
 @media(max-width:480px){
-  .hero-mode-pills{gap:6px}
-  .hero-mode-pill{padding:5px 12px;font-size:.75rem}
+  .hero-mode-pills{gap:6px}.hero-mode-pill{padding:5px 12px;font-size:.75rem}
   .hero-samples{margin-top:40px}
   .hero-sample-card{width:140px;height:180px;padding:16px 14px}
   .footer-top{grid-template-columns:1fr}
@@ -517,9 +521,7 @@ img{max-width:100%;display:block}
 </head>
 <body>
 
-<!-- ============================================================
-     NAV
-     ============================================================ -->
+<!-- NAV -->
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a href="#" class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">ContentExtractor <span class="ai-badge">AI</span></a>
@@ -544,33 +546,28 @@ img{max-width:100%;display:block}
   </div>
 </nav>
 
-<!-- ============================================================
-     HERO
-     ============================================================ -->
+<!-- HERO -->
 <section class="hero" id="hero">
-  <div class="container">
-    <div class="hero-pill">&#128640; Free &mdash; No Credit Card Required</div>
-    <h1>Turn Any Video Into Content<span class="line2">With AI &mdash; In 30 Seconds</span></h1>
-    <p class="hero-subtitle">Paste a YouTube, Instagram, or TikTok link. Our AI extracts facts, quotes, and insights &mdash; then generates branded carousel slides, Twitter threads, and ad copy automatically.</p>
+  <canvas id="hero-canvas"></canvas>
+  <div class="container hero-content">
+    <div class="hero-pill">Free &middot; No Credit Card &middot; 9 AI Modes</div>
+    <h1>Extract Intelligence<span class="line2">From Any Video</span></h1>
+    <p class="hero-subtitle">Paste a YouTube, Instagram, or TikTok link. AI extracts facts, quotes, and insights &mdash; generates branded carousels, threads, and ad copy in seconds.</p>
 
     <div class="hero-tool">
       <div class="hero-url-wrapper">
-        <input type="url" class="hero-url-input" id="hero-url-input" placeholder="Paste any video URL &mdash; YouTube, Instagram, TikTok, X">
+        <input type="url" class="hero-url-input" id="hero-url-input" placeholder="youtube.com/watch?v=...">
       </div>
       <div class="hero-mode-pills">
         <button class="hero-mode-pill active" data-mode="facts">Facts</button>
-        <button class="hero-mode-pill" data-mode="predictions">Predictions</button>
         <button class="hero-mode-pill" data-mode="quotes">Quotes</button>
-        <button class="hero-mode-pill" data-mode="hooks">Hooks</button>
+        <button class="hero-mode-pill" data-mode="opinions">Opinions</button>
+        <button class="hero-mode-pill" data-mode="predictions">Predictions</button>
         <button class="hero-mode-pill" data-mode="ad_creatives">Ad Creatives</button>
       </div>
-      <button class="hero-extract-btn" id="hero-extract-btn">Extract Content &rarr;</button>
+      <button class="hero-extract-btn" id="hero-extract-btn">Extract &rarr;</button>
       <div class="hero-trust">
-        <span>Free forever</span>
-        <span class="separator">&middot;</span>
-        <span>No credit card required</span>
-        <span class="separator">&middot;</span>
-        <span>9 AI modes</span>
+        <span>Works with YouTube, Instagram, TikTok, X</span>
       </div>
     </div>
 
@@ -593,9 +590,7 @@ img{max-width:100%;display:block}
   </div>
 </section>
 
-<!-- ============================================================
-     SOCIAL PROOF / PLATFORMS
-     ============================================================ -->
+<!-- PLATFORMS -->
 <section class="platforms fade-in">
   <div class="container platforms-inner">
     <p>Works with every major platform</p>
@@ -609,48 +604,24 @@ img{max-width:100%;display:block}
   </div>
 </section>
 
-<!-- ============================================================
-     HOW IT WORKS
-     ============================================================ -->
+<!-- HOW IT WORKS -->
 <section class="how-it-works" id="how-it-works">
   <div class="container">
-    <div class="section-heading fade-in"><h2>How It Works</h2><p>From video to viral content in 3 steps</p></div>
+    <div class="section-heading fade-in"><h2>Three Steps. Zero Effort.</h2><p>From video to viral content in seconds</p></div>
     <div class="steps-row fade-in">
-      <div class="step-card">
-        <div class="step-num">1</div>
-        <div class="step-icon">&#128279;</div>
-        <h3>Paste Your Link</h3>
-        <p>Drop any YouTube, Instagram, TikTok, or X video URL</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">2</div>
-        <div class="step-icon">&#129504;</div>
-        <h3>AI Extracts Content</h3>
-        <p>Choose from 9 modes: facts, quotes, predictions, ad copy, and more</p>
-      </div>
-      <div class="step-card">
-        <div class="step-num">3</div>
-        <div class="step-icon">&#128229;</div>
-        <h3>Download &amp; Post</h3>
-        <p>Get branded carousel slides, Twitter threads, LinkedIn posts, and captions</p>
-      </div>
+      <div class="step-card"><div class="step-num">1</div><div class="step-icon">&#128279;</div><h3>Paste Your Link</h3><p>Drop any YouTube, Instagram, TikTok, or X video URL</p></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-icon">&#129504;</div><h3>AI Extracts Content</h3><p>Choose from 9 modes: facts, quotes, predictions, ad copy, and more</p></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-icon">&#128229;</div><h3>Download &amp; Post</h3><p>Get branded carousel slides, Twitter threads, LinkedIn posts, and captions</p></div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     FEATURES (alternating blocks)
-     ============================================================ -->
+<!-- FEATURES -->
 <section class="features" id="features">
   <div class="container">
     <div class="section-heading fade-in"><h2>Everything You Need to Repurpose Video</h2></div>
-
-    <!-- Feature 1: 9 AI Modes -->
     <div class="feature-block fade-in">
-      <div class="feature-text">
-        <h3>9 AI Extraction Modes</h3>
-        <p>Facts, predictions, opinions, key quotes, summaries, counterarguments, takeaways, viral hooks, and ad creatives. Each mode is optimized to pull different insights from your video.</p>
-      </div>
+      <div class="feature-text"><h3>9 AI Extraction Modes</h3><p>Facts, predictions, opinions, key quotes, summaries, counterarguments, takeaways, viral hooks, and ad creatives. Each mode is optimized for different insights.</p></div>
       <div class="modes-visual">
         <div class="mode-vis-card"><div class="mv-icon">&#128202;</div><div class="mv-label">Facts</div></div>
         <div class="mode-vis-card"><div class="mv-icon">&#128302;</div><div class="mv-label">Predictions</div></div>
@@ -663,217 +634,156 @@ img{max-width:100%;display:block}
         <div class="mode-vis-card"><div class="mv-icon">&#128226;</div><div class="mv-label">Ad Copy</div></div>
       </div>
     </div>
-
-    <!-- Feature 2: Branded Carousel Slides -->
     <div class="feature-block reversed fade-in">
-      <div class="feature-text">
-        <h3>Branded Carousel Slides With Real Images</h3>
-        <p>AI fetches relevant background images, applies your brand colors and logo, and generates Instagram-ready carousel slides. Every slide is publication-quality.</p>
-      </div>
+      <div class="feature-text"><h3>Branded Carousel Slides With Real Images</h3><p>AI fetches relevant background images, applies your brand colors and logo, and generates Instagram-ready carousel slides.</p></div>
       <div class="carousel-visual">
         <div class="cv-card"><div class="cv-label">AI FACT 01</div><div class="cv-text">80% of engagement comes from repurposed content</div></div>
         <div class="cv-card"><div class="cv-label">AI FACT 02</div><div class="cv-text">Creators who repurpose see 3x more reach</div></div>
         <div class="cv-card"><div class="cv-label">AI FACT 03</div><div class="cv-text">Video-to-carousel boosts saves by 200%</div></div>
       </div>
     </div>
-
-    <!-- Feature 3: 6 Output Formats -->
     <div class="feature-block fade-in">
-      <div class="feature-text">
-        <h3>6 Output Formats, One Click</h3>
-        <p>Carousel slides, Twitter threads, LinkedIn posts, newsletter blocks, TikTok scripts, and Instagram captions &mdash; all generated simultaneously.</p>
-      </div>
+      <div class="feature-text"><h3>6 Output Formats, One Click</h3><p>Carousel slides, Twitter threads, LinkedIn posts, newsletter blocks, TikTok scripts, and Instagram captions &mdash; all generated simultaneously.</p></div>
       <div class="tabs-visual">
-        <div class="tv-tabs">
-          <div class="tv-tab active">Carousel</div>
-          <div class="tv-tab">Twitter</div>
-          <div class="tv-tab">LinkedIn</div>
-          <div class="tv-tab">Newsletter</div>
-          <div class="tv-tab">TikTok</div>
-          <div class="tv-tab">Caption</div>
-        </div>
-        <div class="tv-body">
-          <div class="tv-line"></div>
-          <div class="tv-line"></div>
-          <div class="tv-line"></div>
-          <div class="tv-line"></div>
-        </div>
+        <div class="tv-tabs"><div class="tv-tab active">Carousel</div><div class="tv-tab">Twitter</div><div class="tv-tab">LinkedIn</div><div class="tv-tab">Newsletter</div><div class="tv-tab">TikTok</div><div class="tv-tab">Caption</div></div>
+        <div class="tv-body"><div class="tv-line"></div><div class="tv-line"></div><div class="tv-line"></div><div class="tv-line"></div></div>
       </div>
     </div>
-
-    <!-- Feature 4: AI Ad Creatives -->
     <div class="feature-block reversed fade-in">
-      <div class="feature-text">
-        <h3>AI Ad Creatives <span class="feature-new-badge">NEW</span></h3>
-        <p>Generate Facebook, Instagram, LinkedIn, and Google ad copy with 3 A/B variants per platform. Headlines, descriptions, and CTAs &mdash; ready to launch.</p>
-      </div>
+      <div class="feature-text"><h3>AI Ad Creatives <span class="feature-new-badge">NEW</span></h3><p>Generate scroll-stopping ad copy for Facebook, Instagram, and TikTok. Multiple headline and body variants for A/B testing.</p></div>
       <div class="ad-visual">
-        <div class="av-header">
-          <div class="av-variant active">Variant A</div>
-          <div class="av-variant">Variant B</div>
-          <div class="av-variant">Variant C</div>
-        </div>
-        <div class="av-body">
-          <div class="av-platform">Facebook Ad</div>
-          <div class="av-headline">Turn Videos Into Viral Carousels</div>
-          <div class="av-desc">Stop wasting hours repurposing content. Our AI turns any video into branded carousel slides, threads, and ad copy in 30 seconds.</div>
-          <div class="av-cta-pill">Try Free &rarr;</div>
-        </div>
+        <div class="av-header"><span class="av-variant active">Variant A</span><span class="av-variant">Variant B</span><span class="av-variant">Variant C</span></div>
+        <div class="av-body"><div class="av-platform">INSTAGRAM AD</div><div class="av-headline">This Changes Everything About Content</div><div class="av-desc">See what 10,000+ creators discovered about turning videos into viral posts. Results in 30 seconds.</div><div class="av-cta-pill">Learn More</div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     STATS BAR
-     ============================================================ -->
-<section class="stats-bar fade-in">
+<!-- STATS -->
+<section class="stats-bar fade-in" id="stats">
   <div class="container">
     <div class="stats-row">
-      <div class="stat-item"><div class="stat-num">9</div><div class="stat-label">AI Modes</div></div>
-      <div class="stat-item"><div class="stat-num">6</div><div class="stat-label">Output Formats</div></div>
-      <div class="stat-item"><div class="stat-num">30s</div><div class="stat-label">Average Processing Time</div></div>
+      <div class="stat-item"><div class="stat-num" data-count="9">0</div><div class="stat-label">AI Modes</div></div>
+      <div class="stat-item"><div class="stat-num accent" data-count="6">0</div><div class="stat-label">Output Formats</div></div>
+      <div class="stat-item"><div class="stat-num">&lt;30s</div><div class="stat-label">Processing Time</div></div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     PRICING
-     ============================================================ -->
+<!-- PODCAST SECTION -->
+<section class="podcast-section fade-in">
+  <div class="container podcast-inner">
+    <div class="section-heading"><h2>Deep Dive Into Podcasts</h2><p>AI analyzes topics, classifies the content type, and lets you extract exactly what you need from long-form conversations.</p></div>
+    <div class="podcast-features">
+      <span class="podcast-feat">Topic Analysis</span>
+      <span class="podcast-feat">Smart Classification</span>
+      <span class="podcast-feat">Video Frame Backgrounds</span>
+      <span class="podcast-feat">Arabic Support</span>
+    </div>
+    <div class="podcast-types">
+      <span class="podcast-type-pill">Academic</span>
+      <span class="podcast-type-pill">Political</span>
+      <span class="podcast-type-pill">Entertainment</span>
+      <span class="podcast-type-pill">Business</span>
+      <span class="podcast-type-pill">Religious</span>
+      <span class="podcast-type-pill">Tech</span>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
 <section class="pricing" id="pricing">
   <div class="container">
-    <div class="section-heading fade-in"><h2>Simple, Transparent Pricing</h2><p>Start free. Upgrade when you need more.</p></div>
+    <div class="section-heading fade-in"><h2>Start Free. Scale When Ready.</h2><p>No credit card required to get started</p></div>
     <div class="pricing-grid fade-in">
-      <!-- Free -->
       <div class="pricing-card">
         <h3>Free</h3>
-        <div class="pricing-price">$0<span>/forever</span></div>
-        <ul class="pricing-list">
-          <li>3 extractions per day</li>
-          <li>All 9 AI modes</li>
-          <li>Carousel slides (with watermark)</li>
-          <li>Twitter threads &amp; LinkedIn posts</li>
-          <li>Instagram captions</li>
-        </ul>
-        <a href="#" class="btn-outline" onclick="handlePricingClick('free');return false;">Start Free &rarr;</a>
+        <div class="pricing-price">$0<span>/mo</span></div>
+        <ul class="pricing-list"><li>3 extractions/day</li><li>All 9 AI modes</li><li>Carousel + 6 text formats</li><li>Watermarked slides</li></ul>
+        <button class="btn-outline" onclick="handlePricingClick('free')">Get Started</button>
       </div>
-      <!-- Pro -->
       <div class="pricing-card featured">
-        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-badge">Popular</div>
         <h3>Pro</h3>
-        <div class="pricing-price">$19<span>/month</span></div>
-        <ul class="pricing-list">
-          <li>Unlimited extractions</li>
-          <li>No watermark</li>
-          <li>Logo upload + brand presets</li>
-          <li>AI Ad Creatives</li>
-          <li>Bulk URL processing (10 at once)</li>
-          <li>History dashboard</li>
-          <li>All 6 output formats</li>
-          <li>Priority processing</li>
-        </ul>
-        <a href="#" class="btn-primary" onclick="handlePricingClick('pro');return false;">Get Pro &rarr;</a>
+        <div class="pricing-price">$19<span>/mo</span></div>
+        <ul class="pricing-list"><li>Unlimited extractions</li><li>All 9 AI modes</li><li>No watermark</li><li>Bulk processing (10 URLs)</li><li>Priority support</li></ul>
+        <button class="btn-primary" onclick="handlePricingClick('pro')">Upgrade to Pro</button>
       </div>
-      <!-- Agency -->
       <div class="pricing-card">
         <h3>Agency</h3>
-        <div class="pricing-price">$49<span>/month</span></div>
-        <ul class="pricing-list">
-          <li>Everything in Pro</li>
-          <li>5 brand presets</li>
-          <li>API access (coming soon)</li>
-          <li>Priority support</li>
-        </ul>
-        <a href="#" class="btn-outline" onclick="handlePricingClick('agency');return false;">Contact Us &rarr;</a>
+        <div class="pricing-price">$49<span>/mo</span></div>
+        <ul class="pricing-list"><li>Everything in Pro</li><li>50 bulk URLs</li><li>API access</li><li>Custom branding</li><li>Dedicated support</li></ul>
+        <button class="btn-outline" onclick="handlePricingClick('agency')">Contact Sales</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     FAQ
-     ============================================================ -->
+<!-- FAQ -->
 <section class="faq" id="faq">
   <div class="container">
-    <div class="section-heading fade-in"><h2>Frequently Asked Questions</h2></div>
+    <div class="section-heading fade-in"><h2>Questions &amp; Answers</h2></div>
     <div class="faq-list fade-in">
-      <div class="faq-item">
-        <button class="faq-q">What video platforms are supported?</button>
-        <div class="faq-a"><p>YouTube, Instagram, TikTok, X (Twitter), and any site supported by yt-dlp &mdash; over 1,000 platforms total.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">How does the AI extract content?</button>
-        <div class="faq-a"><p>We use Kimi K2.5, a 1 trillion parameter AI model, to analyze your video's transcript and extract structured insights.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Can I use my own branding?</button>
-        <div class="faq-a"><p>Yes! Upload your logo, set your brand colors, handle, and tagline. All slides will use your brand identity.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Is it really free?</button>
-        <div class="faq-a"><p>The free plan gives you 3 extractions per day with all 9 AI modes. No credit card required, no signup needed.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">How fast is processing?</button>
-        <div class="faq-a"><p>Most YouTube videos with captions are processed in under 30 seconds. Longer videos without captions may take 1-2 minutes.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">What about copyright?</button>
-        <div class="faq-a"><p>We extract insights and generate original text &mdash; we don't copy or redistribute video content. You own everything we generate.</p></div>
-      </div>
+      <div class="faq-item"><button class="faq-q">What video platforms are supported?</button><div class="faq-a"><p>YouTube, Instagram Reels, TikTok, and X/Twitter videos. Just paste the URL.</p></div></div>
+      <div class="faq-item"><button class="faq-q">How does the AI extract content?</button><div class="faq-a"><p>We fetch the video's transcript (captions or audio transcription), then use advanced AI to analyze and extract the content type you selected.</p></div></div>
+      <div class="faq-item"><button class="faq-q">Can I use my own brand colors and logo?</button><div class="faq-a"><p>Yes. Set your brand handle, name, tagline, colors, and upload a logo. All carousel slides will use your branding.</p></div></div>
+      <div class="faq-item"><button class="faq-q">Does it work with Arabic content?</button><div class="faq-a"><p>Yes. The AI automatically detects Arabic, extracts content in Arabic, and generates RTL carousel slides with Arabic fonts.</p></div></div>
+      <div class="faq-item"><button class="faq-q">What's the difference between Free and Pro?</button><div class="faq-a"><p>Free gives you 3 extractions/day with watermarked slides. Pro removes limits and watermarks, adds bulk processing.</p></div></div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     FINAL CTA
-     ============================================================ -->
+<!-- FINAL CTA -->
 <section class="final-cta fade-in">
   <div class="container">
-    <h2>Ready to Turn Videos Into Viral Content?</h2>
-    <p>Join thousands of creators using AI to repurpose content 10x faster</p>
-    <a href="#app" class="btn-white" onclick="showApp();return false;">Start Extracting &mdash; It's Free &rarr;</a>
+    <h2>Ready to Extract Intelligence?</h2>
+    <p>Join thousands of creators turning videos into viral content.</p>
+    <button class="btn-white" onclick="showApp()">Start Free &rarr;</button>
   </div>
 </section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand"><h4>ContentExtractor <span style="color:var(--primary)">AI</span></h4><p>AI-powered video to content engine. Extract facts, quotes, and insights from any video. Generate branded carousels, threads, and ad copy.</p></div>
+      <div class="footer-col"><h5>Product</h5><ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+      <div class="footer-col"><h5>Modes</h5><ul><li><a href="#app" onclick="showApp()">Facts</a></li><li><a href="#app" onclick="showApp()">Quotes</a></li><li><a href="#app" onclick="showApp()">Ad Creatives</a></li></ul></div>
+      <div class="footer-col"><h5>Legal</h5><ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 ContentExtractor AI. All rights reserved.</div>
+  </div>
+</footer>
 
 <!-- ============================================================
      APP SECTION
      ============================================================ -->
 <section class="app-section" id="app">
   <div class="container">
-    <div class="app-header"><h2>AI <span class="gradient-text">Content Extraction</span></h2><p>Paste a video URL and choose your AI extraction mode</p></div>
+    <div class="app-header"><h2>Extract Content</h2><p>Paste a video URL and choose your extraction mode</p></div>
 
-    <!-- Signup Banner (shown for non-logged-in users) -->
-    <div class="signup-banner" id="signup-banner" onclick="openAuthModal()"><strong>Sign up free</strong> to save history and unlock Pro features</div>
+    <div class="signup-banner" id="signup-banner" onclick="openAuthModal('signup')"><strong>Sign up free</strong> to save history, remove watermarks, and unlock bulk mode</div>
 
     <!-- Brand Settings -->
-    <div class="brand-panel">
-      <button class="brand-toggle" id="brand-toggle"><span>Brand Settings <span class="brand-summary" id="brand-summary"></span></span><span class="chevron" id="chevron">&#9660;</span></button>
+    <div class="brand-panel"><button class="brand-toggle" id="brand-toggle"><span>Brand Settings <span class="brand-summary" id="brand-summary"></span></span><span class="chevron" id="chevron">&#9660;</span></button>
       <div class="brand-body" id="brand-body">
         <div class="brand-grid">
-          <div class="brand-field"><label>Handle</label><input type="text" id="brand-handle" placeholder="@yourbrand"></div>
-          <div class="brand-field"><label>Brand Name</label><input type="text" id="brand-name" placeholder="Your Brand Name"></div>
-          <div class="brand-field full-width"><label>Tagline</label><input type="text" id="brand-tagline" placeholder="Your tagline"></div>
-          <div class="brand-field full-width"><label>Color Theme</label><select id="brand-theme"><option value="dark">Dark</option><option value="light">Light</option><option value="ocean">Ocean</option><option value="fire">Fire</option><option value="custom">Custom</option></select></div>
+          <div class="brand-field"><label>Handle</label><input id="brand-handle" placeholder="@yourhandle"></div>
+          <div class="brand-field"><label>Brand Name</label><input id="brand-name" placeholder="Your Brand"></div>
+          <div class="brand-field full-width"><label>Tagline</label><input id="brand-tagline" placeholder="Your brand tagline"></div>
+          <div class="brand-field"><label>Theme</label><select id="brand-theme"><option value="dark">Dark</option><option value="light">Light</option><option value="ocean">Ocean</option><option value="fire">Fire</option><option value="custom">Custom</option></select></div>
+          <div class="brand-field"><label>Logo</label><div class="logo-upload-area"><button class="logo-upload-btn" id="logo-upload-btn">Upload Logo (PNG, max 2MB)</button><input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp" style="display:none"><div class="logo-preview" id="logo-preview" style="display:none"><img id="logo-preview-img" alt="Logo"><button class="logo-remove" id="logo-remove">&times;</button></div></div></div>
           <div class="custom-colors" id="custom-colors">
-            <div class="brand-field"><label>Background</label><div class="color-field"><input type="color" id="brand-bg-picker" value="#0A0A0A"><input type="text" id="brand-bg" value="#0A0A0A"></div></div>
-            <div class="brand-field"><label>Text</label><div class="color-field"><input type="color" id="brand-text-picker" value="#FFFFFF"><input type="text" id="brand-text" value="#FFFFFF"></div></div>
-            <div class="brand-field"><label>Accent</label><div class="color-field"><input type="color" id="brand-accent-picker" value="#8B5CF6"><input type="text" id="brand-accent" value="#8B5CF6"></div></div>
-          </div>
-          <div class="brand-field full-width"><label>Brand Logo</label>
-            <div class="logo-upload-area" id="logo-upload-area">
-              <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp" hidden>
-              <div class="logo-preview" id="logo-preview" style="display:none"><img id="logo-preview-img" alt="Logo"><button class="logo-remove" id="logo-remove">&times;</button></div>
-              <button class="logo-upload-btn" id="logo-upload-btn">Drop your logo here or click to upload<br><span style="font-size:.7rem;opacity:.5">PNG, JPG, WebP &mdash; max 2 MB</span></button>
-            </div>
+            <div class="color-field"><input type="color" id="brand-bg-picker" value="#0A0A0A"><input type="text" id="brand-bg" value="#0A0A0A" placeholder="Background"></div>
+            <div class="color-field"><input type="color" id="brand-text-picker" value="#FFFFFF"><input type="text" id="brand-text" value="#FFFFFF" placeholder="Text"></div>
+            <div class="color-field"><input type="color" id="brand-accent-picker" value="#8B5CF6"><input type="text" id="brand-accent" value="#8B5CF6" placeholder="Accent"></div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- History -->
-    <div class="history-panel" id="history-panel" style="display:none">
-      <button class="history-toggle" id="history-toggle"><span>History <span class="history-count" id="history-count">0</span></span><span class="chevron" id="history-chevron">&#9660;</span></button>
+    <div class="history-panel" id="history-panel" style="display:none"><button class="history-toggle" id="history-toggle"><span>History <span class="history-count" id="history-count">0</span></span><span class="chevron" id="history-chevron">&#9660;</span></button>
       <div class="history-body" id="history-body">
         <div class="history-actions"><button class="history-clear-btn" id="history-clear">Clear All</button></div>
         <div id="history-list"></div>
@@ -883,18 +793,9 @@ img{max-width:100%;display:block}
     <!-- URL Input -->
     <div class="url-group">
       <label>Video URL</label>
-      <div class="url-mode-toggle">
-        <button class="url-mode-btn active" id="url-mode-single">Single URL</button>
-        <button class="url-mode-btn" id="url-mode-bulk">Bulk (up to 10) <span class="bulk-lock" id="bulk-lock" title="Pro feature">PRO</span></button>
-      </div>
-      <div id="single-url-wrap">
-        <input type="url" class="url-input" id="url-input" placeholder="Paste any video URL here...">
-        <div id="platform-badge-wrap"></div>
-      </div>
-      <div id="bulk-url-wrap" style="display:none">
-        <textarea class="bulk-url-input" id="bulk-url-input" placeholder="Paste one URL per line:&#10;https://youtube.com/watch?v=abc&#10;https://youtube.com/watch?v=xyz"></textarea>
-        <div class="bulk-hint">One URL per line. Maximum 10 URLs.</div>
-      </div>
+      <div class="url-mode-toggle"><button class="url-mode-btn active" id="url-mode-single">Single URL</button><button class="url-mode-btn" id="url-mode-bulk">Bulk <span class="bulk-lock" id="bulk-lock"></span></button></div>
+      <div id="single-url-wrap"><input type="url" class="url-input" id="url-input" placeholder="Paste any video URL"><div id="platform-badge-wrap"></div></div>
+      <div id="bulk-url-wrap" style="display:none"><textarea class="bulk-url-input" id="bulk-url-input" placeholder="Paste URLs, one per line"></textarea><div class="bulk-hint">One URL per line. Max 10.</div></div>
     </div>
 
     <!-- Bulk Progress -->
@@ -903,11 +804,11 @@ img{max-width:100%;display:block}
     <!-- Workflow Toggle -->
     <div class="workflow-toggle" id="workflow-toggle">
       <button class="wf-btn active" id="wf-quick" data-wf="quick">Quick Extract</button>
-      <button class="wf-btn" id="wf-podcast" data-wf="podcast">&#127897; Podcast Deep Dive</button>
+      <button class="wf-btn" id="wf-podcast" data-wf="podcast">Podcast Deep Dive</button>
     </div>
     <span class="lang-badge" id="lang-badge" style="display:none"></span>
 
-    <!-- ═══ QUICK EXTRACT PANEL ═══ -->
+    <!-- QUICK EXTRACT PANEL -->
     <div class="wf-panel" id="panel-quick">
       <div class="mode-grid" id="mode-buttons">
         <button class="mode-btn" data-mode="facts"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
@@ -917,8 +818,7 @@ img{max-width:100%;display:block}
         <button class="mode-btn" data-mode="takeaways"><span class="mode-icon">&#9989;</span><span class="mode-label">Takeaways</span><span class="mode-desc">Actionable items</span></button>
         <button class="mode-btn mode-featured" data-mode="ad_creatives"><span class="mode-new-badge">NEW</span><span class="mode-icon">&#128226;</span><span class="mode-label">Ad Creatives</span><span class="mode-desc">Paid social ad copy</span></button>
       </div>
-      <details class="more-modes">
-        <summary>More modes &#9660;</summary>
+      <details class="more-modes"><summary>More modes &#9660;</summary>
         <div class="mode-grid mode-grid-extra" id="mode-buttons-extra">
           <button class="mode-btn cat-blue" data-mode="summary"><span class="mode-icon">&#128203;</span><span class="mode-label">Summary</span><span class="mode-desc">Timeline breakdown</span></button>
           <button class="mode-btn cat-blue" data-mode="hooks"><span class="mode-icon">&#127907;</span><span class="mode-label">Hooks</span><span class="mode-desc">Viral opening lines</span></button>
@@ -927,29 +827,14 @@ img{max-width:100%;display:block}
       </details>
     </div>
 
-    <!-- ═══ PODCAST DEEP DIVE PANEL ═══ -->
+    <!-- PODCAST DEEP DIVE PANEL -->
     <div class="wf-panel" id="panel-podcast" style="display:none">
-      <!-- Classification badge (shown after analysis) -->
-      <div class="podcast-classify-badge" id="podcast-classify-badge" style="display:none">
-        <span class="pcb-icon" id="pcb-icon"></span>
-        <span class="pcb-text" id="pcb-text"></span>
-        <span class="pcb-detail" id="pcb-detail"></span>
-      </div>
-
-      <!-- Topic cards (shown after analysis) -->
+      <div class="podcast-classify-badge" id="podcast-classify-badge" style="display:none"><span class="pcb-icon" id="pcb-icon"></span><span class="pcb-text" id="pcb-text"></span><span class="pcb-detail" id="pcb-detail"></span></div>
       <div class="topics-panel" id="topics-panel" style="display:none">
-        <div class="topics-header" onclick="toggleTopicsPanel()">
-          <h4>Topics Found</h4>
-          <span class="topics-collapse" id="topics-collapse-text">collapse</span>
-        </div>
+        <div class="topics-header" onclick="toggleTopicsPanel()"><h4>Topics Found</h4><span class="topics-collapse" id="topics-collapse-text">collapse</span></div>
         <div class="topics-body" id="topics-body"></div>
-        <div class="topics-actions">
-          <span id="topics-selected-count">0 selected</span>
-          <span>Select topics, then choose a mode below</span>
-        </div>
+        <div class="topics-actions"><span id="topics-selected-count">0 selected</span><span>Select topics, then choose a mode below</span></div>
       </div>
-
-      <!-- Podcast mode buttons (same modes, podcast_mode=true) -->
       <div class="mode-grid" id="podcast-mode-buttons">
         <button class="mode-btn" data-mode="facts" data-podcast="1"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
         <button class="mode-btn" data-mode="quotes" data-podcast="1"><span class="mode-icon">&#128142;</span><span class="mode-label">Quotes</span><span class="mode-desc">Shareable direct quotes</span></button>
@@ -960,8 +845,8 @@ img{max-width:100%;display:block}
     </div>
 
     <!-- Slide Count -->
-    <div class="slide-count-group" id="slide-count-group">
-      <label>Number of content slides</label>
+    <div class="slide-count-group">
+      <label>Slides</label>
       <div class="count-pills">
         <button class="count-pill" data-count="3">3</button>
         <button class="count-pill" data-count="4">4</button>
@@ -972,6 +857,7 @@ img{max-width:100%;display:block}
         <button class="count-pill" data-count="9">9</button>
         <button class="count-pill" data-count="10">10</button>
       </div>
+      <span class="watermark-badge" id="watermark-badge">Watermarked (Free plan)</span>
     </div>
 
     <!-- Status -->
@@ -981,9 +867,9 @@ img{max-width:100%;display:block}
     <div id="results">
       <div class="result-header">
         <div><h3 id="result-title"></h3><div class="result-meta" id="result-meta"></div></div>
-        <a class="download-btn" id="download-btn" href="#" download>&#11015; Download ZIP</a>
+        <a class="download-btn" id="download-btn" href="#" download>Download ZIP</a>
       </div>
-      <div class="output-tabs" id="output-tabs">
+      <div class="output-tabs">
         <button class="tab-btn active" data-tab="carousel">Carousel</button>
         <button class="tab-btn" data-tab="twitter">Twitter</button>
         <button class="tab-btn" data-tab="linkedin">LinkedIn</button>
@@ -992,108 +878,159 @@ img{max-width:100%;display:block}
         <button class="tab-btn" data-tab="caption">Caption</button>
         <button class="tab-btn" data-tab="ad_copy">Ad Copy</button>
       </div>
-      <div class="tab-panel active" id="panel-carousel"><div class="carousel-container"><button class="carousel-arrow carousel-arrow-left" id="carousel-left">&#8249;</button><div class="carousel-viewer" id="carousel-viewer"></div><button class="carousel-arrow carousel-arrow-right" id="carousel-right">&#8250;</button></div></div>
-      <div class="tab-panel" id="panel-twitter"><div class="text-output-container"><div class="text-output" id="text-twitter"></div><button class="copy-btn" data-target="text-twitter">Copy</button></div></div>
-      <div class="tab-panel" id="panel-linkedin"><div class="text-output-container"><div class="text-output" id="text-linkedin"></div><button class="copy-btn" data-target="text-linkedin">Copy</button></div></div>
-      <div class="tab-panel" id="panel-newsletter"><div class="text-output-container"><div class="text-output" id="text-newsletter"></div><button class="copy-btn" data-target="text-newsletter">Copy</button></div></div>
-      <div class="tab-panel" id="panel-tiktok"><div class="text-output-container"><div class="text-output" id="text-tiktok"></div><button class="copy-btn" data-target="text-tiktok">Copy</button></div></div>
-      <div class="tab-panel" id="panel-caption"><div class="text-output-container"><div class="text-output" id="text-caption"></div><button class="copy-btn" data-target="text-caption">Copy</button></div></div>
-      <div class="tab-panel" id="panel-ad_copy"><div class="text-output-container"><div class="text-output" id="text-ad_copy"></div><button class="copy-btn" data-target="text-ad_copy">Copy</button></div></div>
+      <div class="tab-panel active" id="panel-carousel">
+        <div class="carousel-container">
+          <button class="carousel-arrow carousel-arrow-left" id="carousel-left">&#8249;</button>
+          <div class="carousel-viewer" id="carousel-viewer"></div>
+          <button class="carousel-arrow carousel-arrow-right" id="carousel-right">&#8250;</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-twitter"><div class="text-output-container"><pre class="text-output" id="text-twitter"></pre><button class="copy-btn" data-target="text-twitter">Copy</button></div></div>
+      <div class="tab-panel" id="panel-linkedin"><div class="text-output-container"><pre class="text-output" id="text-linkedin"></pre><button class="copy-btn" data-target="text-linkedin">Copy</button></div></div>
+      <div class="tab-panel" id="panel-newsletter"><div class="text-output-container"><pre class="text-output" id="text-newsletter"></pre><button class="copy-btn" data-target="text-newsletter">Copy</button></div></div>
+      <div class="tab-panel" id="panel-tiktok"><div class="text-output-container"><pre class="text-output" id="text-tiktok"></pre><button class="copy-btn" data-target="text-tiktok">Copy</button></div></div>
+      <div class="tab-panel" id="panel-caption"><div class="text-output-container"><pre class="text-output" id="text-caption"></pre><button class="copy-btn" data-target="text-caption">Copy</button></div></div>
+      <div class="tab-panel" id="panel-ad_copy"><div class="text-output-container"><pre class="text-output" id="text-ad_copy"></pre><button class="copy-btn" data-target="text-ad_copy">Copy</button></div></div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     AUTH MODAL
-     ============================================================ -->
+<!-- AUTH MODAL -->
 <div class="modal-overlay" id="auth-modal">
   <div class="modal">
     <button class="modal-close" id="auth-modal-close">&times;</button>
-    <h2>Welcome to ContentExtractor</h2>
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-auth-tab="signup">Sign Up</button>
-      <button class="auth-tab" data-auth-tab="login">Log In</button>
-    </div>
+    <h2>Welcome</h2>
+    <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="signup">Sign Up</button><button class="auth-tab" data-auth-tab="login">Log In</button></div>
     <form class="auth-form active" id="auth-form-signup">
-      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com" required></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="signup-password" placeholder="Min 6 characters" minlength="6" required></div>
-      <div class="auth-field"><label>Confirm Password</label><input type="password" id="signup-confirm" placeholder="Confirm password" minlength="6" required></div>
-      <button class="auth-submit" id="signup-btn" type="submit">Create Account</button>
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" required></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="signup-password" required></div>
+      <div class="auth-field"><label>Confirm Password</label><input type="password" id="signup-confirm" required></div>
       <div class="auth-error" id="signup-error"></div>
+      <button class="auth-submit" id="signup-btn" type="submit">Create Account</button>
     </form>
     <form class="auth-form" id="auth-form-login">
-      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" required></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="login-password" placeholder="Password" required></div>
-      <button class="auth-submit" id="login-btn" type="submit">Log In</button>
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" required></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="login-password" required></div>
       <div class="auth-error" id="login-error"></div>
+      <button class="auth-submit" id="login-btn" type="submit">Log In</button>
     </form>
   </div>
 </div>
 
-<!-- ============================================================
-     UPGRADE MODAL
-     ============================================================ -->
+<!-- UPGRADE MODAL -->
 <div class="modal-overlay" id="upgrade-modal">
   <div class="modal">
     <button class="modal-close" id="upgrade-modal-close">&times;</button>
     <div class="upgrade-body">
-      <h3>You've used your 3 free extractions today</h3>
-      <p>Upgrade to Pro for unlimited extractions, no watermark, bulk processing, and more.</p>
+      <h3>Daily Limit Reached</h3>
+      <p>You've used all 3 free extractions today. Upgrade to Pro for unlimited access.</p>
       <div class="upgrade-actions">
         <button class="btn-primary" id="upgrade-pro-btn">Upgrade to Pro &mdash; $19/mo</button>
-        <button class="upgrade-dismiss" id="upgrade-dismiss">Come back tomorrow</button>
+        <button class="upgrade-dismiss" id="upgrade-dismiss">Maybe later</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
+<!-- TOAST -->
 <div class="toast hidden" id="toast"></div>
 
-<!-- ============================================================
-     FOOTER
-     ============================================================ -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <h4>ContentExtractor AI</h4>
-        <p>Turn any video into viral content with AI. Carousel slides, threads, ad copy, and more &mdash; in seconds.</p>
-      </div>
-      <div class="footer-col">
-        <h5>Product</h5>
-        <ul>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h5>Platforms</h5>
-        <ul>
-          <li><a href="#app" onclick="showApp();return false;">YouTube</a></li>
-          <li><a href="#app" onclick="showApp();return false;">Instagram</a></li>
-          <li><a href="#app" onclick="showApp();return false;">TikTok</a></li>
-          <li><a href="#app" onclick="showApp();return false;">X / Twitter</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h5>Company</h5>
-        <ul>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Contact</a></li>
-          <li><a href="#">Terms</a></li>
-          <li><a href="#">Privacy</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">&copy; 2026 ContentExtractor AI. All rights reserved.</div>
-  </div>
-</footer>
+<!-- PARTICLE CANVAS SCRIPT -->
+<script>
+(function(){
+  const c=document.getElementById('hero-canvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  let W,H;
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
+  resize();window.addEventListener('resize',resize);
 
-<!-- ============================================================
-     SCRIPTS
-     ============================================================ -->
+  // Simplex-like noise (fast 2D)
+  const perm=new Uint8Array(512);
+  for(let i=0;i<256;i++)perm[i]=i;
+  for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]]}
+  for(let i=0;i<256;i++)perm[i+256]=perm[i];
+  const grad=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+  function noise(x,y){
+    const X=Math.floor(x)&255,Y=Math.floor(y)&255;
+    const xf=x-Math.floor(x),yf=y-Math.floor(y);
+    const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+    const aa=perm[perm[X]+Y]%8,ab=perm[perm[X]+Y+1]%8;
+    const ba=perm[perm[X+1]+Y]%8,bb=perm[perm[X+1]+Y+1]%8;
+    const x1=lerp(dot(grad[aa],xf,yf),dot(grad[ba],xf-1,yf),u);
+    const x2=lerp(dot(grad[ab],xf,yf-1),dot(grad[bb],xf-1,yf-1),u);
+    return lerp(x1,x2,v);
+  }
+  function dot(g,x,y){return g[0]*x+g[1]*y}
+  function lerp(a,b,t){return a+(b-a)*t}
+
+  // Particles
+  const TEAL=[0,212,170],ORANGE=[255,107,53];
+  const particles=[];
+  const MAX=250;
+  function spawn(isSignal){
+    return{
+      x:Math.random()*W,y:Math.random()*H,
+      vx:0,vy:0,
+      life:200+Math.random()*300,
+      maxLife:200+Math.random()*300,
+      signal:isSignal||false,
+      size:isSignal?2+Math.random():1+Math.random()*1.5,
+    };
+  }
+  for(let i=0;i<MAX;i++)particles.push(spawn(i<20));
+
+  let t=0;
+  function frame(){
+    // Fade trail
+    ctx.fillStyle='rgba(12,12,15,0.12)';
+    ctx.fillRect(0,0,W,H);
+    t+=0.003;
+    for(let i=0;i<particles.length;i++){
+      const p=particles[i];
+      const scale=0.003;
+      const n=noise(p.x*scale+t,p.y*scale+t);
+      const angle=n*Math.PI*4;
+      const speed=p.signal?1.8:0.7;
+      p.vx=p.vx*0.9+Math.cos(angle)*speed*0.1;
+      p.vy=p.vy*0.9+Math.sin(angle)*speed*0.1;
+      p.x+=p.vx;p.y+=p.vy;
+      p.life--;
+      if(p.life<=0||p.x<-10||p.x>W+10||p.y<-10||p.y>H+10){
+        const np=spawn(p.signal);
+        np.x=Math.random()*W;np.y=Math.random()*H;
+        particles[i]=np;continue;
+      }
+      const alpha=Math.min(p.life/50,1-(p.life/p.maxLife-0.5)*0.5)*0.6;
+      const col=p.signal?ORANGE:TEAL;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${Math.max(0,alpha)})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+
+  // Stats count-up
+  const statsObs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.stat-num[data-count]').forEach(el=>{
+          const target=parseInt(el.dataset.count);
+          let current=0;
+          const step=()=>{current++;el.textContent=current;if(current<target)requestAnimationFrame(step)};
+          step();
+        });
+        statsObs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.3});
+  const statsEl=document.getElementById('stats');
+  if(statsEl)statsObs.observe(statsEl);
+})();
+</script>
+
 <script>
 const $=id=>document.getElementById(id);
 
