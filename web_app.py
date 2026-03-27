@@ -46,7 +46,7 @@ try:
 
     from config import BRANDS, DEFAULT_BRAND, CONTENT_TYPES, OUTPUT_DIR, LOGOS_DIR, DATA_DIR, Palette
     from transcript import detect_platform, fetch_metadata, _try_youtube_captions, _groq_pipeline, PLATFORM_LABELS, Platform
-    from analyzer import extract_content  # also registers extra content types
+    from analyzer import extract_content, analyze_topics, detect_language  # also registers extra content types
     from image_fetcher import fetch_images_parallel, cleanup_temp_images
     from designer import generate_carousel
     from output_formatter import format_all
@@ -119,6 +119,7 @@ class ExtractRequest(BaseModel):
     format: str = "carousel"
     brand: BrandSettings | None = None
     num_items: int = 5
+    selected_topics: list[str] | None = None
 
 
 # ── Rate limiting & concurrency ─────────────────────────────────────
@@ -127,6 +128,26 @@ _RATE_LIMIT_MAX = 10
 _RATE_LIMIT_WINDOW = 3600  # 1 hour
 
 TEXT_ONLY_MODES = {"summary", "hooks"}
+
+# ── In-memory transcript cache (for analyze-topics → extract flow) ───
+# Keyed by URL, stores (transcript, title, language, timestamp)
+import time as _time_mod
+_transcript_cache: dict[str, dict] = {}
+_TRANSCRIPT_CACHE_TTL = 600  # 10 minutes
+
+
+def _cache_transcript(url: str, transcript: str, title: str, language: str) -> None:
+    _transcript_cache[url] = {
+        "transcript": transcript, "title": title, "language": language,
+        "ts": _time_mod.time(),
+    }
+
+
+def _get_cached_transcript(url: str) -> dict | None:
+    entry = _transcript_cache.get(url)
+    if entry and (_time_mod.time() - entry["ts"]) < _TRANSCRIPT_CACHE_TTL:
+        return entry
+    return None
 
 
 def _check_rate_limit(ip: str) -> bool:
@@ -376,13 +397,91 @@ async def billing_portal(request: Request):
     return JSONResponse({"portal_url": session.url})
 
 
+# ── Topic Analysis endpoint ──────────────────────────────────────────
+
+@app.post("/api/analyze-topics")
+async def api_analyze_topics(request: Request):
+    """Fetch transcript and analyze topics before extraction."""
+    if not _deps_loaded:
+        raise HTTPException(503, "Server still starting or missing dependencies.")
+
+    ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(ip):
+        return JSONResponse({"detail": "Rate limited. Try again in a minute."}, status_code=429)
+
+    body = await request.json()
+    url = (body.get("url") or "").strip()
+    if not url:
+        raise HTTPException(400, "Missing URL")
+
+    try:
+        # 1. Detect platform + fetch metadata
+        platform = detect_platform(url)
+        meta = await asyncio.wait_for(
+            asyncio.to_thread(fetch_metadata, url, platform), timeout=30
+        )
+
+        # 2. Fetch transcript
+        transcript = None
+        if platform == Platform.YOUTUBE:
+            try:
+                transcript = await asyncio.wait_for(
+                    asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
+                )
+            except Exception:
+                pass
+            if not transcript:
+                raise HTTPException(400,
+                    "This YouTube video has no captions available. "
+                    "Try a different video with subtitles.")
+        else:
+            transcript = await asyncio.wait_for(
+                asyncio.to_thread(_groq_pipeline, url), timeout=90
+            )
+
+        if not transcript or len(transcript.split()) < 50:
+            raise HTTPException(400, "Transcript too short. The video may not have spoken content.")
+
+        words = transcript.split()
+        if len(words) > _MAX_TRANSCRIPT_WORDS:
+            transcript = " ".join(words[:_MAX_TRANSCRIPT_WORDS])
+
+        # 3. Detect language
+        language = detect_language(transcript)
+
+        # 4. Cache transcript for later extraction
+        title_display = meta.title or "Untitled Video"
+        _cache_transcript(url, transcript, title_display, language)
+
+        # 5. Analyze topics via LLM
+        topics_data = await asyncio.wait_for(
+            asyncio.to_thread(analyze_topics, transcript, title_display), timeout=60
+        )
+
+        topics_data["video_title"] = title_display
+        topics_data["platform"] = PLATFORM_LABELS.get(platform, "Unknown")
+        topics_data["source"] = meta.author or ""
+        topics_data["language"] = language
+        topics_data["word_count"] = len(words)
+
+        return JSONResponse(topics_data)
+
+    except HTTPException:
+        raise
+    except asyncio.TimeoutError:
+        raise HTTPException(400, "Topic analysis timed out. Try a shorter video.")
+    except Exception as e:
+        logger.error("Topic analysis error: %s", e, exc_info=True)
+        raise HTTPException(500, f"Topic analysis failed: {e}")
+
+
 # ── Pipeline helpers (run sync code in thread) ─────────────────────────
 
 _PIPELINE_TIMEOUT = 120  # seconds
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None, selected_topics: list[str] | None = None) -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -426,28 +525,37 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
 
         title_display = meta.title or "Untitled Video"
 
-        # 2. Fetch transcript
+        # 2. Fetch transcript — use cache if available (from analyze-topics)
+        cached = _get_cached_transcript(url)
         transcript = None
-        if platform == Platform.YOUTUBE:
-            try:
-                transcript = await asyncio.wait_for(
-                    asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
-                )
-            except Exception:
-                transcript = None
-            if not transcript:
-                raise HTTPException(400,
-                    "This YouTube video has no captions available. "
-                    "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
+        detected_lang = "en"
+
+        if cached:
+            transcript = cached["transcript"]
+            detected_lang = cached.get("language", "en")
+            if cached.get("title"):
+                title_display = cached["title"]
         else:
-            try:
-                transcript = await asyncio.wait_for(
-                    asyncio.to_thread(_groq_pipeline, url), timeout=90
-                )
-            except asyncio.TimeoutError:
-                raise HTTPException(400, "Transcript extraction timed out.")
-            except Exception as e:
-                raise HTTPException(400, f"Could not get transcript. ({e})")
+            if platform == Platform.YOUTUBE:
+                try:
+                    transcript = await asyncio.wait_for(
+                        asyncio.to_thread(_try_youtube_captions, meta.video_id), timeout=15
+                    )
+                except Exception:
+                    transcript = None
+                if not transcript:
+                    raise HTTPException(400,
+                        "This YouTube video has no captions available. "
+                        "Try a different video with subtitles, or use an Instagram/TikTok/X link instead.")
+            else:
+                try:
+                    transcript = await asyncio.wait_for(
+                        asyncio.to_thread(_groq_pipeline, url), timeout=90
+                    )
+                except asyncio.TimeoutError:
+                    raise HTTPException(400, "Transcript extraction timed out.")
+                except Exception as e:
+                    raise HTTPException(400, f"Could not get transcript. ({e})")
 
         if not transcript or len(transcript.split()) < 50:
             raise HTTPException(400, "Transcript too short (< 50 words). The video may not have spoken content.")
@@ -456,11 +564,17 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         if len(words) > _MAX_TRANSCRIPT_WORDS:
             transcript = " ".join(words[:_MAX_TRANSCRIPT_WORDS])
 
+        # Detect language if not from cache
+        if not cached:
+            detected_lang = detect_language(transcript)
+            _cache_transcript(url, transcript, title_display, detected_lang)
+
         # 3. Extract content via LLM
         try:
             video_title_for_prompt = meta.title or "this video"
             result = await asyncio.wait_for(
-                asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt, num_items),
+                asyncio.to_thread(extract_content, content_type, transcript, video_title_for_prompt, num_items,
+                                  selected_topics=selected_topics, language=detected_lang),
                 timeout=120,
             )
             items = result.items
@@ -498,7 +612,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     generate_carousel, items=items, video_title=title_display,
                     content_type=content_type, palette=palette, output_dir=output_path,
                     source=meta.author, title_image=title_image, content_images=content_images,
-                    watermark=watermark,
+                    watermark=watermark, language=detected_lang,
                 )
             except Exception as e:
                 raise HTTPException(500, f"Slide generation error. {e}")
@@ -568,6 +682,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             "item_count": len(items), "slides": slides_data,
             "zip_url": f"/downloads/{zip_name}" if zip_name else "",
             "has_slides": not is_text_only,
+            "language": detected_lang,
         }
         response.update(text_formats)
         return response
@@ -618,7 +733,7 @@ async def api_generate(req: ExtractRequest, request: Request):
         )
     try:
         _uid = user["id"] if user else None
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid)
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid, selected_topics=req.selected_topics)
         # Increment usage for logged-in users
         if user and _auth_loaded:
             db.increment_daily_usage(user["id"])

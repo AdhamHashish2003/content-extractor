@@ -331,6 +331,33 @@ img{max-width:100%;display:block}
 .mode-btn .mode-label{font-size:.8rem;font-weight:700}
 .mode-btn .mode-desc{font-size:.65rem;color:var(--text-muted)}
 .mode-btn.mode-featured{background:var(--primary-light);border-left-color:var(--primary)}
+
+/* Topic Analysis */
+.topic-analyze-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.topic-analyze-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:transparent;border:2px solid var(--primary);border-radius:var(--radius-sm);color:var(--primary);cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}
+.topic-analyze-btn:hover{background:var(--primary-light)}
+.topic-analyze-btn:disabled{opacity:.5;cursor:not-allowed}
+.lang-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:.72rem;font-weight:600;background:var(--surface);border:1px solid var(--card-border);color:var(--text-muted)}
+.lang-badge.ar{background:#FEF3C7;border-color:#F59E0B;color:#92400E}
+
+.topics-panel{margin-bottom:20px;border:1px solid var(--card-border);border-radius:var(--radius-sm);overflow:hidden}
+.topics-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--card-border);cursor:pointer}
+.topics-header h4{font-size:.9rem;margin:0;color:var(--text)}
+.topics-header .topics-collapse{font-size:.7rem;color:var(--text-muted)}
+.topics-body{padding:12px}
+.topic-card{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:all .15s}
+.topic-card:hover{border-color:var(--primary);background:var(--primary-light)}
+.topic-card.selected{border-color:var(--primary);background:var(--primary-light)}
+.topic-card input[type=checkbox]{margin-top:3px;accent-color:var(--primary)}
+.topic-card .tc-content{flex:1}
+.topic-card .tc-name{font-size:.82rem;font-weight:700;color:var(--text)}
+.topic-card .tc-desc{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.topic-card .tc-meta{display:flex;gap:8px;margin-top:4px}
+.topic-card .tc-tag{font-size:.6rem;padding:2px 6px;border-radius:8px;background:var(--surface);color:var(--text-muted)}
+.topics-actions{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px;font-size:.75rem;color:var(--text-muted)}
+
+/* RTL support for results */
+.result-text-rtl{direction:rtl;text-align:right}
 .mode-btn .mode-new-badge{position:absolute;top:-6px;right:-6px;padding:2px 7px;border-radius:100px;background:var(--primary-gradient);font-size:.55rem;font-weight:700;color:#fff}
 
 /* Slide Count Selector */
@@ -858,6 +885,23 @@ img{max-width:100%;display:block}
     <!-- Bulk Progress -->
     <div class="bulk-progress" id="bulk-progress" style="display:none"></div>
 
+    <!-- Topic Analysis -->
+    <div class="topic-analyze-row">
+      <button class="topic-analyze-btn" id="analyze-topics-btn" onclick="analyzeTopics()">&#128269; Analyze Topics</button>
+      <span class="lang-badge" id="lang-badge" style="display:none"></span>
+    </div>
+    <div class="topics-panel" id="topics-panel" style="display:none">
+      <div class="topics-header" onclick="toggleTopicsPanel()">
+        <h4>Topics Found in This Video</h4>
+        <span class="topics-collapse" id="topics-collapse-text">collapse</span>
+      </div>
+      <div class="topics-body" id="topics-body"></div>
+      <div class="topics-actions">
+        <span id="topics-selected-count">0 selected</span>
+        <span>Select topics, then choose extraction mode below</span>
+      </div>
+    </div>
+
     <!-- Mode Buttons -->
     <div class="mode-grid" id="mode-buttons">
       <button class="mode-btn" data-mode="facts"><span class="mode-icon">&#128202;</span><span class="mode-label">Facts</span><span class="mode-desc">Key facts &amp; statistics</span></button>
@@ -1147,6 +1191,86 @@ document.querySelectorAll('.count-pill').forEach(p=>{
   });
 });
 
+/* --- TOPIC ANALYSIS --- */
+let analyzedTopics=[];
+let selectedTopics=[];
+let topicsPanelOpen=true;
+
+async function analyzeTopics(){
+  const url=$('url-input').value.trim();
+  if(!url){showError('Please paste a video URL first');return}
+  const btn=$('analyze-topics-btn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner" style="width:14px;height:14px;display:inline-block"></div> Analyzing...';
+  $('topics-panel').style.display='none';
+  $('lang-badge').style.display='none';
+  try{
+    const hdrs={'Content-Type':'application/json',...authHeaders()};
+    const r=await fetch('/api/analyze-topics',{method:'POST',headers:hdrs,body:JSON.stringify({url})});
+    const d=await r.json();
+    if(!r.ok){showError(d.detail||'Topic analysis failed');return}
+    analyzedTopics=d.topics||[];
+    selectedTopics=[];
+    // Show language badge
+    const lang=d.language||'en';
+    const badge=$('lang-badge');
+    badge.style.display='inline-flex';
+    badge.className='lang-badge'+(lang==='ar'?' ar':'');
+    badge.textContent=lang==='ar'?'\uD83C\uDF10 Arabic detected':'\uD83C\uDF10 English detected';
+    // Render topic cards
+    renderTopics(analyzedTopics);
+    $('topics-panel').style.display='';
+    topicsPanelOpen=true;
+    $('topics-body').style.display='';
+    $('topics-collapse-text').textContent='collapse';
+  }catch(e){showError('Network error during topic analysis')}
+  finally{btn.disabled=false;btn.innerHTML='&#128269; Analyze Topics'}
+}
+
+function renderTopics(topics){
+  const body=$('topics-body');
+  body.innerHTML=topics.map((t,i)=>{
+    const rel=t.relevance||'medium';
+    return`<div class="topic-card" data-idx="${i}" onclick="toggleTopic(${i})">
+      <input type="checkbox" id="tc-${i}" ${selectedTopics.includes(t.topic)?'checked':''}>
+      <div class="tc-content">
+        <div class="tc-name">${escHtml(t.topic)}</div>
+        <div class="tc-desc">${escHtml(t.description||'')}</div>
+        <div class="tc-meta">
+          <span class="tc-tag">${escHtml(t.timestamp_hint||'')}</span>
+          <span class="tc-tag">${rel}</span>
+        </div>
+      </div>
+    </div>`
+  }).join('');
+  updateTopicCount();
+}
+
+function toggleTopic(idx){
+  const topic=analyzedTopics[idx].topic;
+  const pos=selectedTopics.indexOf(topic);
+  if(pos===-1)selectedTopics.push(topic);else selectedTopics.splice(pos,1);
+  // Update checkbox + card style
+  const card=$('topics-body').children[idx];
+  const cb=card.querySelector('input[type=checkbox]');
+  cb.checked=pos===-1;
+  card.classList.toggle('selected',pos===-1);
+  updateTopicCount();
+}
+
+function updateTopicCount(){
+  $('topics-selected-count').textContent=selectedTopics.length+' selected';
+}
+
+function toggleTopicsPanel(){
+  topicsPanelOpen=!topicsPanelOpen;
+  $('topics-body').style.display=topicsPanelOpen?'':'none';
+  $('topics-collapse-text').textContent=topicsPanelOpen?'collapse':'expand';
+}
+
+function getSelectedTopics(){
+  return selectedTopics.length>0?selectedTopics:null;
+}
+
 /* --- GENERATION --- */
 const STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Fetching images...','Generating slides...'];
 const TEXT_ONLY_STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Formatting output...'];
@@ -1175,7 +1299,9 @@ async function generate(mode){
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};
-    const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify({url,mode,format:'all',brand:bp,num_items:selectedSlideCount})});
+    const payload={url,mode,format:'all',brand:bp,num_items:selectedSlideCount};
+    const st=getSelectedTopics();if(st)payload.selected_topics=st;
+    const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
     clearInterval(iv);const d=await r.json();
     if(!r.ok){
       if(d.limit_reached){setButtonsDisabled(false);openUpgradeModal();return}
@@ -1201,13 +1327,16 @@ function showResults(d,mode){
   if(hasSlides){
     d.slides.forEach(s=>{const div=document.createElement('div');div.className='slide-preview';const img=document.createElement('img');img.src=s.data_url;img.alt=s.filename;div.appendChild(img);v.appendChild(div)});
   }
-  // Text outputs
+  // Text outputs — add RTL for Arabic
+  const isAr=(d.language==='ar');
+  const textIds=['text-twitter','text-linkedin','text-newsletter','text-tiktok','text-caption','text-ad_copy'];
   $('text-twitter').textContent=d.twitter_thread||'(not available)';
   $('text-linkedin').textContent=d.linkedin_post||'(not available)';
   $('text-newsletter').textContent=d.newsletter||'(not available)';
   $('text-tiktok').textContent=d.tiktok_script||'(not available)';
   $('text-caption').textContent=d.caption||'(not available)';
   $('text-ad_copy').textContent=d.ad_copy||'(not available)';
+  textIds.forEach(id=>{const el=$(id);if(isAr){el.dir='rtl';el.classList.add('result-text-rtl')}else{el.dir='';el.classList.remove('result-text-rtl')}});
   // Tabs — hide carousel tab for text-only modes
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));

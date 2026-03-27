@@ -247,16 +247,21 @@ def _try_youtube_captions(video_id: str) -> str | None:
     import html as htmlmod
     import requests
 
-    # Source 1: youtube-transcript-api (handles Innertube, consent cookies, etc.)
-    try:
-        api = YouTubeTranscriptApi()
-        result = api.fetch(video_id)
-        text = " ".join(snippet.text for snippet in result)
-        if len(text.split()) >= 50:
-            logger.info("[yt-captions] youtube-transcript-api OK for %s", video_id)
-            return text
-    except Exception as e:
-        logger.info("[yt-captions] youtube-transcript-api failed: %s", e)
+    # Source 1: youtube-transcript-api with multi-language fallback
+    for lang_codes in [["en", "en-US", "en-GB"], ["ar"], None]:
+        try:
+            api = YouTubeTranscriptApi()
+            if lang_codes is not None:
+                result = api.fetch(video_id, languages=lang_codes)
+            else:
+                # Last resort: fetch any available transcript
+                result = api.fetch(video_id)
+            text = " ".join(snippet.text for snippet in result)
+            if len(text.split()) >= 50:
+                logger.info("[yt-captions] youtube-transcript-api OK for %s (langs=%s)", video_id, lang_codes)
+                return text
+        except Exception as e:
+            logger.info("[yt-captions] youtube-transcript-api failed for langs=%s: %s", lang_codes, e)
 
     # Source 2: Scrape caption track URLs from page HTML and fetch XML directly
     try:

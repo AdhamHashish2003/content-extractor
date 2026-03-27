@@ -15,5 +15,7 @@ stripe>=8.0.0
 passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
 psycopg2-binary>=2.9.9
+arabic-reshaper>=3.0.0
+python-bidi>=0.6.0
 # openai-whisper — optional, install manually for local Whisper fallback
 # Pulls in PyTorch (~2GB), skip in production to keep image small

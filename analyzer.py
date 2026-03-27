@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -19,6 +20,21 @@ logger = logging.getLogger(__name__)
 
 NVIDIA_MODEL = "moonshotai/kimi-k2.5"
 GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile"
+
+
+# ── Language detection ────────────────────────────────────────────────
+
+def detect_language(text: str) -> str:
+    """Simple heuristic language detection. Returns 'ar' or 'en'."""
+    if not text:
+        return "en"
+    sample = text[:3000]
+    arabic_count = sum(1 for ch in sample if "\u0600" <= ch <= "\u06FF" or "\u0750" <= ch <= "\u077F")
+    total = len(sample.replace(" ", ""))
+    if total == 0:
+        return "en"
+    ratio = arabic_count / total
+    return "ar" if ratio > 0.3 else "en"
 
 # ── Register new content types ────────────────────────────────────────
 CONTENT_TYPES.update({
@@ -93,15 +109,34 @@ class ExtractedItem:
     image_query: str = ""
 
 
-def _build_prompt(content_type: ContentType, transcript: str, video_title: str, num_items: int = 5) -> str:
+def _build_prompt(content_type: ContentType, transcript: str, video_title: str, num_items: int = 5, selected_topics: list[str] | None = None, language: str = "en") -> str:
     mode_instruction = MODE_PROMPTS.get(content_type.key, MODE_PROMPTS["facts"])
+
+    topic_filter = ""
+    if selected_topics:
+        topics_str = ", ".join(selected_topics)
+        topic_filter = f"""
+TOPIC FILTER:
+Focus ONLY on these specific topics from the transcript: [{topics_str}].
+Ignore all other topics discussed in the video. Every item you return must relate to one of the selected topics.
+"""
+
+    language_instruction = ""
+    if language == "ar":
+        language_instruction = """
+LANGUAGE:
+The transcript is in Arabic. Extract content and write the output (headlines and body text) in Arabic.
+Keep the JSON keys in English but write ALL values (headline, body, source_quote, carousel_title) in Arabic.
+image_query and title_image_query should remain in English for search purposes.
+"""
 
     return f"""You are an expert content analyst for social media.
 
 Analyze this video transcript and extract exactly {num_items} compelling {content_type.label.lower()} from it.
 
 Video title: "{video_title}"
-
+{topic_filter}
+{language_instruction}
 TRANSCRIPT:
 {transcript[:12000]}
 
@@ -142,6 +177,7 @@ class ExtractionResult:
     items: list[ExtractedItem]
     title_image_query: str
     carousel_title: str = ""
+    language: str = "en"
 
 
 _SYSTEM_MSG = (
@@ -219,10 +255,15 @@ def extract_content(
     transcript: str,
     video_title: str,
     num_items: int = 5,
+    selected_topics: list[str] | None = None,
+    language: str | None = None,
 ) -> ExtractionResult:
     """Extract structured content — Kimi K2.5 primary, Groq Llama fallback."""
     num_items = max(3, min(7, num_items))
-    prompt = _build_prompt(content_type, transcript, video_title, num_items)
+    if language is None:
+        language = detect_language(transcript)
+    prompt = _build_prompt(content_type, transcript, video_title, num_items,
+                           selected_topics=selected_topics, language=language)
     raw = _call_llm(prompt)
 
     # Strip markdown bold/italic that models sometimes inject into JSON values
@@ -263,4 +304,60 @@ def extract_content(
         items=items,
         title_image_query=title_image_query,
         carousel_title=carousel_title,
+        language=language,
     )
+
+
+# ── Topic Analysis ────────────────────────────────────────────────────
+
+def analyze_topics(transcript: str, video_title: str) -> dict:
+    """Analyze transcript and return main topics discussed."""
+    language = detect_language(transcript)
+
+    lang_instruction = ""
+    if language == "ar":
+        lang_instruction = (
+            "The transcript is in Arabic. Write topic names and descriptions in Arabic. "
+            "Keep JSON keys in English."
+        )
+
+    prompt = f"""Analyze this transcript and identify the main topics discussed.
+
+Video title: "{video_title}"
+{lang_instruction}
+
+TRANSCRIPT:
+{transcript[:12000]}
+
+Return a JSON object with:
+{{
+  "video_title": "{video_title}",
+  "duration_estimate": "estimated duration based on word count",
+  "language": "{language}",
+  "topics": [
+    {{
+      "topic": "Name of the topic discussed",
+      "description": "1-2 sentence description of what was discussed about this topic",
+      "timestamp_hint": "early/middle/late in the conversation",
+      "relevance": "high" or "medium"
+    }}
+  ]
+}}
+
+Return 3-8 topics. Each topic should be specific, not vague.
+CRITICAL: Return ONLY valid JSON. No markdown fences, no explanation."""
+
+    raw = _call_llm(prompt)
+    raw = raw.replace("**", "").replace("*", "")
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            data = json.loads(match.group())
+        else:
+            raise RuntimeError(f"Topic analysis returned invalid JSON:\n{raw[:500]}")
+
+    data["language"] = language
+    return data

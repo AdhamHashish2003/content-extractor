@@ -184,7 +184,10 @@ FORMATTERS: dict[str, callable] = {
 
 def format_all(result: "ExtractionResult", handle: str = "", source_channel: str = "") -> dict[str, str]:
     """Run all formatters and return a dict of format_name -> text."""
-    return {
+    is_arabic = getattr(result, "language", "en") == "ar"
+    rtl_mark = "\u200F" if is_arabic else ""  # Right-to-Left Mark
+
+    out = {
         "twitter_thread": format_twitter_thread(result, handle=handle),
         "linkedin_post": format_linkedin_post(result, handle=handle.lstrip("@")),
         "newsletter": format_newsletter_block(result, source_channel=source_channel),
@@ -192,3 +195,12 @@ def format_all(result: "ExtractionResult", handle: str = "", source_channel: str
         "caption": format_caption(result, handle=handle),
         "ad_copy": format_ad_copy(result, handle=handle),
     }
+
+    # Prepend RTL marks for Arabic content so text editors render correctly
+    if is_arabic:
+        out = {k: rtl_mark + v for k, v in out.items()}
+        out["language"] = "ar"
+    else:
+        out["language"] = "en"
+
+    return out

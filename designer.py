@@ -14,10 +14,29 @@ from config import (
     FONT_REGULAR,
     FONT_SEMIBOLD,
     FONT_BOLD,
+    FONT_ARABIC_REGULAR,
+    FONT_ARABIC_BOLD,
     Palette,
     ContentType,
 )
 from analyzer import ExtractedItem
+
+# ── Arabic RTL support ────────────────────────────────────────────────
+_arabic_available = False
+try:
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    _arabic_available = True
+except ImportError:
+    pass
+
+
+def _reshape_arabic(text: str) -> str:
+    """Reshape Arabic text for correct display in Pillow (RTL + glyph joining)."""
+    if not _arabic_available:
+        return text
+    reshaped = arabic_reshaper.reshape(text)
+    return get_display(reshaped)
 
 
 # ── Renderer Protocol ──────────────────────────────────────────────────
@@ -190,19 +209,29 @@ PAD = 100
 class PillowRenderer:
     """Generates carousel slides using Pillow."""
 
-    def __init__(self) -> None:
+    def __init__(self, language: str = "en") -> None:
+        self.language = language
         self._load_fonts()
 
     def _load_fonts(self) -> None:
-        self.font_label_caps = ImageFont.truetype(str(FONT_SEMIBOLD), 22)
-        self.font_headline = ImageFont.truetype(str(FONT_BOLD), 60)
-        self.font_body = ImageFont.truetype(str(FONT_REGULAR), 36)
-        self.font_handle = ImageFont.truetype(str(FONT_REGULAR), 22)
-        self.font_cta_main = ImageFont.truetype(str(FONT_BOLD), 52)
-        self.font_cta_sub = ImageFont.truetype(str(FONT_REGULAR), 28)
-        self.font_source = ImageFont.truetype(str(FONT_REGULAR), 22)
-        self.font_title_big = ImageFont.truetype(str(FONT_BOLD), 64)
-        self.font_counter = ImageFont.truetype(str(FONT_REGULAR), 22)
+        if self.language == "ar" and FONT_ARABIC_BOLD.exists():
+            bold = str(FONT_ARABIC_BOLD)
+            regular = str(FONT_ARABIC_REGULAR) if FONT_ARABIC_REGULAR.exists() else bold
+            semibold = bold  # Arabic font family doesn't have semibold
+        else:
+            bold = str(FONT_BOLD)
+            regular = str(FONT_REGULAR)
+            semibold = str(FONT_SEMIBOLD)
+
+        self.font_label_caps = ImageFont.truetype(semibold, 22)
+        self.font_headline = ImageFont.truetype(bold, 60)
+        self.font_body = ImageFont.truetype(regular, 36)
+        self.font_handle = ImageFont.truetype(regular, 22)
+        self.font_cta_main = ImageFont.truetype(bold, 52)
+        self.font_cta_sub = ImageFont.truetype(regular, 28)
+        self.font_source = ImageFont.truetype(regular, 22)
+        self.font_title_big = ImageFont.truetype(bold, 64)
+        self.font_counter = ImageFont.truetype(regular, 22)
 
     def _new_canvas(self, palette: Palette) -> tuple[Image.Image, ImageDraw.Draw]:
         img = Image.new("RGB", (SLIDE_WIDTH, SLIDE_HEIGHT), palette.bg)
@@ -214,8 +243,28 @@ class PillowRenderer:
         draw = ImageDraw.Draw(img)
         return img, draw
 
+    def _prep_text(self, text: str) -> str:
+        """Reshape Arabic text for rendering if needed."""
+        if self.language == "ar":
+            return _reshape_arabic(text)
+        return text
+
+    def _text_x(self, x_ltr: int) -> int:
+        """Return x position — right-aligned for Arabic."""
+        if self.language == "ar":
+            return SLIDE_WIDTH - x_ltr
+        return x_ltr
+
+    def _text_anchor(self, ltr_anchor: str | None) -> str | None:
+        """Flip anchor for RTL if needed."""
+        if self.language != "ar" or ltr_anchor is None:
+            return ltr_anchor
+        # Flip left↔right in anchor strings: "la" → "ra", "ra" → "la", "mm" stays
+        return ltr_anchor.replace("l", "R").replace("r", "L").replace("R", "r").replace("L", "l")
+
     def _wrap_text(self, text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
-        words = text.split()
+        display_text = self._prep_text(text)
+        words = display_text.split()
         lines: list[str] = []
         current_line = ""
 
@@ -365,14 +414,20 @@ class PillowRenderer:
         divider_line = (255, 255, 255, 128) if has_bg else _divider_color(palette)
 
         # Content type label
+        is_rtl = self.language == "ar"
         label = f"{total_items} {content_type.label.upper()}"
+        lx = (SLIDE_WIDTH - PAD) if is_rtl else PAD
+        label_anchor = "ra" if is_rtl else None
         if has_bg:
-            _draw_text_shadow(draw, (PAD, 160), label, self.font_label_caps, "#FFFFFF", shadow_offset=1, shadow_opacity=0.3)
+            _draw_text_shadow(draw, (lx, 160), label, self.font_label_caps, "#FFFFFF", anchor=label_anchor, shadow_offset=1, shadow_opacity=0.3)
         else:
-            draw.text((PAD, 160), label, font=self.font_label_caps, fill=label_color)
+            draw.text((lx, 160), label, font=self.font_label_caps, fill=label_color, anchor=label_anchor)
 
         # Short divider below label
-        draw.line([(PAD, 205), (PAD + 50, 205)], fill=divider_line, width=2)
+        if is_rtl:
+            draw.line([(SLIDE_WIDTH - PAD, 205), (SLIDE_WIDTH - PAD - 50, 205)], fill=divider_line, width=2)
+        else:
+            draw.line([(PAD, 205), (PAD + 50, 205)], fill=divider_line, width=2)
 
         # Video title — vertically centered
         title_lines = self._wrap_text(video_title, self.font_title_big, max_w)
@@ -386,18 +441,22 @@ class PillowRenderer:
 
         for i, line in enumerate(title_lines):
             y = start_y + i * line_height
+            tx = (SLIDE_WIDTH - PAD) if is_rtl else PAD
+            t_anchor = "ra" if is_rtl else None
             if has_bg:
-                _draw_text_shadow(draw, (PAD, y), line, self.font_title_big, title_color)
+                _draw_text_shadow(draw, (tx, y), line, self.font_title_big, title_color, anchor=t_anchor)
             else:
-                draw.text((PAD, y), line, font=self.font_title_big, fill=title_color)
+                draw.text((tx, y), line, font=self.font_title_big, fill=title_color, anchor=t_anchor)
 
         # Source
         if source:
-            source_text = f"Source: {source}"
+            source_text = self._prep_text(f"Source: {source}") if not is_rtl else self._prep_text(f"{source} :المصدر")
+            sx = (SLIDE_WIDTH - PAD) if is_rtl else PAD
+            s_anchor = "ra" if is_rtl else None
             if has_bg:
-                _draw_text_shadow(draw, (PAD, SLIDE_HEIGHT - 190), source_text, self.font_source, "#FFFFFF", shadow_offset=1, shadow_opacity=0.3)
+                _draw_text_shadow(draw, (sx, SLIDE_HEIGHT - 190), source_text, self.font_source, "#FFFFFF", anchor=s_anchor, shadow_offset=1, shadow_opacity=0.3)
             else:
-                draw.text((PAD, SLIDE_HEIGHT - 190), source_text, font=self.font_source, fill=source_color)
+                draw.text((sx, SLIDE_HEIGHT - 190), source_text, font=self.font_source, fill=source_color, anchor=s_anchor)
 
         if has_bg:
             self._draw_footer_on_image(draw, img, palette)
@@ -428,15 +487,22 @@ class PillowRenderer:
         max_w = SLIDE_WIDTH - PAD * 2
 
         # ── Top bar ──
+        is_rtl = self.language == "ar"
         label = f"{content_type.singular} {index:02d}"
         counter = f"{index + 1}/{total_slides}"
 
+        # For RTL: swap label/counter positions
+        lx = (SLIDE_WIDTH - PAD) if is_rtl else PAD
+        cx = PAD if is_rtl else (SLIDE_WIDTH - PAD)
+        la = "ra" if is_rtl else None
+        ca = None if is_rtl else "ra"
+
         if has_bg:
-            _draw_text_shadow(draw, (PAD, 100), label, self.font_label_caps, "#FFFFFF", shadow_offset=1, shadow_opacity=0.3)
-            _draw_text_shadow(draw, (SLIDE_WIDTH - PAD, 100), counter, self.font_counter, "#FFFFFF", anchor="ra", shadow_offset=1, shadow_opacity=0.3)
+            _draw_text_shadow(draw, (lx, 100), label, self.font_label_caps, "#FFFFFF", anchor=la, shadow_offset=1, shadow_opacity=0.3)
+            _draw_text_shadow(draw, (cx, 100), counter, self.font_counter, "#FFFFFF", anchor=ca, shadow_offset=1, shadow_opacity=0.3)
         else:
-            draw.text((PAD, 100), label, font=self.font_label_caps, fill=_muted_color(palette))
-            draw.text((SLIDE_WIDTH - PAD, 100), counter, font=self.font_counter, fill=_muted_color(palette), anchor="ra")
+            draw.text((lx, 100), label, font=self.font_label_caps, fill=_muted_color(palette), anchor=la)
+            draw.text((cx, 100), counter, font=self.font_counter, fill=_muted_color(palette), anchor=ca)
 
         # ── Center: headline + body ──
         headline_lines = self._wrap_text(item.headline, self.font_headline, max_w)
@@ -454,22 +520,25 @@ class PillowRenderer:
         start_y = zone_top + (zone_h - total_h) // 2
         start_y = max(start_y, zone_top)
 
+        tx = (SLIDE_WIDTH - PAD) if is_rtl else PAD
+        t_anchor = "ra" if is_rtl else None
+
         # Headline
         for i, line in enumerate(headline_lines):
             y = start_y + i * headline_lh
             if has_bg:
-                _draw_text_shadow(draw, (PAD, y), line, self.font_headline, "#FFFFFF")
+                _draw_text_shadow(draw, (tx, y), line, self.font_headline, "#FFFFFF", anchor=t_anchor)
             else:
-                draw.text((PAD, y), line, font=self.font_headline, fill=palette.text)
+                draw.text((tx, y), line, font=self.font_headline, fill=palette.text, anchor=t_anchor)
 
         # Body
         body_start = start_y + len(headline_lines) * headline_lh + gap
         for i, line in enumerate(body_lines):
             y = body_start + i * body_lh
             if has_bg:
-                _draw_text_shadow(draw, (PAD, y), line, self.font_body, "#FFFFFF")
+                _draw_text_shadow(draw, (tx, y), line, self.font_body, "#FFFFFF", anchor=t_anchor)
             else:
-                draw.text((PAD, y), line, font=self.font_body, fill=_body_color(palette))
+                draw.text((tx, y), line, font=self.font_body, fill=_body_color(palette), anchor=t_anchor)
 
         if has_bg:
             self._draw_footer_on_image(draw, img, palette)
@@ -562,10 +631,11 @@ def generate_carousel(
     title_image: Path | None = None,
     content_images: list[Path | None] | None = None,
     watermark: bool = False,
+    language: str = "en",
 ) -> list[Path]:
     """Generate all slides and save to output_dir. Returns list of saved paths."""
     if renderer is None:
-        renderer = PillowRenderer()
+        renderer = PillowRenderer(language=language)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     total_slides = len(items) + 2

@@ -17,6 +17,10 @@ FONT_REGULAR = FONTS_DIR / "Inter-Regular.ttf"
 FONT_SEMIBOLD = FONTS_DIR / "Inter-SemiBold.ttf"
 FONT_BOLD = FONTS_DIR / "Inter-Bold.ttf"
 
+# Arabic fonts (Noto Sans Arabic)
+FONT_ARABIC_REGULAR = FONTS_DIR / "NotoSansArabic-Regular.ttf"
+FONT_ARABIC_BOLD = FONTS_DIR / "NotoSansArabic-Bold.ttf"
+
 # ── Slide dimensions (Instagram carousel) ─────────────────────────────
 SLIDE_WIDTH = 1080
 SLIDE_HEIGHT = 1350
