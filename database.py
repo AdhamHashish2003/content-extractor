@@ -126,13 +126,18 @@ def create_user(email: str, password: str) -> dict:
 
 
 def get_user_by_email(email: str) -> dict | None:
-    conn, ph = _connect()
-    cur = conn.cursor()
     normalized = email.lower().strip()
-    cur.execute(f"SELECT * FROM users WHERE email = {ph}", (normalized,))
-    user = _fetchone(cur)
-    cur.close()
-    conn.close()
+    try:
+        conn, ph = _connect()
+        cur = conn.cursor()
+        cur.execute(f"SELECT * FROM users WHERE email = {ph}", (normalized,))
+        user = _fetchone(cur)
+        cur.close()
+        conn.close()
+    except Exception as e:
+        # DB error must NOT be treated as "user found"
+        print(f"[db] get_user_by_email ERROR for {normalized}: {type(e).__name__}: {e}")
+        return None
     if user:
         print(f"[db] get_user_by_email({normalized}): found id={user.get('id', '?')[:8]}")
     else:
@@ -141,13 +146,17 @@ def get_user_by_email(email: str) -> dict | None:
 
 
 def get_user_by_id(user_id: str) -> dict | None:
-    conn, ph = _connect()
-    cur = conn.cursor()
-    cur.execute(f"SELECT * FROM users WHERE id = {ph}", (user_id,))
-    user = _fetchone(cur)
-    cur.close()
-    conn.close()
-    return user
+    try:
+        conn, ph = _connect()
+        cur = conn.cursor()
+        cur.execute(f"SELECT * FROM users WHERE id = {ph}", (user_id,))
+        user = _fetchone(cur)
+        cur.close()
+        conn.close()
+        return user
+    except Exception as e:
+        print(f"[db] get_user_by_id ERROR: {type(e).__name__}: {e}")
+        return None
 
 
 def reset_user_password(user_id: str, new_password: str) -> None:
@@ -381,4 +390,8 @@ def delete_extraction(job_id: str) -> None:
 
 
 # ── Initialize on import ──────────────────────────────────────────────
-init_db()
+try:
+    init_db()
+    print(f"[db] Initialized OK (pg={_use_pg})")
+except Exception as e:
+    print(f"[db] INIT FAILED: {type(e).__name__}: {e}")
