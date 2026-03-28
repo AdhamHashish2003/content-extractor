@@ -458,8 +458,101 @@ class TranscriptionProgress:
     def on_rate_limit_fallback(self) -> None: ...
 
 
+def _download_audio_innertube(video_id: str, output_path: Path) -> Path | None:
+    """Download audio via Innertube ANDROID API — bypasses bot detection on cloud servers."""
+    import requests
+
+    logger.info("[audio-download] Trying Innertube ANDROID for %s", video_id)
+    try:
+        session = requests.Session()
+        session.headers["User-Agent"] = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
+
+        # Get API key
+        page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
+        key_match = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
+        api_key = key_match.group(1) if key_match else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+
+        # Get audio streams via ANDROID client
+        player = session.post(
+            f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
+            json={
+                "context": {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}},
+                "videoId": video_id,
+            },
+            timeout=15,
+        )
+        if not player.ok:
+            logger.info("[audio-download] Innertube player API returned %d", player.status_code)
+            return None
+
+        data = player.json()
+        formats = data.get("streamingData", {}).get("adaptiveFormats", [])
+        # Find best audio-only stream
+        audio_fmts = [f for f in formats if f.get("mimeType", "").startswith("audio/")]
+        if not audio_fmts:
+            logger.info("[audio-download] No audio formats in Innertube response")
+            return None
+
+        # Prefer m4a/mp4a, lowest bitrate that's still reasonable (>48kbps)
+        audio_fmts.sort(key=lambda f: f.get("bitrate", 0))
+        chosen = None
+        for fmt in audio_fmts:
+            if fmt.get("bitrate", 0) >= 48000:
+                chosen = fmt
+                break
+        if not chosen:
+            chosen = audio_fmts[-1]  # highest bitrate if all are low
+
+        audio_url = chosen.get("url", "")
+        if not audio_url:
+            logger.info("[audio-download] Audio format has no URL (possibly encrypted)")
+            return None
+
+        # Download the audio stream
+        ext = "m4a" if "mp4a" in chosen.get("mimeType", "") or "m4a" in chosen.get("mimeType", "") else "webm"
+        audio_path = output_path / f"audio.{ext}"
+        logger.info("[audio-download] Downloading %s audio (%d kbps)...",
+                     ext, chosen.get("bitrate", 0) // 1000)
+
+        dl_headers = {
+            "Referer": "https://www.youtube.com/",
+            "Origin": "https://www.youtube.com",
+        }
+        with session.get(audio_url, stream=True, timeout=120, headers=dl_headers) as r:
+            r.raise_for_status()
+            with open(audio_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=65536):
+                    f.write(chunk)
+
+        size_kb = audio_path.stat().st_size // 1024
+        logger.info("[audio-download] Innertube download OK: %s (%d KB)", audio_path.name, size_kb)
+        if size_kb < 10:
+            logger.info("[audio-download] File too small, likely empty")
+            return None
+        return audio_path
+
+    except Exception as e:
+        logger.info("[audio-download] Innertube audio download failed: %s", e)
+        return None
+
+
 def _download_audio(url: str, output_path: Path) -> Path:
-    """Download audio via yt-dlp Python API, return path to the audio file."""
+    """Download audio — tries Innertube first (cloud-friendly), then yt-dlp."""
+
+    # For YouTube URLs, try Innertube ANDROID API first (bypasses bot detection)
+    yt_match = re.search(r"(?:v=|youtu\.be/)([a-zA-Z0-9_-]{11})", url)
+    if yt_match:
+        video_id = yt_match.group(1)
+        innertube_path = _download_audio_innertube(video_id, output_path)
+        if innertube_path:
+            return innertube_path
+        logger.info("[audio-download] Innertube failed, falling back to yt-dlp")
+
+    # Fallback: yt-dlp (works locally, may fail on cloud)
     import yt_dlp
 
     opts = {
@@ -467,7 +560,7 @@ def _download_audio(url: str, output_path: Path) -> Path:
         "extractaudio": True,
         "audioformat": "mp3",
         "audioquality": "5",
-        "outtmpl": str(output_path / "audio.%(ext)s"),
+        "outtmpl": str(output_path / "audio_ytdlp.%(ext)s"),
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
@@ -476,19 +569,19 @@ def _download_audio(url: str, output_path: Path) -> Path:
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
-            "preferredquality": "64",  # Lower quality = faster download + smaller file
+            "preferredquality": "64",
         }],
     }
-    logger.info("[groq-pipeline] Downloading audio from %s", url[:80])
+    logger.info("[audio-download] Trying yt-dlp for %s", url[:80])
     with yt_dlp.YoutubeDL(opts) as ydl:
         rc = ydl.download([url])
         if rc != 0:
             raise RuntimeError("yt-dlp failed to download audio")
 
-    audio_files = list(output_path.glob("audio.*"))
+    audio_files = list(output_path.glob("audio_ytdlp.*"))
     if not audio_files:
         raise RuntimeError("yt-dlp completed but no audio file was produced.")
-    logger.info("[groq-pipeline] Audio downloaded: %s (%d KB)", audio_files[0].name, audio_files[0].stat().st_size // 1024)
+    logger.info("[audio-download] yt-dlp OK: %s (%d KB)", audio_files[0].name, audio_files[0].stat().st_size // 1024)
     return audio_files[0]
 
 
