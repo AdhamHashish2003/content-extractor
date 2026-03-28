@@ -443,7 +443,12 @@ async def api_analyze_topics(request: Request):
             except asyncio.TimeoutError:
                 raise HTTPException(400, "Audio transcription timed out. Try a shorter video.")
             except Exception as e:
-                raise HTTPException(400, f"Audio transcription failed: {e}")
+                err_str = str(e)
+                if "bot" in err_str.lower() or "sign in" in err_str.lower():
+                    raise HTTPException(400,
+                        "This video's captions aren't accessible from our server, and YouTube "
+                        "is blocking audio download. Try a video with auto-generated subtitles.")
+                raise HTTPException(400, f"Audio transcription failed: {err_str[:200]}")
 
         if not transcript or len(transcript.split()) < 50:
             raise HTTPException(400, "Transcript too short. The video may not have spoken content.")
@@ -562,9 +567,14 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                         raise HTTPException(400,
                             "Audio transcription timed out. Try a shorter video (under 15 minutes).")
                     except Exception as whisper_err:
-                        logger.error("[pipeline] Groq Whisper failed for %s: %s", meta.video_id, whisper_err)
-                        raise HTTPException(400,
-                            f"Audio transcription failed: {whisper_err}")
+                        err_str = str(whisper_err)
+                        logger.error("[pipeline] Groq Whisper failed for %s: %s", meta.video_id, err_str)
+                        if "bot" in err_str.lower() or "sign in" in err_str.lower():
+                            raise HTTPException(400,
+                                "This video's captions aren't accessible from our server, and YouTube "
+                                "is blocking audio download. Try a video with auto-generated subtitles, "
+                                "or try a shorter/more popular video.")
+                        raise HTTPException(400, f"Audio transcription failed: {err_str[:200]}")
             else:
                 try:
                     transcript = await asyncio.wait_for(
