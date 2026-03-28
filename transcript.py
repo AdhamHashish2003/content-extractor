@@ -87,6 +87,7 @@ def _get_yt_cookie_session():
 
 # Initialize cookies on module load
 _init_youtube_cookies()
+print(f"YouTube cookies: {'LOADED' if _yt_cookies_ready else 'NOT SET'} (file exists: {_YT_COOKIE_FILE.exists()})")
 
 
 # ── Transcript cache ──────────────────────────────────────────────────
@@ -606,7 +607,7 @@ def _download_audio(url: str, output_path: Path) -> Path:
     import yt_dlp
 
     opts = {
-        "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "format": "bestaudio/best",
         "extractaudio": True,
         "audioformat": "mp3",
         "audioquality": "5",
@@ -782,7 +783,7 @@ def extract_video_frames(url: str, num_frames: int = 5) -> list[Path]:
 
     # Download video at low quality (360p max)
     ydl_opts = {
-        "format": "worst[height>=360][ext=mp4]/worst[ext=mp4]/worst",
+        "format": "bestvideo[height<=480][ext=mp4]+bestaudio/best[height<=480]/best",
         "outtmpl": str(video_path),
         "quiet": True,
         "no_warnings": True,
