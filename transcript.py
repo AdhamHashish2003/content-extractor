@@ -28,6 +28,67 @@ from config import Platform, get_groq_keys
 
 logger = logging.getLogger(__name__)
 
+# ── YouTube Cookies (for bypassing bot detection on cloud servers) ────
+
+_YT_COOKIE_FILE = Path("/tmp/youtube_cookies.txt")
+_yt_cookies_ready = False
+
+
+def _init_youtube_cookies() -> bool:
+    """Write YOUTUBE_COOKIES env var to a Netscape cookie file.
+
+    The env var should contain cookies in Netscape/Mozilla format, e.g.:
+    .youtube.com\tTRUE\t/\tTRUE\t0\tSID\tvalue...
+    One cookie per line, tab-separated.
+    """
+    global _yt_cookies_ready
+    raw = os.getenv("YOUTUBE_COOKIES", "").strip()
+    if not raw:
+        return False
+    try:
+        # Write with the required Netscape header
+        content = raw if raw.startswith("# Netscape") else "# Netscape HTTP Cookie File\n" + raw
+        _YT_COOKIE_FILE.write_text(content)
+        _yt_cookies_ready = True
+        logger.info("[yt-cookies] Cookie file written: %d bytes, %d lines",
+                    len(content), content.count("\n"))
+        return True
+    except Exception as e:
+        logger.warning("[yt-cookies] Failed to write cookie file: %s", e)
+        return False
+
+
+def _load_cookies_into_session(session) -> None:
+    """Load YouTube cookies from the cookie file into a requests.Session."""
+    if not _yt_cookies_ready or not _YT_COOKIE_FILE.exists():
+        return
+    try:
+        from http.cookiejar import MozillaCookieJar
+        jar = MozillaCookieJar(str(_YT_COOKIE_FILE))
+        jar.load(ignore_discard=True, ignore_expires=True)
+        session.cookies.update(jar)
+        logger.info("[yt-cookies] Loaded %d cookies into session", len(jar))
+    except Exception as e:
+        logger.warning("[yt-cookies] Failed to load cookies into session: %s", e)
+
+
+def _get_yt_cookie_session():
+    """Create a requests.Session pre-loaded with YouTube cookies (if available)."""
+    import requests
+    session = requests.Session()
+    session.headers["User-Agent"] = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+    session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
+    _load_cookies_into_session(session)
+    return session
+
+
+# Initialize cookies on module load
+_init_youtube_cookies()
+
+
 # ── Transcript cache ──────────────────────────────────────────────────
 _CACHE_DIR = Path(__file__).parent / ".cache"
 _CACHE_FILE = _CACHE_DIR / "transcripts.json"
@@ -304,9 +365,11 @@ def _try_youtube_captions(video_id: str) -> str | None:
 
     # ── Source 1: youtube-transcript-api ──────────────────────────────
     debug.append(f"=== CAPTION DEBUG for {video_id} ===")
-    debug.append("Source 1 (youtube-transcript-api): trying...")
+    debug.append(f"Source 1 (youtube-transcript-api): trying... (cookies={'YES' if _yt_cookies_ready else 'NO'})")
     try:
-        api = YouTubeTranscriptApi()
+        # Pass cookie-loaded session as http_client if cookies available
+        yt_session = _get_yt_cookie_session() if _yt_cookies_ready else None
+        api = YouTubeTranscriptApi(http_client=yt_session) if yt_session else YouTubeTranscriptApi()
         transcript_list = api.list(video_id)
         available = list(transcript_list)
         if available:
@@ -352,15 +415,9 @@ def _try_youtube_captions(video_id: str) -> str | None:
         logger.info("[yt-captions] Source 1 failed for %s: %s: %s", video_id, err_type, e)
 
     # ── Source 2: Innertube ANDROID player API ───────────────────────
-    debug.append("Source 2 (Innertube ANDROID): trying...")
+    debug.append(f"Source 2 (Innertube ANDROID): trying... (cookies={'YES' if _yt_cookies_ready else 'NO'})")
     try:
-        session = requests.Session()
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        })
-        # Robust consent cookie to bypass EU consent page
-        session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
+        session = _get_yt_cookie_session()
 
         # Fetch page to get API key (with fallback to hardcoded public key)
         page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
@@ -460,16 +517,9 @@ class TranscriptionProgress:
 
 def _download_audio_innertube(video_id: str, output_path: Path) -> Path | None:
     """Download audio via Innertube ANDROID API — bypasses bot detection on cloud servers."""
-    import requests
-
-    logger.info("[audio-download] Trying Innertube ANDROID for %s", video_id)
+    logger.info("[audio-download] Trying Innertube ANDROID for %s (cookies=%s)", video_id, "YES" if _yt_cookies_ready else "NO")
     try:
-        session = requests.Session()
-        session.headers["User-Agent"] = (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
-        session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
+        session = _get_yt_cookie_session()
 
         # Get API key
         page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
@@ -552,7 +602,7 @@ def _download_audio(url: str, output_path: Path) -> Path:
             return innertube_path
         logger.info("[audio-download] Innertube failed, falling back to yt-dlp")
 
-    # Fallback: yt-dlp (works locally, may fail on cloud)
+    # Fallback: yt-dlp (works locally, may fail on cloud without cookies)
     import yt_dlp
 
     opts = {
@@ -572,6 +622,10 @@ def _download_audio(url: str, output_path: Path) -> Path:
             "preferredquality": "64",
         }],
     }
+    # Pass cookie file if available (bypasses bot detection)
+    if _yt_cookies_ready and _YT_COOKIE_FILE.exists():
+        opts["cookiefile"] = str(_YT_COOKIE_FILE)
+        logger.info("[audio-download] yt-dlp using cookie file")
     logger.info("[audio-download] Trying yt-dlp for %s", url[:80])
     with yt_dlp.YoutubeDL(opts) as ydl:
         rc = ydl.download([url])
@@ -734,6 +788,8 @@ def extract_video_frames(url: str, num_frames: int = 5) -> list[Path]:
         "no_warnings": True,
         "noplaylist": True,
     }
+    if _yt_cookies_ready and _YT_COOKIE_FILE.exists():
+        ydl_opts["cookiefile"] = str(_YT_COOKIE_FILE)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
