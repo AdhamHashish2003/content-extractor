@@ -100,10 +100,14 @@ def init_db() -> None:
 # ── User CRUD ─────────────────────────────────────────────────────────
 
 def create_user(email: str, password: str) -> dict:
-    """Create a new user. Raises ValueError if email exists."""
+    """Create a new user. Raises ValueError ONLY for genuine duplicate email."""
     user_id = str(uuid.uuid4())
     pw_hash = bcrypt.hash(password)
-    conn, ph = _connect()
+    try:
+        conn, ph = _connect()
+    except Exception as e:
+        print(f"[db] create_user CONNECT FAILED: {type(e).__name__}: {e}")
+        raise RuntimeError(f"Database connection failed: {e}")
     cur = conn.cursor()
     try:
         cur.execute(
@@ -115,13 +119,19 @@ def create_user(email: str, password: str) -> dict:
         conn.rollback()
         cur.close()
         conn.close()
-        if "unique" in str(e).lower() or "duplicate" in str(e).lower() or "integrity" in str(e).lower():
+        err_str = str(e).lower()
+        print(f"[db] create_user INSERT FAILED: {type(e).__name__}: {e}")
+        # Only raise ValueError for genuine unique constraint violations
+        if "unique" in err_str or "duplicate" in err_str:
             raise ValueError("Email already registered")
+        # Everything else is a real DB error — propagate it
         raise
     cur.execute(f"SELECT * FROM users WHERE id = {ph}", (user_id,))
     user = _fetchone(cur)
     cur.close()
     conn.close()
+    if not user:
+        print(f"[db] create_user: INSERT succeeded but SELECT returned None for id={user_id[:8]}")
     return user
 
 
@@ -392,6 +402,15 @@ def delete_extraction(job_id: str) -> None:
 # ── Initialize on import ──────────────────────────────────────────────
 try:
     init_db()
-    print(f"[db] Initialized OK (pg={_use_pg})")
+    # Verify tables exist by running a simple query
+    _test_conn, _test_ph = _connect()
+    _test_cur = _test_conn.cursor()
+    _test_cur.execute("SELECT COUNT(*) AS cnt FROM users")
+    _test_row = _test_cur.fetchone()
+    _test_cur.close()
+    _test_conn.close()
+    _count_val = _test_row["cnt"] if isinstance(_test_row, dict) else _test_row[0]
+    print(f"[db] Initialized OK (pg={_use_pg}, users_table={_count_val} rows)")
 except Exception as e:
     print(f"[db] INIT FAILED: {type(e).__name__}: {e}")
+    print(f"[db] DATABASE_URL set: {bool(DATABASE_URL)}")

@@ -243,33 +243,45 @@ async def auth_signup(request: Request):
     if not password or len(password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
 
-    # Check if email already exists BEFORE creating the user
+    # Step 1: Check if email already exists
     existing = db.get_user_by_email(email)
     logger.info("[signup] email=%s existing=%s", email, bool(existing))
+
     if existing:
         logger.info("[signup] existing user: id=%s, last_ext=%s, daily_ext=%s",
                     existing.get("id", "?")[:8], existing.get("last_extraction_date"), existing.get("daily_extractions"))
-        # Ghost user recovery: if the account was created by the old bug
-        # (last_extraction_date is still NULL — never completed signup),
-        # allow re-registration by resetting the password.
-        # Legitimate users always have last_extraction_date set to at least
-        # 'registered' after a successful signup.
         is_ghost = (
             existing.get("last_extraction_date") is None
             and (existing.get("daily_extractions") or 0) == 0
         )
         if is_ghost:
-            db.reset_user_password(existing["id"], password)
-            db.mark_signup_complete(existing["id"])
-            user = db.get_user_by_id(existing["id"])
+            try:
+                db.reset_user_password(existing["id"], password)
+                db.mark_signup_complete(existing["id"])
+                user = db.get_user_by_id(existing["id"])
+            except Exception as e:
+                logger.error("[signup] ghost recovery failed: %s", e)
+                raise HTTPException(500, f"Account recovery failed: {e}")
         else:
             raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
     else:
+        # Step 2: Create new user — separate error handling
         try:
             user = db.create_user(email, password)
         except ValueError:
+            # Genuine duplicate (race condition between check and insert)
             raise HTTPException(409, "An account with this email already exists. Try logging in instead.")
-        db.mark_signup_complete(user["id"])
+        except Exception as e:
+            # Database error — NOT a duplicate, do NOT say "already exists"
+            logger.error("[signup] create_user failed: %s: %s", type(e).__name__, e)
+            raise HTTPException(500, f"Could not create account. Database error: {type(e).__name__}")
+        try:
+            db.mark_signup_complete(user["id"])
+        except Exception as e:
+            logger.warning("[signup] mark_signup_complete failed (non-fatal): %s", e)
+
+    if not user:
+        raise HTTPException(500, "Account creation failed — no user returned from database")
 
     token = _create_jwt(user["id"], user["email"])
     return JSONResponse({
