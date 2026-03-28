@@ -1595,6 +1595,8 @@ async function checkPaymentSuccess(){
 }
 
 /* --- INIT --- */
+// Clear legacy brand defaults from old deployments
+(function(){try{const b=JSON.parse(localStorage.getItem('ce_brand')||'{}');if(b.handle&&/undercurrent/i.test(b.handle+b.name)){localStorage.removeItem('ce_brand');localStorage.removeItem('ce_logo')}}catch{}})();
 populateBrandInputs(loadBrand());
 if(window.location.hash==='#app')showApp();
 refreshUser();

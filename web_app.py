@@ -163,18 +163,16 @@ def _check_rate_limit(ip: str) -> bool:
 
 
 def _friendly_error(detail: str) -> str:
-    """Map technical errors to user-friendly messages."""
+    """Map technical errors to user-friendly messages. Passes through details."""
     d = detail.lower()
     if "ratelimit" in d or "rate limit" in d:
         return "Transcription service is busy. Please try again in a minute."
-    if "timeout" in d or "timed out" in d:
+    if "timed out" in d and "audio" not in d:
         return "Processing took too long. Try a shorter video."
     if "transcript too short" in d:
         return "This video doesn't have enough spoken content. Try a different video."
-    if "transcription failed" in d:
-        return "Could not transcribe this video. The audio may be too long or the service is busy. Try again in a minute."
-    # Pass through detailed messages instead of hiding them
-    return detail if len(detail) < 200 else "Something went wrong. Please try again."
+    # Pass through actual error details so we can diagnose issues
+    return detail if len(detail) < 300 else detail[:297] + "..."
 
 
 class BulkExtractRequest(BaseModel):
