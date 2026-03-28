@@ -245,7 +245,10 @@ async def auth_signup(request: Request):
 
     # Check if email already exists BEFORE creating the user
     existing = db.get_user_by_email(email)
+    logger.info("[signup] email=%s existing=%s", email, bool(existing))
     if existing:
+        logger.info("[signup] existing user: id=%s, last_ext=%s, daily_ext=%s",
+                    existing.get("id", "?")[:8], existing.get("last_extraction_date"), existing.get("daily_extractions"))
         # Ghost user recovery: if the account was created by the old bug
         # (last_extraction_date is still NULL — never completed signup),
         # allow re-registration by resetting the password.
@@ -498,7 +501,9 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             if logo_file.exists():
                 logo_path = str(logo_file)
         palette = Palette(
-            bg=brand.bg_color, accent=brand.accent_color, text=brand.text_color,
+            bg=brand.bg_color or "#1a1a2e",
+            accent=brand.accent_color or "#00D4AA",
+            text=brand.text_color or "#FFFFFF",
             name=brand.name, handle=brand.handle, tagline=brand.tagline, logo_path=logo_path,
         )
     else:

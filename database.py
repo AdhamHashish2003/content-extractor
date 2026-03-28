@@ -8,6 +8,9 @@ from datetime import date, datetime, timezone
 from passlib.hash import bcrypt
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+# Railway provides postgres:// but psycopg2 requires postgresql://
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # ── Plan limits ──────────────────────────────────────────────────────
 FREE_DAILY_LIMIT = 3
@@ -125,10 +128,15 @@ def create_user(email: str, password: str) -> dict:
 def get_user_by_email(email: str) -> dict | None:
     conn, ph = _connect()
     cur = conn.cursor()
-    cur.execute(f"SELECT * FROM users WHERE email = {ph}", (email.lower().strip(),))
+    normalized = email.lower().strip()
+    cur.execute(f"SELECT * FROM users WHERE email = {ph}", (normalized,))
     user = _fetchone(cur)
     cur.close()
     conn.close()
+    if user:
+        print(f"[db] get_user_by_email({normalized}): found id={user.get('id', '?')[:8]}")
+    else:
+        print(f"[db] get_user_by_email({normalized}): not found")
     return user
 
 
