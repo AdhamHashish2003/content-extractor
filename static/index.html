@@ -1263,8 +1263,8 @@ function toggleTopicsPanel(){
 $('url-input').addEventListener('input',()=>{podcastAnalyzed=false;analyzedTopics=[];selectedTopics=[];lastPodcastType=null})
 
 /* --- GENERATION --- */
-const STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Fetching images...','Generating slides...'];
-const TEXT_ONLY_STEPS=['Detecting platform...','Fetching transcript...','Analyzing with AI...','Formatting output...'];
+const STEPS=['Detecting platform...','Getting transcript (may take 30-90s)...','Analyzing with AI...','Fetching images...','Generating slides...'];
+const TEXT_ONLY_STEPS=['Detecting platform...','Getting transcript (may take 30-90s)...','Analyzing with AI...','Formatting output...'];
 function showStepProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${STEPS.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
 function showError(m){$('status-area').innerHTML=`<div class="status-msg error"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="10" cy="10" r="9" stroke="#EF4444" stroke-width="2"/><path d="M10 6v5M10 13.5v.5" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg><span>${escHtml(m)}</span></div>`}
 function clearStatus(){$('status-area').innerHTML=''}
@@ -1300,7 +1300,7 @@ async function generate(mode,opts){
   setButtonsDisabled(true);let si=0;
   function showProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
   showProgress(0);
-  const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},isPodcast?6000:4000);
+  const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},isPodcast?10000:8000);
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};

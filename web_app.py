@@ -439,7 +439,7 @@ async def api_analyze_topics(request: Request):
             logger.info("[analyze-topics] Captions unavailable, using Groq Whisper for %s", url[:60])
             try:
                 transcript = await asyncio.wait_for(
-                    asyncio.to_thread(_groq_pipeline, url), timeout=180
+                    asyncio.to_thread(_groq_pipeline, url), timeout=300
                 )
                 logger.info("[analyze-topics] Groq Whisper OK: %d words", len((transcript or "").split()))
             except asyncio.TimeoutError:
@@ -485,7 +485,7 @@ async def api_analyze_topics(request: Request):
 
 # ── Pipeline helpers (run sync code in thread) ─────────────────────────
 
-_PIPELINE_TIMEOUT = 120  # seconds
+_PIPELINE_TIMEOUT = 360  # seconds — long videos need time for download + transcription
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
@@ -557,7 +557,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     logger.info("[pipeline] Captions failed for %s, trying Groq Whisper fallback", meta.video_id)
                     try:
                         transcript = await asyncio.wait_for(
-                            asyncio.to_thread(_groq_pipeline, url), timeout=180
+                            asyncio.to_thread(_groq_pipeline, url), timeout=300
                         )
                         logger.info("[pipeline] Groq Whisper OK for %s: %d words", meta.video_id, len((transcript or "").split()))
                     except asyncio.TimeoutError:
@@ -570,7 +570,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             else:
                 try:
                     transcript = await asyncio.wait_for(
-                        asyncio.to_thread(_groq_pipeline, url), timeout=90
+                        asyncio.to_thread(_groq_pipeline, url), timeout=300
                     )
                 except asyncio.TimeoutError:
                     raise HTTPException(400, "Transcript extraction timed out.")

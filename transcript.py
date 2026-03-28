@@ -463,7 +463,7 @@ def _download_audio(url: str, output_path: Path) -> Path:
     import yt_dlp
 
     opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "extractaudio": True,
         "audioformat": "mp3",
         "audioquality": "5",
@@ -471,12 +471,15 @@ def _download_audio(url: str, output_path: Path) -> Path:
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
+        "socket_timeout": 30,
+        "retries": 2,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
-            "preferredquality": "5",
+            "preferredquality": "64",  # Lower quality = faster download + smaller file
         }],
     }
+    logger.info("[groq-pipeline] Downloading audio from %s", url[:80])
     with yt_dlp.YoutubeDL(opts) as ydl:
         rc = ydl.download([url])
         if rc != 0:
@@ -485,14 +488,17 @@ def _download_audio(url: str, output_path: Path) -> Path:
     audio_files = list(output_path.glob("audio.*"))
     if not audio_files:
         raise RuntimeError("yt-dlp completed but no audio file was produced.")
+    logger.info("[groq-pipeline] Audio downloaded: %s (%d KB)", audio_files[0].name, audio_files[0].stat().st_size // 1024)
     return audio_files[0]
 
 
 def _convert_to_mp3(audio_path: Path, tmp_dir: Path) -> Path:
     """Convert any audio file to mp3 at 64k bitrate for smaller size."""
+    logger.info("[groq-pipeline] Converting to mp3 (64k)...")
     audio = AudioSegment.from_file(str(audio_path))
     mp3_path = tmp_dir / "converted.mp3"
     audio.export(str(mp3_path), format="mp3", bitrate="64k")
+    logger.info("[groq-pipeline] Converted: %d KB, %d sec", mp3_path.stat().st_size // 1024, len(audio) // 1000)
     return mp3_path
 
 
@@ -522,22 +528,35 @@ def _prepare_chunks(mp3_path: Path, tmp_dir: Path) -> list[Path]:
 
 def _transcribe_chunk_with_rotation(audio_path: Path, keys: list[str]) -> str:
     """Transcribe a single audio chunk, rotating through keys on 429."""
-    last_err: RateLimitError | None = None
+    import time
+    chunk_size_kb = audio_path.stat().st_size // 1024
+    logger.info("[groq-pipeline] Transcribing chunk %s (%d KB)...", audio_path.name, chunk_size_kb)
+
+    last_err: Exception | None = None
     for key in keys:
         try:
-            client = Groq(api_key=key)
+            client = Groq(api_key=key, timeout=120.0)
             with open(audio_path, "rb") as f:
                 result = client.audio.transcriptions.create(
                     model="whisper-large-v3",
                     file=f,
                     response_format="text",
                 )
+            words = len(result.strip().split())
+            logger.info("[groq-pipeline] Chunk transcribed: %d words", words)
             return result.strip()
         except RateLimitError as e:
-            logger.info("Key %s...%s rate limited, trying next", key[:8], key[-4:])
+            logger.info("[groq-pipeline] Key %s...%s rate limited, trying next", key[:8], key[-4:])
+            last_err = e
+            time.sleep(2)  # Brief pause before trying next key
+            continue
+        except Exception as e:
+            logger.warning("[groq-pipeline] Transcription error with key %s: %s", key[:8], e)
             last_err = e
             continue
-    raise last_err  # type: ignore[misc]
+    if isinstance(last_err, RateLimitError):
+        raise last_err
+    raise RuntimeError(f"All Groq keys failed: {last_err}")
 
 
 def _transcribe_with_local_whisper(audio_path: Path) -> str:
@@ -557,6 +576,9 @@ def _transcribe_with_local_whisper(audio_path: Path) -> str:
 
 def _groq_pipeline(url: str, progress: TranscriptionProgress | None = None) -> str:
     """Full pipeline: download audio → convert to 64k mp3 → Groq API (with local Whisper fallback)."""
+    import time as _t
+    _start = _t.time()
+    logger.info("[groq-pipeline] Starting for %s", url[:80])
     with tempfile.TemporaryDirectory(prefix="content_extractor_") as tmp:
         tmp_path = Path(tmp)
 
@@ -589,6 +611,8 @@ def _groq_pipeline(url: str, progress: TranscriptionProgress | None = None) -> s
         transcript = " ".join(transcripts)
 
         word_count = len(transcript.split())
+        elapsed = _t.time() - _start
+        logger.info("[groq-pipeline] Complete: %d words in %.1fs", word_count, elapsed)
         if progress:
             progress.on_transcribe_done(word_count)
 

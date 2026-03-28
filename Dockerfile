@@ -15,4 +15,4 @@ COPY . .
 
 RUN mkdir -p output downloads logos data .cache
 
-CMD ["sh", "-c", "uvicorn web_app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn web_app:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 360"]
