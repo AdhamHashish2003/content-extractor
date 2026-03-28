@@ -39,6 +39,53 @@ def _reshape_arabic(text: str) -> str:
     return get_display(reshaped)
 
 
+# ── Gradient backgrounds ─────────────────────────────────────────────
+
+_GRADIENT_PRESETS = [
+    ((10, 10, 30), (26, 26, 46)),     # dark navy → dark purple
+    ((10, 20, 20), (0, 40, 36)),      # dark teal → deeper teal
+    ((20, 10, 10), (46, 16, 16)),     # dark red → deeper red
+    ((10, 15, 25), (20, 30, 50)),     # midnight blue → steel
+    ((15, 10, 20), (30, 20, 45)),     # dark plum → violet
+]
+
+
+def _hex_to_rgb(h: str) -> tuple[int, int, int]:
+    h = h.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _create_gradient_image(
+    top_color: tuple[int, int, int],
+    bottom_color: tuple[int, int, int],
+) -> Image.Image:
+    """Create a vertical gradient background image."""
+    img = Image.new("RGB", (SLIDE_WIDTH, SLIDE_HEIGHT))
+    draw = ImageDraw.Draw(img)
+    for y in range(SLIDE_HEIGHT):
+        t = y / SLIDE_HEIGHT
+        r = int(top_color[0] + (bottom_color[0] - top_color[0]) * t)
+        g = int(top_color[1] + (bottom_color[1] - top_color[1]) * t)
+        b = int(top_color[2] + (bottom_color[2] - top_color[2]) * t)
+        draw.line([(0, y), (SLIDE_WIDTH, y)], fill=(r, g, b))
+    return img
+
+
+def _gradient_for_slide(index: int, palette: Palette | None = None) -> Image.Image:
+    """Pick a gradient for a slide. Uses brand colors if available, else rotates presets."""
+    if palette and palette.bg and palette.accent:
+        try:
+            bg_rgb = _hex_to_rgb(palette.bg)
+            accent_rgb = _hex_to_rgb(palette.accent)
+            # Ensure colors are dark enough for white text
+            darken = lambda c: tuple(max(0, min(v, 60)) for v in c)
+            return _create_gradient_image(darken(bg_rgb), darken(accent_rgb))
+        except (ValueError, IndexError):
+            pass
+    preset = _GRADIENT_PRESETS[index % len(_GRADIENT_PRESETS)]
+    return _create_gradient_image(preset[0], preset[1])
+
+
 # ── Renderer Protocol ──────────────────────────────────────────────────
 
 class SlideRenderer(Protocol):
@@ -209,8 +256,9 @@ PAD = 100
 class PillowRenderer:
     """Generates carousel slides using Pillow."""
 
-    def __init__(self, language: str = "en") -> None:
+    def __init__(self, language: str = "en", bg_style: str = "pexels") -> None:
         self.language = language
+        self.bg_style = bg_style
         self._load_fonts()
 
     def _load_fonts(self) -> None:
@@ -233,8 +281,14 @@ class PillowRenderer:
         self.font_title_big = ImageFont.truetype(bold, 64)
         self.font_counter = ImageFont.truetype(regular, 22)
 
+    _slide_index: int = 0  # Track slide index for gradient rotation
+
     def _new_canvas(self, palette: Palette) -> tuple[Image.Image, ImageDraw.Draw]:
-        img = Image.new("RGB", (SLIDE_WIDTH, SLIDE_HEIGHT), palette.bg)
+        if self.bg_style == "gradient":
+            img = _gradient_for_slide(self._slide_index, palette)
+            self._slide_index += 1
+        else:
+            img = Image.new("RGB", (SLIDE_WIDTH, SLIDE_HEIGHT), palette.bg)
         draw = ImageDraw.Draw(img)
         return img, draw
 
@@ -632,10 +686,11 @@ def generate_carousel(
     content_images: list[Path | None] | None = None,
     watermark: bool = False,
     language: str = "en",
+    bg_style: str = "pexels",
 ) -> list[Path]:
     """Generate all slides and save to output_dir. Returns list of saved paths."""
     if renderer is None:
-        renderer = PillowRenderer(language=language)
+        renderer = PillowRenderer(language=language, bg_style=bg_style)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     total_slides = len(items) + 2

@@ -859,6 +859,14 @@ img{max-width:100%;display:block}
       </div>
       <span class="watermark-badge" id="watermark-badge">Watermarked (Free plan)</span>
     </div>
+    <div class="slide-count-group">
+      <label>Background</label>
+      <div class="count-pills" id="bg-style-pills">
+        <button class="count-pill active" data-bg="pexels" style="width:auto;padding:0 12px">Stock Photos</button>
+        <button class="count-pill" data-bg="frames" style="width:auto;padding:0 12px">Video Frames</button>
+        <button class="count-pill" data-bg="gradient" style="width:auto;padding:0 12px">Gradient</button>
+      </div>
+    </div>
 
     <!-- Status -->
     <div class="status-area" id="status-area"></div>
@@ -1167,11 +1175,20 @@ loadHistory();
 
 /* --- SLIDE COUNT --- */
 let selectedSlideCount=5;
-document.querySelectorAll('.count-pill').forEach(p=>{
+document.querySelectorAll('.count-pill[data-count]').forEach(p=>{
   p.addEventListener('click',()=>{
-    document.querySelectorAll('.count-pill').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.count-pill[data-count]').forEach(x=>x.classList.remove('active'));
     p.classList.add('active');
     selectedSlideCount=parseInt(p.dataset.count);
+  });
+});
+
+let selectedBgStyle='pexels';
+document.querySelectorAll('.count-pill[data-bg]').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('.count-pill[data-bg]').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    selectedBgStyle=p.dataset.bg;
   });
 });
 
@@ -1304,9 +1321,9 @@ async function generate(mode,opts){
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};
-    const payload={url,mode,format:'all',brand:bp,num_items:selectedSlideCount};
+    const payload={url,mode,format:'all',brand:bp,num_items:selectedSlideCount,bg_style:selectedBgStyle};
     const st=getSelectedTopics();if(st)payload.selected_topics=st;
-    if(opts.podcast_mode)payload.podcast_mode=true;
+    if(opts.podcast_mode){payload.podcast_mode=true;payload.bg_style='frames';}
     if(opts.podcast_type)payload.podcast_type=opts.podcast_type;
     else if(lastPodcastType)payload.podcast_type=lastPodcastType;
     const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});

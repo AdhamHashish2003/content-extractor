@@ -122,6 +122,7 @@ class ExtractRequest(BaseModel):
     selected_topics: list[str] | None = None
     podcast_mode: bool = False
     podcast_type: str | None = None
+    bg_style: str = "pexels"  # "pexels", "frames", "gradient"
 
 
 # ── Rate limiting & concurrency ─────────────────────────────────────
@@ -476,7 +477,7 @@ _PIPELINE_TIMEOUT = 600  # seconds — long videos need time for download + tran
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
-async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None, selected_topics: list[str] | None = None, podcast_mode: bool = False, podcast_type: str | None = None) -> dict:
+async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSettings | None = None, num_items: int = 5, watermark: bool = False, user_id: str | None = None, selected_topics: list[str] | None = None, podcast_mode: bool = False, podcast_type: str | None = None, bg_style: str = "pexels") -> dict:
     """Run the full extraction pipeline with per-step error handling."""
     if not _deps_loaded:
         raise HTTPException(503, "Server still starting or missing dependencies. Check logs.")
@@ -577,12 +578,15 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
         output_path = None
 
         if not is_text_only:
-            # 4. Fetch background images (non-fatal)
+            # 4. Fetch background images based on bg_style
             title_image = None
             content_images = [None] * len(items)
-
+            effective_bg = bg_style if bg_style in ("pexels", "frames", "gradient") else "pexels"
+            # Podcast mode forces frames
             if podcast_mode:
-                # Podcast mode: extract frames from the video itself
+                effective_bg = "frames"
+
+            if effective_bg == "frames":
                 try:
                     from transcript import extract_video_frames
                     frame_paths = await asyncio.wait_for(
@@ -591,15 +595,14 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     if frame_paths:
                         title_image = frame_paths[0]
                         content_images = frame_paths[1:len(items) + 1]
-                        # Pad with None if not enough frames
                         while len(content_images) < len(items):
                             content_images.append(None)
                         temp_image_files = list(frame_paths)
                 except Exception as e:
-                    logger.warning("Podcast frame extraction failed, falling back to web images: %s", e)
+                    logger.warning("Frame extraction failed, falling back to gradient: %s", e)
+                    effective_bg = "gradient"
 
-            # Fall back to web images if podcast frames failed or not podcast mode
-            if title_image is None:
+            if effective_bg == "pexels":
                 try:
                     queries = [result.title_image_query] + [item.image_query for item in items]
                     image_paths = await asyncio.wait_for(
@@ -609,7 +612,11 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     title_image = image_paths[0]
                     content_images = image_paths[1:]
                 except Exception as e:
-                    logger.warning("Image fetching failed, using white fallback: %s", e)
+                    logger.warning("Image fetching failed, falling back to gradient: %s", e)
+                    effective_bg = "gradient"
+
+            # gradient mode: title_image and content_images stay None
+            # designer.py will use _new_gradient_canvas instead of solid black
 
             # 5. Generate slides
             try:
@@ -618,7 +625,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
                     generate_carousel, items=items, video_title=title_display,
                     content_type=content_type, palette=palette, output_dir=output_path,
                     source=meta.author, title_image=title_image, content_images=content_images,
-                    watermark=watermark, language=detected_lang,
+                    watermark=watermark, language=detected_lang, bg_style=effective_bg,
                 )
             except Exception as e:
                 raise HTTPException(500, f"Slide generation error. {e}")
@@ -739,7 +746,7 @@ async def api_generate(req: ExtractRequest, request: Request):
         )
     try:
         _uid = user["id"] if user else None
-        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid, selected_topics=req.selected_topics, podcast_mode=req.podcast_mode, podcast_type=req.podcast_type)
+        result = await _run_pipeline(req.url, req.mode, req.format, req.brand, req.num_items, watermark=watermark, user_id=_uid, selected_topics=req.selected_topics, podcast_mode=req.podcast_mode, podcast_type=req.podcast_type, bg_style=req.bg_style)
         # Increment usage for logged-in users
         if user and _auth_loaded:
             db.increment_daily_usage(user["id"])
