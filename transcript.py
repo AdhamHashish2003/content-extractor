@@ -351,158 +351,122 @@ def _track_sort_key(t) -> tuple:
     return (2, is_auto)
 
 
-# ── YouTube Transcript (multi-source fallback with debug logging) ────
+# ── YouTube Transcript (multi-source fallback) ──────────────────────
 
 def _try_youtube_captions(video_id: str) -> str | None:
-    """Fetch YouTube transcript with multiple fallbacks for cloud servers.
-
-    Source 1: youtube-transcript-api (Innertube internally)
-    Source 2: Innertube ANDROID player API (bypasses exp=xpe, works on cloud)
-    Returns None if all sources fail — caller can fall back to Groq Whisper.
-    """
+    """Try every caption source. Returns transcript text or None."""
     import requests
 
-    debug: list[str] = []  # Accumulate debug info for error messages
+    MIN_WORDS = 20
 
-    # ── Source 1: youtube-transcript-api ──────────────────────────────
-    debug.append(f"=== CAPTION DEBUG for {video_id} ===")
-    debug.append(f"Source 1 (youtube-transcript-api): trying... (cookies={'YES' if _yt_cookies_ready else 'NO'})")
+    # ── Method 1: youtube-transcript-api (fast, free, works ~60% on cloud) ──
+    logger.info("[transcript] Method 1 (youtube-transcript-api) for %s", video_id)
     try:
-        # Pass cookie-loaded session as http_client if cookies available
         yt_session = _get_yt_cookie_session() if _yt_cookies_ready else None
         api = YouTubeTranscriptApi(http_client=yt_session) if yt_session else YouTubeTranscriptApi()
-        transcript_list = api.list(video_id)
-        available = list(transcript_list)
+        available = list(api.list(video_id))
         if available:
-            codes = [(t.language_code, "auto" if t.is_generated else "manual") for t in available]
-            debug.append(f"Source 1: languages found: {codes}")
-            logger.info("[yt-captions] Source 1 languages for %s: %s", video_id, codes)
-
-            manual = [t for t in available if not t.is_generated]
-            generated = [t for t in available if t.is_generated]
-
-            preferred = ["en", "ar"]
-            chosen = None
-            for pool in [manual, generated]:
-                for pref in preferred:
-                    for t in pool:
-                        if t.language_code == pref or t.language_code.startswith(pref + "-"):
-                            chosen = t
-                            break
-                    if chosen:
-                        break
-                if chosen:
-                    break
-            if not chosen:
-                chosen = manual[0] if manual else available[0]
-
-            debug.append(f"Source 1: chose {chosen.language_code}, fetching...")
-            result = chosen.fetch()
-            text = " ".join(snippet.text for snippet in result)
-            word_count = len(text.split())
-            debug.append(f"Source 1: fetched {word_count} words")
-
-            if word_count >= 50:
-                logger.info("[yt-captions] Source 1 OK for %s (lang=%s, words=%d)",
-                            video_id, chosen.language_code, word_count)
+            # Pick best: en > ar > first available, manual > generated
+            available.sort(key=lambda t: _track_sort_key(t))
+            chosen = available[0]
+            text = " ".join(s.text for s in chosen.fetch())
+            if len(text.split()) > MIN_WORDS:
+                logger.info("[transcript] Method 1 OK: %s, %d words", chosen.language_code, len(text.split()))
                 return text
-            else:
-                debug.append(f"Source 1: too few words ({word_count}), skipping")
-        else:
-            debug.append("Source 1: no transcripts available")
     except Exception as e:
-        err_type = type(e).__name__
-        debug.append(f"Source 1 FAILED: {err_type}: {e}")
-        logger.info("[yt-captions] Source 1 failed for %s: %s: %s", video_id, err_type, e)
+        logger.info("[transcript] Method 1 failed: %s", e)
 
-    # ── Source 2: Innertube ANDROID player API ───────────────────────
-    debug.append(f"Source 2 (Innertube ANDROID): trying... (cookies={'YES' if _yt_cookies_ready else 'NO'})")
+    # ── Method 2: Innertube ANDROID captions (bypasses some blocks) ──
+    logger.info("[transcript] Method 2 (Innertube ANDROID) for %s", video_id)
     try:
         session = _get_yt_cookie_session()
-
-        # Fetch page to get API key (with fallback to hardcoded public key)
         page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
-        debug.append(f"Source 2: page fetch status={page.status_code} len={len(page.text)}")
+        key_m = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
+        api_key = key_m.group(1) if key_m else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 
-        api_key_match = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
-        api_key = api_key_match.group(1) if api_key_match else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-        debug.append(f"Source 2: API key {'from page' if api_key_match else 'HARDCODED FALLBACK'}: {api_key[:20]}...")
-
-        # Call player API with ANDROID client
-        player_resp = session.post(
+        resp = session.post(
             f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
-            json={
-                "context": {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}},
-                "videoId": video_id,
-            },
+            json={"context": {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}}, "videoId": video_id},
             timeout=15,
         )
-        debug.append(f"Source 2: player response status={player_resp.status_code}")
-
-        if player_resp.ok:
-            player_data = player_resp.json()
-
-            # Check both possible caption paths
-            captions_obj = player_data.get("captions", {})
-            captions_data = (
-                captions_obj.get("playerCaptionsTracklistRenderer", {}).get("captionTracks", [])
-                or captions_obj.get("playerCaptionsRenderer", {}).get("captionTracks", [])
-            )
-
-            if captions_data:
-                langs = [(t.get("languageCode", "?"), t.get("kind", "")) for t in captions_data]
-                debug.append(f"Source 2: {len(captions_data)} tracks found: {langs}")
-                logger.info("[yt-captions] Source 2 found %d tracks for %s: %s",
-                            len(captions_data), video_id, langs)
-
-                captions_data.sort(key=_track_sort_key)
-
-                for track in captions_data:
-                    base_url = track.get("baseUrl", "")
-                    lang = track.get("languageCode", "?")
-                    if not base_url:
-                        debug.append(f"Source 2: track {lang} has no baseUrl, skipping")
+        if resp.ok:
+            caps = resp.json().get("captions", {})
+            tracks = (caps.get("playerCaptionsTracklistRenderer", {}).get("captionTracks", [])
+                      or caps.get("playerCaptionsRenderer", {}).get("captionTracks", []))
+            if tracks:
+                tracks.sort(key=_track_sort_key)
+                for t in tracks:
+                    url = t.get("baseUrl", "")
+                    if not url:
                         continue
-
-                    has_xpe = "exp=xpe" in base_url
-                    debug.append(f"Source 2: fetching track {lang} (xpe={has_xpe})")
-
-                    cc_resp = session.get(base_url, timeout=15)
-                    debug.append(f"Source 2: caption response status={cc_resp.status_code} len={len(cc_resp.text)}")
-
-                    if cc_resp.ok and len(cc_resp.text) > 100:
-                        text = _parse_caption_xml(cc_resp.text)
-                        word_count = len(text.split())
-                        debug.append(f"Source 2: parsed {word_count} words from {lang}")
-
-                        if word_count >= 50:
-                            logger.info("[yt-captions] Source 2 OK for %s (lang=%s, words=%d)",
-                                        video_id, lang, word_count)
+                    cr = session.get(url, timeout=15)
+                    if cr.ok and len(cr.text) > 100:
+                        text = _parse_caption_xml(cr.text)
+                        if len(text.split()) > MIN_WORDS:
+                            logger.info("[transcript] Method 2 OK: %s, %d words", t.get("languageCode"), len(text.split()))
                             return text
-                        else:
-                            debug.append(f"Source 2: too few words from {lang}, trying next track")
-                    else:
-                        debug.append(f"Source 2: empty/short response for {lang}")
-            else:
-                debug.append("Source 2: no captionTracks in player response")
-                # Log what keys ARE present for debugging
-                cap_keys = list(captions_obj.keys()) if captions_obj else []
-                debug.append(f"Source 2: captions object keys: {cap_keys}")
-        else:
-            debug.append(f"Source 2: player API returned {player_resp.status_code}")
     except Exception as e:
-        err_type = type(e).__name__
-        debug.append(f"Source 2 FAILED: {err_type}: {e}")
-        logger.info("[yt-captions] Source 2 failed for %s: %s: %s", video_id, err_type, e)
+        logger.info("[transcript] Method 2 failed: %s", e)
 
-    # ── All sources failed — log full debug trace ────────────────────
-    debug.append(f"=== FINAL RESULT: FAILED (all sources exhausted) ===")
-    debug_text = "\n".join(debug)
-    logger.warning("[yt-captions] All caption sources failed for %s:\n%s", video_id, debug_text)
+    # ── Method 3: External transcript APIs (work from any IP) ──
+    logger.info("[transcript] Method 3 (external APIs) for %s", video_id)
+    external_urls = [
+        f"https://deserving-harmony-production.up.railway.app/transcript?url=https://youtube.com/watch?v={video_id}",
+    ]
+    for svc_url in external_urls:
+        try:
+            r = requests.get(svc_url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+            if not r.ok:
+                continue
+            data = r.json()
+            # Handle different response formats
+            if isinstance(data, list):
+                text = " ".join(item.get("text", "") for item in data if item.get("text"))
+            elif isinstance(data, dict):
+                text = data.get("transcript", "") or data.get("text", "") or data.get("content", "")
+                # Some APIs nest transcript in a list
+                if not text and "transcription" in data:
+                    parts = data["transcription"]
+                    if isinstance(parts, list):
+                        text = " ".join(p.get("text", "") for p in parts if p.get("text"))
+            else:
+                continue
+            if text and len(text.split()) > MIN_WORDS:
+                logger.info("[transcript] Method 3 OK via %s: %d words", svc_url[:50], len(text.split()))
+                return text
+        except Exception as e:
+            logger.info("[transcript] Method 3 service %s failed: %s", svc_url[:40], e)
 
-    # Store debug info so the API layer can include it in the error message
-    _try_youtube_captions._last_debug = debug_text  # type: ignore[attr-defined]
+    logger.warning("[transcript] All caption methods failed for %s", video_id)
     return None
+
+
+def get_transcript(video_id: str, url: str) -> tuple[str, str]:
+    """Get transcript using all methods. Returns (text, language_code).
+
+    Tries captions first (Methods 1-3), then Groq Whisper as last resort.
+    Raises RuntimeError if everything fails.
+    """
+    # Try all caption methods first
+    text = _try_youtube_captions(video_id)
+    if text and len(text.split()) > 20:
+        from analyzer import detect_language
+        return text, detect_language(text)
+
+    # Method 4: Groq Whisper (downloads audio — last resort)
+    logger.info("[transcript] Method 4 (Groq Whisper) for %s", url[:60])
+    try:
+        text = _groq_pipeline(url)
+        if text and len(text.split()) > 20:
+            from analyzer import detect_language
+            return text, detect_language(text)
+    except Exception as e:
+        logger.warning("[transcript] Method 4 (Whisper) failed: %s", e)
+
+    raise RuntimeError(
+        "Could not get transcript. All methods failed — captions unavailable "
+        "and audio download blocked. Try a different video or one with subtitles."
+    )
 
 
 # ── Tier 2: yt-dlp Download + Groq Whisper API ─────────────────────────
