@@ -425,7 +425,7 @@ async def api_analyze_topics(request: Request):
         # 2. Fetch transcript — unified multi-source with Whisper fallback
         try:
             transcript, detected_lang_hint = await asyncio.wait_for(
-                asyncio.to_thread(get_transcript, meta.video_id, url), timeout=300
+                asyncio.to_thread(get_transcript, meta.video_id, url), timeout=600
             )
         except asyncio.TimeoutError:
             raise HTTPException(400, "Transcript fetch timed out. Try a shorter video.")
@@ -472,7 +472,7 @@ async def api_analyze_topics(request: Request):
 
 # ── Pipeline helpers (run sync code in thread) ─────────────────────────
 
-_PIPELINE_TIMEOUT = 360  # seconds — long videos need time for download + transcription
+_PIPELINE_TIMEOUT = 600  # seconds — long videos need time for download + transcription
 _MAX_TRANSCRIPT_WORDS = 15000
 
 
@@ -534,7 +534,7 @@ async def _run_pipeline(url: str, mode: str, output_format: str, brand: BrandSet
             # Unified transcript fetch — all methods including Whisper fallback
             try:
                 transcript, detected_lang = await asyncio.wait_for(
-                    asyncio.to_thread(get_transcript, meta.video_id, url), timeout=300
+                    asyncio.to_thread(get_transcript, meta.video_id, url), timeout=600
                 )
             except asyncio.TimeoutError:
                 raise HTTPException(400, "Transcript fetch timed out. Try a shorter video.")

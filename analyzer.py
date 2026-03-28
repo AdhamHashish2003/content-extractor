@@ -181,7 +181,7 @@ Video title: "{video_title}"
 {language_instruction}
 {podcast_instruction}
 TRANSCRIPT:
-{transcript[:12000]}
+{transcript}
 
 MODE-SPECIFIC INSTRUCTIONS:
 {mode_instruction}
@@ -306,6 +306,18 @@ def extract_content(
     num_items = max(3, min(10, num_items))
     if language is None:
         language = detect_language(transcript)
+
+    # Truncate transcript for performance - user only needs N points
+    max_chars = min(max(num_items * 3000, 10000), 50000)
+    if len(transcript) > max_chars:
+        cut = transcript[:max_chars]
+        # Don't cut mid-sentence — find nearest period or newline
+        last_break = max(cut.rfind(". "), cut.rfind(".\n"), cut.rfind("\n"))
+        if last_break > max_chars * 0.8:
+            cut = cut[:last_break + 1]
+        transcript = cut
+        logger.info("Truncated transcript to %d chars (max=%d for %d items)", len(transcript), max_chars, num_items)
+
     prompt = _build_prompt(content_type, transcript, video_title, num_items,
                            selected_topics=selected_topics, language=language,
                            podcast_type=podcast_type)
@@ -373,7 +385,7 @@ Video title: "{video_title}"
 {lang_instruction}
 
 TRANSCRIPT:
-{transcript[:12000]}
+{transcript[:15000]}
 
 Return a JSON object with:
 {{
