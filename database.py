@@ -5,7 +5,7 @@ import os
 import uuid
 from datetime import date, datetime, timezone
 
-from passlib.hash import bcrypt
+import bcrypt as _bcrypt
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 # Railway provides postgres:// but psycopg2 requires postgresql://
@@ -102,7 +102,7 @@ def init_db() -> None:
 def create_user(email: str, password: str) -> dict:
     """Create a new user. Raises ValueError ONLY for genuine duplicate email."""
     user_id = str(uuid.uuid4())
-    pw_hash = bcrypt.hash(password)
+    pw_hash = _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
     try:
         conn, ph = _connect()
     except Exception as e:
@@ -171,7 +171,7 @@ def get_user_by_id(user_id: str) -> dict | None:
 
 def reset_user_password(user_id: str, new_password: str) -> None:
     """Reset a user's password (used for ghost-user recovery)."""
-    pw_hash = bcrypt.hash(new_password)
+    pw_hash = _bcrypt.hashpw(new_password.encode(), _bcrypt.gensalt()).decode()
     conn, ph = _connect()
     cur = conn.cursor()
     cur.execute(
@@ -202,7 +202,7 @@ def mark_signup_complete(user_id: str) -> None:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.verify(plain, hashed)
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 # ── Plan management ───────────────────────────────────────────────────
