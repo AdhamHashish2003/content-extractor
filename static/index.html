@@ -394,6 +394,13 @@ img{max-width:100%;display:block}
 .count-pill:hover{border-color:var(--primary);color:var(--primary)}
 .count-pill.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
 
+/* Background style pills */
+.bg-pills{display:flex;gap:8px;flex-wrap:wrap}
+.bg-pill{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:100px;background:var(--surface2);border:1px solid var(--card-border);color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap}
+.bg-pill:hover{border-color:var(--primary);color:var(--primary)}
+.bg-pill.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
+.bg-pill-icon{font-size:.9rem}
+
 /* Status */
 .status-area{margin-bottom:20px;min-height:32px}
 .status-steps{padding:14px 18px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--card-border)}
@@ -860,11 +867,11 @@ img{max-width:100%;display:block}
       <span class="watermark-badge" id="watermark-badge">Watermarked (Free plan)</span>
     </div>
     <div class="slide-count-group">
-      <label>Background</label>
-      <div class="count-pills" id="bg-style-pills">
-        <button class="count-pill active" data-bg="pexels" style="width:auto;padding:0 12px">Stock Photos</button>
-        <button class="count-pill" data-bg="frames" style="width:auto;padding:0 12px">Video Frames</button>
-        <button class="count-pill" data-bg="gradient" style="width:auto;padding:0 12px">Gradient</button>
+      <label>Slide Background</label>
+      <div class="bg-pills" id="bg-style-pills">
+        <button class="bg-pill active" data-bg="pexels"><span class="bg-pill-icon">&#128444;&#65039;</span>Stock Photos</button>
+        <button class="bg-pill" data-bg="frames"><span class="bg-pill-icon">&#127916;</span>Video Frames</button>
+        <button class="bg-pill" data-bg="gradient"><span class="bg-pill-icon">&#127912;</span>Gradient</button>
       </div>
     </div>
 
@@ -1184,9 +1191,9 @@ document.querySelectorAll('.count-pill[data-count]').forEach(p=>{
 });
 
 let selectedBgStyle='pexels';
-document.querySelectorAll('.count-pill[data-bg]').forEach(p=>{
+document.querySelectorAll('.bg-pill[data-bg]').forEach(p=>{
   p.addEventListener('click',()=>{
-    document.querySelectorAll('.count-pill[data-bg]').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.bg-pill[data-bg]').forEach(x=>x.classList.remove('active'));
     p.classList.add('active');
     selectedBgStyle=p.dataset.bg;
   });
