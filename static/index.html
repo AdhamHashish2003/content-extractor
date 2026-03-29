@@ -353,6 +353,7 @@ img{max-width:100%;display:block}
 .bg-pill:hover{border-color:var(--primary);color:var(--primary)}
 .bg-pill.active{background:var(--primary);color:#08080C;border-color:var(--primary)}
 .bg-pill-icon{font-size:.9rem}
+.bg-pill-hint{color:var(--text-dim);font-size:.65rem;font-weight:400}
 .extract-overlay{position:fixed;inset:0;background:rgba(8,8,12,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .extract-overlay.active{opacity:1;pointer-events:auto}
 .extract-overlay-title{font-size:1.3rem;font-weight:700}
@@ -459,7 +460,8 @@ img{max-width:100%;display:block}
   .count-pills{flex-wrap:wrap;gap:4px}
   .count-pill{width:36px;height:32px;font-size:.8rem}
   .bg-pills{flex-wrap:wrap;gap:6px}
-  .bg-pill{flex:1 1 calc(50% - 6px);justify-content:center;padding:8px 10px;font-size:.75rem}
+  .bg-pill{flex:1 1 calc(50% - 6px);justify-content:center;padding:8px 10px;font-size:.75rem;white-space:normal;text-align:center}
+  .bg-pill-hint{display:none}
   .mode-btn{padding:10px 12px}.mode-btn .mode-label{font-size:.75rem}
   .slide-preview{width:85vw}
   .text-output{padding:14px;font-size:.8rem}
@@ -587,7 +589,7 @@ img{max-width:100%;display:block}
     <div class="brand-field"><label>Handle</label><input id="brand-handle" placeholder="@yourhandle"></div>
     <div class="brand-field"><label>Brand Name</label><input id="brand-name" placeholder="Your Brand"></div>
     <div class="brand-field full-width"><label>Tagline</label><input id="brand-tagline" placeholder="Your brand tagline"></div>
-    <div class="brand-field"><label>Theme</label><select id="brand-theme"><option value="dark">Dark</option><option value="light">Light</option><option value="ocean">Ocean</option><option value="fire">Fire</option><option value="custom">Custom</option></select></div>
+    <div class="brand-field"><label>Theme</label><select id="brand-theme"><option value="dark">Dark (black bg, white text)</option><option value="light">Light (white bg, dark text)</option><option value="ocean">Ocean (navy bg, cyan accent)</option><option value="fire">Fire (dark red bg, orange accent)</option><option value="custom">Custom (pick your own colors)</option></select></div>
     <div class="brand-field"><label>Logo</label><div class="logo-upload-area"><button class="logo-upload-btn" id="logo-upload-btn">Upload Logo</button><input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp" style="display:none"><div class="logo-preview" id="logo-preview" style="display:none"><img id="logo-preview-img" alt="Logo"><button class="logo-remove" id="logo-remove">&times;</button></div></div></div>
     <div class="custom-colors" id="custom-colors"><div class="color-field"><input type="color" id="brand-bg-picker" value="#0A0A0A"><input type="text" id="brand-bg" value="#0A0A0A"></div><div class="color-field"><input type="color" id="brand-text-picker" value="#FFFFFF"><input type="text" id="brand-text" value="#FFFFFF"></div><div class="color-field"><input type="color" id="brand-accent-picker" value="#8B5CF6"><input type="text" id="brand-accent" value="#8B5CF6"></div></div>
   </div></div></div>
@@ -623,7 +625,7 @@ img{max-width:100%;display:block}
     <div class="podcast-hint" id="podcast-hint">Paste a URL, then click a mode to auto-analyze topics.</div>
   </div>
   <div class="slide-count-group"><label>Slides</label><div class="count-pills"><button class="count-pill" data-count="3">3</button><button class="count-pill" data-count="4">4</button><button class="count-pill active" data-count="5">5</button><button class="count-pill" data-count="6">6</button><button class="count-pill" data-count="7">7</button><button class="count-pill" data-count="8">8</button><button class="count-pill" data-count="9">9</button><button class="count-pill" data-count="10">10</button></div><span class="watermark-badge" id="watermark-badge">Watermarked (Free)</span></div>
-  <div class="slide-count-group"><label>Slide Background</label><div class="bg-pills" id="bg-style-pills"><button class="bg-pill active" data-bg="pexels"><span class="bg-pill-icon">&#128444;&#65039;</span>Stock Photos</button><button class="bg-pill" data-bg="frames"><span class="bg-pill-icon">&#127916;</span>Video Frames</button><button class="bg-pill" data-bg="gradient"><span class="bg-pill-icon">&#127912;</span>Gradient</button></div></div>
+  <div class="slide-count-group"><label>Slide Background</label><div class="bg-pills" id="bg-style-pills"><button class="bg-pill active" data-bg="pexels"><span class="bg-pill-icon">&#128444;&#65039;</span><span class="bg-pill-label">Generate</span><span class="bg-pill-hint">(AI picks relevant images)</span></button><button class="bg-pill" data-bg="frames"><span class="bg-pill-icon">&#127916;</span><span class="bg-pill-label">Video Cuts</span><span class="bg-pill-hint">(frames from your video)</span></button><button class="bg-pill" data-bg="gradient"><span class="bg-pill-icon">&#127912;</span><span class="bg-pill-label">Gradient</span><span class="bg-pill-hint">(clean color background)</span></button></div></div>
   <div class="status-area" id="status-area"></div>
   <div id="results">
     <div class="result-header"><div><h3 id="result-title"></h3><div class="result-meta" id="result-meta"></div></div><a class="download-btn" id="download-btn" href="#" download onclick="gtag('event','download_zip')">Download ZIP</a></div>
