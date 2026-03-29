@@ -547,9 +547,9 @@ img{max-width:100%;display:block}
 <section class="pricing" id="pricing"><div class="container">
   <div class="section-heading fade-in"><span class="section-label">Pricing</span><h2>Start Free. Scale When Ready.</h2><p>No credit card required</p></div>
   <div class="pricing-grid fade-in">
-    <div class="pricing-card"><h3>Free</h3><div class="pricing-price">$0<span>/mo</span></div><ul class="pricing-list"><li>3 extractions/day</li><li>All 9 AI modes</li><li>Carousel + 6 text formats</li><li>Watermarked slides</li></ul><button class="btn-outline" onclick="handlePricingClick('free')">Get Started</button></div>
-    <div class="pricing-card featured"><div class="pricing-badge">Popular</div><h3>Pro</h3><div class="pricing-price">$19<span>/mo</span></div><ul class="pricing-list"><li>Unlimited extractions</li><li>No watermark</li><li>Bulk processing (10 URLs)</li><li>Priority support</li></ul><button class="btn-primary" onclick="handlePricingClick('pro')">Upgrade to Pro</button></div>
-    <div class="pricing-card"><h3>Agency</h3><div class="pricing-price">$49<span>/mo</span></div><ul class="pricing-list"><li>Everything in Pro</li><li>50 bulk URLs</li><li>API access</li><li>Dedicated support</li></ul><button class="btn-accent" onclick="handlePricingClick('agency')">Contact Sales</button></div>
+    <div class="pricing-card"><h3>Free</h3><div class="pricing-price">$0<span>/mo</span></div><ul class="pricing-list"><li>1 extraction/day</li><li>All 9 AI modes</li><li>Carousel + 6 text formats</li><li>Watermarked slides</li></ul><button class="btn-outline" onclick="handlePricingClick('free')">Get Started</button></div>
+    <div class="pricing-card featured"><div class="pricing-badge">Popular</div><h3>Pro</h3><div class="pricing-price">$9.99<span>/mo</span></div><ul class="pricing-list"><li>Unlimited extractions</li><li>No watermark</li><li>Bulk processing (10 URLs)</li><li>Priority support</li></ul><button class="btn-primary" onclick="handlePricingClick('pro')">Upgrade to Pro</button></div>
+    <div class="pricing-card"><h3>Agency</h3><div class="pricing-price">$12.99<span>/mo</span></div><ul class="pricing-list"><li>Everything in Pro</li><li>50 bulk URLs</li><li>API access</li><li>Dedicated support</li></ul><button class="btn-accent" onclick="handlePricingClick('agency')">Contact Sales</button></div>
   </div>
 </div></section>
 
@@ -645,7 +645,7 @@ img{max-width:100%;display:block}
 </div></div>
 
 <!-- UPGRADE MODAL -->
-<div class="modal-overlay" id="upgrade-modal"><div class="modal"><button class="modal-close" id="upgrade-modal-close">&times;</button><div class="upgrade-body"><h3>Daily Limit Reached</h3><p>Upgrade to Pro for unlimited extractions.</p><div class="upgrade-actions"><button class="btn-primary" id="upgrade-pro-btn">Upgrade to Pro &mdash; $19/mo</button><button class="upgrade-dismiss" id="upgrade-dismiss">Maybe later</button></div></div></div></div>
+<div class="modal-overlay" id="upgrade-modal"><div class="modal"><button class="modal-close" id="upgrade-modal-close">&times;</button><div class="upgrade-body"><h3>Daily Limit Reached</h3><p>Upgrade to Pro for unlimited extractions.</p><div class="upgrade-actions"><button class="btn-primary" id="upgrade-pro-btn">Upgrade to Pro &mdash; $9.99/mo</button><button class="upgrade-dismiss" id="upgrade-dismiss">Maybe later</button></div></div></div></div>
 
 <div class="toast hidden" id="toast"></div>
 <div class="extract-overlay" id="extract-overlay"><div class="extract-overlay-title">Extracting... please wait</div><div class="status-steps" id="overlay-steps"></div></div>
@@ -1018,6 +1018,7 @@ async function generate(mode,opts){
     const r=await fetch('/api/generate',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
     clearInterval(iv);const d=await r.json();
     if(!r.ok){
+      if(d.auth_required){setButtonsDisabled(false);openAuthModal('signup');showError('Create a free account to start — it takes 5 seconds');return}
       if(d.limit_reached){setButtonsDisabled(false);openUpgradeModal();return}
       showError(d.detail||'Something went wrong. Please try again.');gtag('event','extraction_error',{mode:mode,error:(d.detail||'').substring(0,50)});setButtonsDisabled(false);return;
     }

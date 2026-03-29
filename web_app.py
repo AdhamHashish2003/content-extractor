@@ -69,8 +69,8 @@ try:
     _JWT_SECRET = os.getenv("JWT_SECRET", "")
 
     _PLANS = {
-        "pro": {"name": "ContentExtractor AI Pro", "amount": 1900, "interval": "month"},
-        "agency": {"name": "ContentExtractor AI Agency", "amount": 4900, "interval": "month"},
+        "pro": {"name": "ContentExtractor AI Pro", "amount": 999, "interval": "month"},
+        "agency": {"name": "ContentExtractor AI Agency", "amount": 1299, "interval": "month"},
     }
     _JWT_ALGORITHM = "HS256"
     _JWT_EXPIRE_DAYS = 30
@@ -738,19 +738,23 @@ async def api_generate(req: ExtractRequest, request: Request):
     user = None
     if _auth_loaded:
         user = _get_current_user(request.headers.get("authorization"))
-    if user:
-        plan = user.get("plan", "free")
-        if plan in ("pro", "agency"):
-            watermark = False
-        else:
-            # free plan — check daily limit
-            if not db.check_can_extract(user["id"]):
-                return JSONResponse(
-                    {"detail": "Daily limit reached. Upgrade to Pro for unlimited extractions.",
-                     "limit_reached": True},
-                    status_code=429,
-                )
-    # anonymous users get watermark but no limit check (IP rate limit still applies)
+    if not user:
+        return JSONResponse(
+            {"detail": "Please create a free account to start extracting.",
+             "auth_required": True},
+            status_code=401,
+        )
+    plan = user.get("plan", "free")
+    if plan in ("pro", "agency"):
+        watermark = False
+    else:
+        # free plan — check daily limit
+        if not db.check_can_extract(user["id"]):
+            return JSONResponse(
+                {"detail": "Daily limit reached. Upgrade to Pro for unlimited extractions.",
+                 "limit_reached": True},
+                status_code=429,
+            )
 
     start_time = time.time()
     # Concurrency gate — return 503 immediately if all slots are busy

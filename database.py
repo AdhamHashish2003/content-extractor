@@ -13,7 +13,7 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # ── Plan limits ──────────────────────────────────────────────────────
-FREE_DAILY_LIMIT = 3
+FREE_DAILY_LIMIT = 1
 PLAN_LIMITS = {
     "free": FREE_DAILY_LIMIT,
     "pro": None,
