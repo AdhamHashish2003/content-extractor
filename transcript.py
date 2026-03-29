@@ -380,54 +380,74 @@ def _try_youtube_captions(video_id: str) -> str | None:
 
     MIN_WORDS = 20
 
-    # ── Method 1: youtube-transcript-api (fast, free, works ~60% on cloud) ──
-    logger.info("[transcript] Method 1 (youtube-transcript-api) for %s", video_id)
+    # ── Method 1: youtube-transcript-api (fast, free) ──
+    logger.info("[transcript] Method 1 (youtube-transcript-api) for %s (cookies=%s)", video_id, _yt_cookies_ready)
     try:
         yt_session = _get_yt_cookie_session() if _yt_cookies_ready else None
         api = YouTubeTranscriptApi(http_client=yt_session) if yt_session else YouTubeTranscriptApi()
         available = list(api.list(video_id))
         if available:
-            # Pick best: en > ar > first available, manual > generated
+            langs = [(t.language_code, "auto" if t.is_generated else "manual") for t in available]
+            logger.info("[transcript] Method 1: found %d transcripts: %s", len(available), langs)
             available.sort(key=lambda t: _track_sort_key(t))
             chosen = available[0]
             text = " ".join(s.text for s in chosen.fetch())
             if len(text.split()) > MIN_WORDS:
                 logger.info("[transcript] Method 1 OK: %s, %d words", chosen.language_code, len(text.split()))
                 return text
+            logger.info("[transcript] Method 1: fetched but too short (%d words)", len(text.split()))
+        else:
+            logger.info("[transcript] Method 1: no transcripts listed")
     except Exception as e:
-        logger.info("[transcript] Method 1 failed: %s: %s", type(e).__name__, str(e)[:200])
+        logger.info("[transcript] Method 1 ERROR: %s: %s", type(e).__name__, str(e)[:300])
 
-    # ── Method 2: Innertube ANDROID captions (bypasses some blocks) ──
-    logger.info("[transcript] Method 2 (Innertube ANDROID) for %s", video_id)
-    try:
-        session = _get_yt_cookie_session()
-        page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
-        key_m = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
-        api_key = key_m.group(1) if key_m else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+    # ── Method 2: Innertube player API with cookies ──
+    # Try both WEB (with cookies) and ANDROID clients
+    for client_name, client_ver in [("WEB", "2.20240101.00.00"), ("ANDROID", "20.10.38")]:
+        logger.info("[transcript] Method 2 (Innertube %s) for %s", client_name, video_id)
+        try:
+            session = _get_yt_cookie_session()
+            page = session.get(f"https://www.youtube.com/watch?v={video_id}", timeout=15)
+            key_m = re.search(r'"INNERTUBE_API_KEY":\s*"([a-zA-Z0-9_-]+)"', page.text)
+            api_key = key_m.group(1) if key_m else "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 
-        resp = session.post(
-            f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
-            json={"context": {"client": {"clientName": "ANDROID", "clientVersion": "20.10.38"}}, "videoId": video_id},
-            timeout=15,
-        )
-        if resp.ok:
-            caps = resp.json().get("captions", {})
+            resp = session.post(
+                f"https://www.youtube.com/youtubei/v1/player?key={api_key}",
+                json={"context": {"client": {"clientName": client_name, "clientVersion": client_ver}}, "videoId": video_id},
+                timeout=15,
+            )
+            if not resp.ok:
+                logger.info("[transcript] Method 2 (%s): player API returned %d", client_name, resp.status_code)
+                continue
+
+            player_data = resp.json()
+            caps = player_data.get("captions", {})
             tracks = (caps.get("playerCaptionsTracklistRenderer", {}).get("captionTracks", [])
                       or caps.get("playerCaptionsRenderer", {}).get("captionTracks", []))
-            if tracks:
-                tracks.sort(key=_track_sort_key)
-                for t in tracks:
-                    url = t.get("baseUrl", "")
-                    if not url:
-                        continue
-                    cr = session.get(url, timeout=15)
-                    if cr.ok and len(cr.text) > 100:
-                        text = _parse_caption_xml(cr.text)
-                        if len(text.split()) > MIN_WORDS:
-                            logger.info("[transcript] Method 2 OK: %s, %d words", t.get("languageCode"), len(text.split()))
-                            return text
-    except Exception as e:
-        logger.info("[transcript] Method 2 failed: %s", e)
+
+            if not tracks:
+                logger.info("[transcript] Method 2 (%s): no caption tracks", client_name)
+                continue
+
+            logger.info("[transcript] Method 2 (%s): %d tracks found", client_name, len(tracks))
+            tracks.sort(key=_track_sort_key)
+
+            for t in tracks:
+                track_url = t.get("baseUrl", "")
+                lang = t.get("languageCode", "?")
+                if not track_url:
+                    continue
+                cr = session.get(track_url, timeout=15)
+                if cr.ok and len(cr.text) > 100:
+                    text = _parse_caption_xml(cr.text)
+                    if len(text.split()) > MIN_WORDS:
+                        logger.info("[transcript] Method 2 (%s) OK: %s, %d words", client_name, lang, len(text.split()))
+                        return text
+                    logger.info("[transcript] Method 2 (%s): track %s parsed but too short (%d)", client_name, lang, len(text.split()))
+                else:
+                    logger.info("[transcript] Method 2 (%s): track %s response empty (%d bytes)", client_name, lang, len(cr.text))
+        except Exception as e:
+            logger.info("[transcript] Method 2 (%s) ERROR: %s: %s", client_name, type(e).__name__, str(e)[:200])
 
     # ── Method 3: External transcript APIs (work from any IP) ──
     logger.info("[transcript] Method 3 (external APIs) for %s", video_id)
@@ -474,8 +494,8 @@ def get_transcript(video_id: str, url: str) -> tuple[str, str]:
         from analyzer import detect_language
         return text, detect_language(text)
 
-    # Method 4: Groq Whisper (downloads audio — last resort)
-    logger.info("[transcript] Method 4 (Groq Whisper) for %s", url[:60])
+    # Method 4: Groq Whisper (downloads audio via yt-dlp with cookies — last resort)
+    logger.info("[transcript] Method 4 (Groq Whisper) for %s (cookies=%s)", url[:60], _yt_cookies_ready)
     try:
         text = _groq_pipeline(url)
         if text and len(text.split()) > 20:
