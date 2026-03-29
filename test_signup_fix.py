@@ -143,9 +143,9 @@ GHOST_EMAIL = "ghost@example.com"
 GHOST_PW2 = "NewGhostPass2"
 
 import uuid as _uuid
-from passlib.hash import bcrypt as _bc
+import bcrypt as _bc
 _ghost_id = str(_uuid.uuid4())
-_ghost_hash = _bc.hash("BuggyPassword1")
+_ghost_hash = _bc.hashpw(b"BuggyPassword1", _bc.gensalt()).decode()
 db_exec(
     "INSERT INTO users (id, email, password_hash, plan, daily_extractions) VALUES (?, ?, ?, 'free', 0)",
     (_ghost_id, GHOST_EMAIL, _ghost_hash),
