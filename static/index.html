@@ -13,6 +13,8 @@
 <meta name="twitter:title" content="ContentExtractor AI">
 <meta name="twitter:description" content="AI-powered video to content engine. Free.">
 <link rel="canonical" href="https://content-extractor-production-9224.up.railway.app">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FCPQ8BBSY6"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-FCPQ8BBSY6');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -624,7 +626,7 @@ img{max-width:100%;display:block}
   <div class="slide-count-group"><label>Slide Background</label><div class="bg-pills" id="bg-style-pills"><button class="bg-pill active" data-bg="pexels"><span class="bg-pill-icon">&#128444;&#65039;</span>Stock Photos</button><button class="bg-pill" data-bg="frames"><span class="bg-pill-icon">&#127916;</span>Video Frames</button><button class="bg-pill" data-bg="gradient"><span class="bg-pill-icon">&#127912;</span>Gradient</button></div></div>
   <div class="status-area" id="status-area"></div>
   <div id="results">
-    <div class="result-header"><div><h3 id="result-title"></h3><div class="result-meta" id="result-meta"></div></div><a class="download-btn" id="download-btn" href="#" download>Download ZIP</a></div>
+    <div class="result-header"><div><h3 id="result-title"></h3><div class="result-meta" id="result-meta"></div></div><a class="download-btn" id="download-btn" href="#" download onclick="gtag('event','download_zip')">Download ZIP</a></div>
     <div class="output-tabs"><button class="tab-btn active" data-tab="carousel">Carousel</button><button class="tab-btn" data-tab="twitter">Twitter</button><button class="tab-btn" data-tab="linkedin">LinkedIn</button><button class="tab-btn" data-tab="newsletter">Newsletter</button><button class="tab-btn" data-tab="tiktok">TikTok</button><button class="tab-btn" data-tab="caption">Caption</button><button class="tab-btn" data-tab="ad_copy">Ad Copy</button></div>
     <div class="tab-panel active" id="panel-carousel"><div class="carousel-container"><button class="carousel-arrow carousel-arrow-left" id="carousel-left">&#8249;</button><div class="carousel-viewer" id="carousel-viewer"></div><button class="carousel-arrow carousel-arrow-right" id="carousel-right">&#8250;</button></div></div>
     <div class="tab-panel" id="panel-twitter"><div class="text-output-container"><pre class="text-output" id="text-twitter"></pre><button class="copy-btn" data-target="text-twitter">Copy</button></div></div>
@@ -755,6 +757,7 @@ document.querySelectorAll('.hero-mode-pill').forEach(p=>{
 function heroExtract(){
   const url=$('hero-url-input').value.trim();
   if(url){
+    gtag('event','hero_extract',{mode:heroSelectedMode});
     $('url-input').value=url;
     $('url-input').dispatchEvent(new Event('input'));
     showApp();
@@ -855,7 +858,7 @@ document.querySelectorAll('.bg-pill[data-bg]').forEach(p=>{
   p.addEventListener('click',()=>{
     document.querySelectorAll('.bg-pill[data-bg]').forEach(x=>x.classList.remove('active'));
     p.classList.add('active');
-    selectedBgStyle=p.dataset.bg;
+    selectedBgStyle=p.dataset.bg;gtag('event','bg_style_select',{style:selectedBgStyle});
   });
 });
 
@@ -890,7 +893,7 @@ async function runPodcastAnalysis(){
   $('podcast-classify-badge').style.display='none';
   try{
     const hdrs={'Content-Type':'application/json',...authHeaders()};
-    const r=await fetch('/api/analyze-topics',{method:'POST',headers:hdrs,body:JSON.stringify({url})});
+    gtag('event','podcast_analyze');const r=await fetch('/api/analyze-topics',{method:'POST',headers:hdrs,body:JSON.stringify({url})});
     const d=await r.json();
     if(!r.ok){showError(d.detail||'Analysis failed');$('podcast-hint').textContent='Analysis failed. Click a mode to extract without topics.';return false}
     analyzedTopics=d.topics||[];selectedTopics=[];
@@ -962,7 +965,7 @@ function updateOverlaySteps(html){$('overlay-steps').innerHTML=html}
 
 // Quick extract mode buttons
 document.querySelectorAll('#panel-quick .mode-btn, #mode-buttons-extra .mode-btn').forEach(b=>{
-  b.addEventListener('click',()=>{if(urlMode==='bulk')generateBulk(b.dataset.mode);else generate(b.dataset.mode)});
+  b.addEventListener('click',()=>{gtag('event','mode_select',{mode:b.dataset.mode});if(urlMode==='bulk')generateBulk(b.dataset.mode);else generate(b.dataset.mode)});
 });
 // Podcast mode buttons — auto-analyze topics first, then extract with podcast_mode=true
 document.querySelectorAll('#podcast-mode-buttons .mode-btn').forEach(b=>{
@@ -971,8 +974,8 @@ document.querySelectorAll('#podcast-mode-buttons .mode-btn').forEach(b=>{
     generate(b.dataset.mode,{podcast_mode:true,podcast_type:lastPodcastType});
   });
 });
-document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active')})});
-document.querySelectorAll('.copy-btn').forEach(b=>{b.addEventListener('click',()=>{navigator.clipboard.writeText($(b.dataset.target).textContent);b.textContent='Copied \u2713';b.classList.add('copied');setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied')},2000)})});
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{gtag('event','tab_view',{tab:b.dataset.tab});document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active')})});
+document.querySelectorAll('.copy-btn').forEach(b=>{b.addEventListener('click',()=>{gtag('event','copy_text',{format:b.dataset.target});navigator.clipboard.writeText($(b.dataset.target).textContent);b.textContent='Copied \u2713';b.classList.add('copied');setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied')},2000)})});
 $('carousel-left').addEventListener('click',()=>{$('carousel-viewer').scrollBy({left:-280,behavior:'smooth'})});
 $('carousel-right').addEventListener('click',()=>{$('carousel-viewer').scrollBy({left:280,behavior:'smooth'})});
 $('url-input').addEventListener('keydown',e=>{if(e.key==='Enter'){if(urlMode==='bulk')generateBulk('facts');else generate('facts')}});
@@ -996,7 +999,7 @@ async function generate(mode,opts){
     ?['Detecting platform...','Transcribing audio...','Downloading video frames...','Analyzing with AI...','Generating slides...']
     :(isTextOnly?TEXT_ONLY_STEPS:STEPS);
   $('results').classList.remove('visible');$('bulk-progress').style.display='none';
-  setButtonsDisabled(true);let si=0;
+  setButtonsDisabled(true);gtag('event','extraction_start',{mode:mode,bg_style:selectedBgStyle,slide_count:selectedSlideCount});let si=0;
   function showProgress(idx){
     const html=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`;
     $('status-area').innerHTML=html;
@@ -1016,9 +1019,9 @@ async function generate(mode,opts){
     clearInterval(iv);const d=await r.json();
     if(!r.ok){
       if(d.limit_reached){setButtonsDisabled(false);openUpgradeModal();return}
-      showError(d.detail||'Something went wrong. Please try again.');setButtonsDisabled(false);return;
+      showError(d.detail||'Something went wrong. Please try again.');gtag('event','extraction_error',{mode:mode,error:(d.detail||'').substring(0,50)});setButtonsDisabled(false);return;
     }
-    clearStatus();showResults(d,mode);
+    clearStatus();showResults(d,mode);gtag('event','extraction_complete',{mode:mode,items:d.item_count,slides:d.slides?.length||0});
     if(currentUser)refreshUser();
   }catch(e){clearInterval(iv);showError('Network error — please check your connection and try again.');setButtonsDisabled(false)}
   setButtonsDisabled(false);
@@ -1163,7 +1166,7 @@ $('auth-form-signup').addEventListener('submit',function handleSignup(e){
         }else{errEl.textContent=d.detail||'Signup failed'}
         return;
       }
-      setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');
+      setToken(d.token);closeAuthModal();await refreshUser();showToast('Account created!');gtag('event','sign_up',{method:'email'});
     }catch(err){errEl.textContent='Network error'}
   })();
 });
@@ -1185,7 +1188,7 @@ $('auth-form-login').addEventListener('submit',function handleLogin(e){
       const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
       const d=await r.json();
       if(!r.ok){errEl.textContent=d.detail||'Login failed';return}
-      setToken(d.token);closeAuthModal();await refreshUser();showToast('Welcome back!');
+      setToken(d.token);closeAuthModal();await refreshUser();showToast('Welcome back!');gtag('event','login',{method:'email'});
     }catch(err){errEl.textContent='Network error'}
   })();
 });
@@ -1250,7 +1253,7 @@ async function startCheckout(plan){
   try{
     const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({plan})});
     const d=await r.json();
-    if(r.ok&&d.checkout_url)window.location.href=d.checkout_url;
+    if(r.ok&&d.checkout_url){gtag('event','begin_checkout',{plan:plan});window.location.href=d.checkout_url;}
     else showToast(d.detail||'Could not start checkout');
   }catch{showToast('Network error')}
 }
