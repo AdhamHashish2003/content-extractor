@@ -401,6 +401,12 @@ img{max-width:100%;display:block}
 .bg-pill.active{background:var(--primary);color:#0C0C0F;border-color:var(--primary)}
 .bg-pill-icon{font-size:.9rem}
 
+/* Extraction overlay */
+.extract-overlay{position:fixed;inset:0;background:rgba(12,12,15,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;opacity:0;transition:opacity .3s ease}
+.extract-overlay.active{display:flex;opacity:1}
+.extract-overlay-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text)}
+.extract-overlay .status-steps{z-index:10000;max-width:400px;width:90%}
+
 /* Status */
 .status-area{margin-bottom:20px;min-height:32px}
 .status-steps{padding:14px 18px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--card-border)}
@@ -950,6 +956,12 @@ img{max-width:100%;display:block}
 <!-- TOAST -->
 <div class="toast hidden" id="toast"></div>
 
+<!-- Extraction overlay -->
+<div class="extract-overlay" id="extract-overlay">
+  <div class="extract-overlay-title">Extracting... please wait</div>
+  <div class="status-steps" id="overlay-steps"></div>
+</div>
+
 <!-- PARTICLE CANVAS SCRIPT -->
 <script>
 (function(){
@@ -1292,7 +1304,13 @@ const TEXT_ONLY_STEPS=['Detecting platform...','Getting transcript (may take 30-
 function showStepProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${STEPS.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
 function showError(m){$('status-area').innerHTML=`<div class="status-msg error"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="10" cy="10" r="9" stroke="#EF4444" stroke-width="2"/><path d="M10 6v5M10 13.5v.5" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg><span>${escHtml(m)}</span></div>`}
 function clearStatus(){$('status-area').innerHTML=''}
-function setButtonsDisabled(d){document.querySelectorAll('.mode-btn').forEach(b=>b.disabled=d)}
+function setButtonsDisabled(d){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.disabled=d);
+  const ov=$('extract-overlay');
+  if(d){ov.classList.add('active');requestAnimationFrame(()=>ov.style.opacity='1')}
+  else{ov.style.opacity='0';setTimeout(()=>ov.classList.remove('active'),300)}
+}
+function updateOverlaySteps(html){$('overlay-steps').innerHTML=html}
 
 // Quick extract mode buttons
 document.querySelectorAll('#panel-quick .mode-btn, #mode-buttons-extra .mode-btn').forEach(b=>{
@@ -1315,6 +1333,14 @@ async function generate(mode,opts){
   opts=opts||{};
   const url=$('url-input').value.trim();
   if(!url){showError('Please paste a video URL first');return}
+  // Validate handle
+  const handle=$('brand-handle').value.trim();
+  if(!handle){
+    showError('Please enter your @handle in Brand Settings first');
+    $('brand-body').classList.add('open');$('chevron').classList.add('open');
+    $('brand-handle').focus();
+    return;
+  }
   const isPodcast=!!opts.podcast_mode;
   const isTextOnly=(mode==='summary'||mode==='hooks');
   const steps=isPodcast
@@ -1322,7 +1348,11 @@ async function generate(mode,opts){
     :(isTextOnly?TEXT_ONLY_STEPS:STEPS);
   $('results').classList.remove('visible');$('bulk-progress').style.display='none';
   setButtonsDisabled(true);let si=0;
-  function showProgress(idx){$('status-area').innerHTML=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`}
+  function showProgress(idx){
+    const html=`<div class="status-steps">${steps.map((s,i)=>{let c='status-step',ic='&#9675;';if(i<idx){c+=' done';ic='&#10003;'}else if(i===idx){c+=' active';ic='<div class="spinner"></div>'}return`<div class="${c}"><span class="step-icon">${ic}</span>${s}</div>`}).join('')}</div>`;
+    $('status-area').innerHTML=html;
+    updateOverlaySteps(html);
+  }
   showProgress(0);
   const iv=setInterval(()=>{si++;if(si<steps.length)showProgress(si)},isPodcast?10000:8000);
   const b=getBrandFromInputs(),bp={handle:b.handle,name:b.name,tagline:b.tagline,bg_color:b.bg_color,text_color:b.text_color,accent_color:b.accent_color,logo:localStorage.getItem('ce_logo')||''};
@@ -1341,7 +1371,7 @@ async function generate(mode,opts){
     }
     clearStatus();showResults(d,mode);
     if(currentUser)refreshUser();
-  }catch(e){clearInterval(iv);showError('Network error — please check your connection and try again.')}
+  }catch(e){clearInterval(iv);showError('Network error — please check your connection and try again.');setButtonsDisabled(false)}
   setButtonsDisabled(false);
 }
 

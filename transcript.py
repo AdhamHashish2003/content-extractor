@@ -69,7 +69,20 @@ def _load_cookies_into_session(session) -> None:
         session.cookies.update(jar)
         logger.info("[yt-cookies] Loaded %d cookies into session", len(jar))
     except Exception as e:
-        logger.warning("[yt-cookies] Failed to load cookies into session: %s", e)
+        # MozillaCookieJar is strict — fall back to manual parsing
+        logger.warning("[yt-cookies] MozillaCookieJar failed (%s), trying manual parse", e)
+        try:
+            for line in _YT_COOKIE_FILE.read_text().strip().split("\n"):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split("\t")
+                if len(parts) >= 7:
+                    domain, _, path, secure, _, name, value = parts[:7]
+                    session.cookies.set(name, value, domain=domain, path=path)
+            logger.info("[yt-cookies] Manual parse loaded cookies into session")
+        except Exception as e2:
+            logger.warning("[yt-cookies] Manual parse also failed: %s", e2)
 
 
 def _get_yt_cookie_session():
@@ -87,7 +100,15 @@ def _get_yt_cookie_session():
 
 # Initialize cookies on module load
 _init_youtube_cookies()
-print(f"YouTube cookies: {'LOADED' if _yt_cookies_ready else 'NOT SET'} (file exists: {_YT_COOKIE_FILE.exists()})")
+if _yt_cookies_ready and _YT_COOKIE_FILE.exists():
+    _lines = _YT_COOKIE_FILE.read_text().strip().split("\n")
+    _real = [l for l in _lines if l.strip() and not l.startswith("#")]
+    print(f"YouTube cookies: LOADED ({len(_real)} cookies, file={_YT_COOKIE_FILE})")
+    if _real:
+        print(f"  first: {_real[0][:60]}...")
+        print(f"  last:  {_real[-1][:60]}...")
+else:
+    print(f"YouTube cookies: NOT SET (env var empty: {not os.getenv('YOUTUBE_COOKIES', '')})")
 
 
 # ── Transcript cache ──────────────────────────────────────────────────
@@ -374,7 +395,7 @@ def _try_youtube_captions(video_id: str) -> str | None:
                 logger.info("[transcript] Method 1 OK: %s, %d words", chosen.language_code, len(text.split()))
                 return text
     except Exception as e:
-        logger.info("[transcript] Method 1 failed: %s", e)
+        logger.info("[transcript] Method 1 failed: %s: %s", type(e).__name__, str(e)[:200])
 
     # ── Method 2: Innertube ANDROID captions (bypasses some blocks) ──
     logger.info("[transcript] Method 2 (Innertube ANDROID) for %s", video_id)
