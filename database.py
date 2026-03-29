@@ -373,7 +373,7 @@ def get_history(user_id: str | None = None, limit: int = _MAX_HISTORY) -> list[d
             "slide_count": r.get("num_slides", 0),
             "zip_url": r.get("zip_path", ""),
             "thumbnail": extra.get("thumbnail", ""),
-            "created_at": r.get("created_at", ""),
+            "created_at": str(r.get("created_at") or ""),
         })
     return result
 
