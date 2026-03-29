@@ -521,6 +521,17 @@ img{max-width:100%;display:block}
   .footer-top{grid-template-columns:1fr 1fr;gap:24px}
   .history-card{grid-template-columns:1fr}.history-thumb{display:none}
   .podcast-section .section-heading h2{font-size:1.5rem}
+  /* Carousel */
+  .slide-preview{width:220px}
+  .carousel-arrow{width:30px;height:30px;font-size:.85rem}
+  .carousel-arrow-left{left:4px}.carousel-arrow-right{right:4px}
+  /* Output tabs */
+  .output-tabs{scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .output-tabs::-webkit-scrollbar{display:none}
+  .tab-btn{padding:8px 12px;font-size:.75rem;min-width:max-content}
+  /* Result header */
+  .result-header{flex-direction:column;align-items:flex-start}
+  .download-btn{width:100%;justify-content:center}
 }
 @media(max-width:480px){
   .hero-mode-pills{gap:6px}.hero-mode-pill{padding:5px 12px;font-size:.75rem}
@@ -529,6 +540,24 @@ img{max-width:100%;display:block}
   .footer-top{grid-template-columns:1fr}
   .stats-row{gap:24px}
   .mode-grid{grid-template-columns:1fr}
+  /* Slide count + bg pills */
+  .slide-count-group{flex-wrap:wrap;gap:8px}
+  .count-pills{flex-wrap:wrap;gap:4px}
+  .count-pill{width:36px;height:32px;font-size:.8rem}
+  .bg-pills{flex-wrap:wrap;gap:6px}
+  .bg-pill{flex:1 1 calc(50% - 6px);justify-content:center;padding:8px 10px;font-size:.75rem}
+  /* Mode buttons */
+  .mode-btn{padding:10px 12px}
+  .mode-btn .mode-label{font-size:.75rem}
+  /* Carousel full width swipe */
+  .slide-preview{width:85vw;flex-shrink:0}
+  /* Text output */
+  .text-output{padding:14px;font-size:.8rem}
+  /* Extract overlay */
+  .extract-overlay-title{font-size:1.05rem}
+  .extract-overlay .status-steps{padding:12px 14px;font-size:.8rem}
+  /* Auth modal */
+  .modal{padding:28px 20px;max-width:95vw}
 }
 </style>
 </head>
