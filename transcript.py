@@ -85,8 +85,20 @@ def _load_cookies_into_session(session) -> None:
             logger.warning("[yt-cookies] Manual parse also failed: %s", e2)
 
 
+def _generate_sapisidhash(sapisid: str, origin: str = "https://www.youtube.com") -> str | None:
+    """Generate SAPISIDHASH authorization header from SAPISID cookie."""
+    import hashlib
+    import time as _time
+    if not sapisid:
+        return None
+    timestamp = int(_time.time())
+    hash_input = f"{timestamp} {sapisid} {origin}"
+    sha1 = hashlib.sha1(hash_input.encode()).hexdigest()
+    return f"SAPISIDHASH {timestamp}_{sha1}"
+
+
 def _get_yt_cookie_session():
-    """Create a requests.Session pre-loaded with YouTube cookies (if available)."""
+    """Create a requests.Session pre-loaded with YouTube cookies and SAPISIDHASH auth."""
     import requests
     session = requests.Session()
     session.headers["User-Agent"] = (
@@ -95,6 +107,23 @@ def _get_yt_cookie_session():
     )
     session.cookies.set("CONSENT", "YES+cb.20210328-17-p0.en+FX+999", domain=".youtube.com")
     _load_cookies_into_session(session)
+
+    # Generate SAPISIDHASH auth header if SAPISID cookie is present
+    sapisid = None
+    for cookie in session.cookies:
+        if cookie.name == "SAPISID":
+            sapisid = cookie.value
+            break
+        if cookie.name == "__Secure-3PAPISID":
+            sapisid = cookie.value
+            break
+    if sapisid:
+        auth = _generate_sapisidhash(sapisid)
+        if auth:
+            session.headers["Authorization"] = auth
+            session.headers["X-Origin"] = "https://www.youtube.com"
+            logger.info("[yt-cookies] SAPISIDHASH auth header set")
+
     return session
 
 
@@ -401,9 +430,13 @@ def _try_youtube_captions(video_id: str) -> str | None:
     except Exception as e:
         logger.info("[transcript] Method 1 ERROR: %s: %s", type(e).__name__, str(e)[:300])
 
-    # ── Method 2: Innertube player API with cookies ──
-    # Try both WEB (with cookies) and ANDROID clients
-    for client_name, client_ver in [("WEB", "2.20240101.00.00"), ("ANDROID", "20.10.38")]:
+    # ── Method 2: Innertube player API — try WEB (cookies), ANDROID, TV embedded ──
+    _clients = [
+        ("WEB", "2.20240101.00.00"),
+        ("ANDROID", "20.10.38"),
+        ("TVHTML5_SIMPLY_EMBEDDED_PLAYER", "2.0"),
+    ]
+    for client_name, client_ver in _clients:
         logger.info("[transcript] Method 2 (Innertube %s) for %s", client_name, video_id)
         try:
             session = _get_yt_cookie_session()
@@ -630,9 +663,12 @@ def _download_audio(url: str, output_path: Path) -> Path:
     }
     # Pass cookie file if available (bypasses bot detection)
     if _yt_cookies_ready and _YT_COOKIE_FILE.exists():
-        opts["cookiefile"] = str(_YT_COOKIE_FILE)
-        logger.info("[audio-download] yt-dlp using cookie file")
-    logger.info("[audio-download] Trying yt-dlp for %s", url[:80])
+        cookie_path = str(_YT_COOKIE_FILE)
+        opts["cookiefile"] = cookie_path
+        logger.info("[audio-download] yt-dlp cookiefile=%s (%d bytes)", cookie_path, _YT_COOKIE_FILE.stat().st_size)
+    else:
+        logger.info("[audio-download] yt-dlp NO cookies (ready=%s, exists=%s)", _yt_cookies_ready, _YT_COOKIE_FILE.exists())
+    logger.info("[audio-download] yt-dlp opts: format=%s", opts.get("format"))
     with yt_dlp.YoutubeDL(opts) as ydl:
         rc = ydl.download([url])
         if rc != 0:
